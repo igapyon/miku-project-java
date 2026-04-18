@@ -44,12 +44,16 @@
 
 - [ ] Java 側の package 構成案を決める
 - [ ] 最小の Java エントリポイントを置く
-- [ ] `src/test/java/` を用意する
-- [ ] JUnit Jupiter を Maven に追加する
+- [x] `src/test/java/` を用意する
+- [x] JUnit Jupiter を Maven に追加する
 - [ ] upstream 対応を意識したテスト class 命名規則を決める
 - [ ] upstream の主要テストと Java 側テストの対応表を作る
 - [ ] `README.md` に Java 版の目的を追記する
 - [ ] upstream 対応方針を `README.md` に追記する
+
+## upstream 連絡事項
+
+- [ ] 該当なし
 
 ## 次の候補
 
