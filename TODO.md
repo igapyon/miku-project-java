@@ -50,6 +50,7 @@
 - [ ] upstream の主要テストと Java 側テストの対応表を作る
 - [ ] `README.md` に Java 版の目的を追記する
 - [ ] upstream 対応方針を `README.md` に追記する
+- [ ] ソースヘッダーにライセンス表記を追加する
 
 ## upstream 連絡事項
 
