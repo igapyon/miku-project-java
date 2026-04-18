@@ -1,3 +1,7 @@
+/*
+ * Copyright 2026 Toshiki Iga
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package jp.igapyon.mikuproject.msprojectxml;
 
 import java.util.List;
@@ -29,6 +33,16 @@ public class MsProjectXml {
         if (model.project == null) {
             model.project = new jp.igapyon.mikuproject.model.ProjectInfo();
         }
+        if (model.project.outlineCodes == null) {
+            model.project.outlineCodes = new java.util.ArrayList<jp.igapyon.mikuproject.model.OutlineCodeModel>();
+        }
+        if (model.project.wbsMasks == null) {
+            model.project.wbsMasks = new java.util.ArrayList<jp.igapyon.mikuproject.model.WbsMaskModel>();
+        }
+        if (model.project.extendedAttributes == null) {
+            model.project.extendedAttributes =
+                    new java.util.ArrayList<jp.igapyon.mikuproject.model.ProjectExtendedAttributeModel>();
+        }
         if (model.tasks == null) {
             model.tasks = new java.util.ArrayList<jp.igapyon.mikuproject.model.TaskModel>();
         }
@@ -40,6 +54,72 @@ public class MsProjectXml {
         }
         if (model.calendars == null) {
             model.calendars = new java.util.ArrayList<jp.igapyon.mikuproject.model.CalendarModel>();
+        }
+        for (jp.igapyon.mikuproject.model.TaskModel task : model.tasks) {
+            if (task == null) {
+                continue;
+            }
+            if (task.extendedAttributes == null) {
+                task.extendedAttributes =
+                        new java.util.ArrayList<jp.igapyon.mikuproject.model.TaskExtendedAttributeModel>();
+            }
+            if (task.baselines == null) {
+                task.baselines = new java.util.ArrayList<jp.igapyon.mikuproject.model.TaskBaselineModel>();
+            }
+            if (task.timephasedData == null) {
+                task.timephasedData = new java.util.ArrayList<jp.igapyon.mikuproject.model.TaskTimephasedDataModel>();
+            }
+            if (task.predecessors == null) {
+                task.predecessors = new java.util.ArrayList<jp.igapyon.mikuproject.model.PredecessorModel>();
+            }
+        }
+        for (jp.igapyon.mikuproject.model.ResourceModel resource : model.resources) {
+            if (resource == null) {
+                continue;
+            }
+            if (resource.extendedAttributes == null) {
+                resource.extendedAttributes =
+                        new java.util.ArrayList<jp.igapyon.mikuproject.model.ResourceExtendedAttributeModel>();
+            }
+            if (resource.baselines == null) {
+                resource.baselines = new java.util.ArrayList<jp.igapyon.mikuproject.model.ResourceBaselineModel>();
+            }
+            if (resource.timephasedData == null) {
+                resource.timephasedData =
+                        new java.util.ArrayList<jp.igapyon.mikuproject.model.ResourceTimephasedDataModel>();
+            }
+        }
+        for (jp.igapyon.mikuproject.model.AssignmentModel assignment : model.assignments) {
+            if (assignment == null) {
+                continue;
+            }
+            if (assignment.extendedAttributes == null) {
+                assignment.extendedAttributes =
+                        new java.util.ArrayList<jp.igapyon.mikuproject.model.AssignmentExtendedAttributeModel>();
+            }
+            if (assignment.baselines == null) {
+                assignment.baselines =
+                        new java.util.ArrayList<jp.igapyon.mikuproject.model.AssignmentBaselineModel>();
+            }
+            if (assignment.timephasedData == null) {
+                assignment.timephasedData =
+                        new java.util.ArrayList<jp.igapyon.mikuproject.model.AssignmentTimephasedDataModel>();
+            }
+        }
+        for (jp.igapyon.mikuproject.model.CalendarModel calendarModel : model.calendars) {
+            if (calendarModel == null) {
+                continue;
+            }
+            if (calendarModel.weekDays == null) {
+                calendarModel.weekDays = new java.util.ArrayList<jp.igapyon.mikuproject.model.WeekDayModel>();
+            }
+            if (calendarModel.exceptions == null) {
+                calendarModel.exceptions =
+                        new java.util.ArrayList<jp.igapyon.mikuproject.model.CalendarExceptionModel>();
+            }
+            if (calendarModel.workWeeks == null) {
+                calendarModel.workWeeks = new java.util.ArrayList<jp.igapyon.mikuproject.model.WorkWeekModel>();
+            }
         }
         return model;
     }
