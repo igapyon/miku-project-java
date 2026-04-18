@@ -16,6 +16,11 @@
 自動テストは JUnit を使う。
 Java 1.8 前提でも利用可能な JUnit 系の現行版を第一候補とし、原則として JUnit 5 Jupiter を優先する。
 
+テスト実行の正本は `mvn test` とする。
+素の `javac` は、主に `src/main/java` の簡易構文確認に使い、`src/test/java` の単発確認手段としては前提にしない。
+
+開発環境によっては Maven の依存取得で IPv6 起因の通信問題が起きうるため、このリポジトリでは `.mvn/jvm.config` で IPv4 優先を指定する。
+
 ## Java 1.8 前提
 
 ターゲット Java は `1.8` とする。
