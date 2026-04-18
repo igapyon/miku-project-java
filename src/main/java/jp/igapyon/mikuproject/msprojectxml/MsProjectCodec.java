@@ -1,3 +1,7 @@
+/*
+ * Copyright 2026 Toshiki Iga
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package jp.igapyon.mikuproject.msprojectxml;
 
 import org.w3c.dom.Node;
@@ -204,14 +208,15 @@ public class MsProjectCodec {
         builder.append("<Project xmlns=\"http://schemas.microsoft.com/project\">\n");
         appendTextElement(builder, 1, "Name", model.project.name);
         appendTextElement(builder, 1, "Title", model.project.title);
-        appendTextElement(builder, 1, "Author", model.project.author);
         appendTextElement(builder, 1, "Company", model.project.company);
+        appendTextElement(builder, 1, "Author", model.project.author);
         appendTextElement(builder, 1, "CreationDate", model.project.creationDate);
         appendTextElement(builder, 1, "LastSaved", model.project.lastSaved);
         appendTextElement(builder, 1, "SaveVersion", model.project.saveVersion);
         appendTextElement(builder, 1, "CurrentDate", model.project.currentDate);
         appendTextElement(builder, 1, "StartDate", model.project.startDate);
         appendTextElement(builder, 1, "FinishDate", model.project.finishDate);
+        appendTextElement(builder, 1, "ScheduleFromStart", Boolean.valueOf(model.project.scheduleFromStart));
         appendTextElement(builder, 1, "DefaultStartTime", model.project.defaultStartTime);
         appendTextElement(builder, 1, "DefaultFinishTime", model.project.defaultFinishTime);
         appendTextElement(builder, 1, "MinutesPerDay", model.project.minutesPerDay);
@@ -245,7 +250,6 @@ public class MsProjectCodec {
         appendTextElement(builder, 1, "TaskUpdatesResource", model.project.taskUpdatesResource);
         appendTextElement(builder, 1, "UpdateManuallyScheduledTasksWhenEditingLinks",
                 model.project.updateManuallyScheduledTasksWhenEditingLinks);
-        builder.append("  <ScheduleFromStart>").append(model.project.scheduleFromStart ? "1" : "0").append("</ScheduleFromStart>\n");
         appendTextElement(builder, 1, "CalendarUID", model.project.calendarUID);
         appendOutlineCodes(builder, model);
         appendWbsMasks(builder, model);
@@ -591,8 +595,8 @@ public class MsProjectCodec {
             appendTextElement(builder, 3, "OutlineNumber", task.outlineNumber);
             appendTextElement(builder, 3, "WBS", task.wbs);
             appendTextElement(builder, 3, "Type", task.type);
-            appendTextElement(builder, 3, "Priority", task.priority);
             appendTextElement(builder, 3, "CalendarUID", task.calendarUID);
+            appendTextElement(builder, 3, "Priority", task.priority);
             appendTextElement(builder, 3, "Start", task.start);
             appendTextElement(builder, 3, "Finish", task.finish);
             appendTextElement(builder, 3, "Duration", task.duration);
@@ -615,9 +619,9 @@ public class MsProjectCodec {
             appendTextElement(builder, 3, "Critical", task.critical);
             appendTextElement(builder, 3, "PercentComplete", task.percentComplete);
             appendTextElement(builder, 3, "PercentWorkComplete", task.percentWorkComplete);
+            appendTextElement(builder, 3, "Notes", task.notes);
             appendTextElement(builder, 3, "ConstraintType", task.constraintType);
             appendTextElement(builder, 3, "ConstraintDate", task.constraintDate);
-            appendTextElement(builder, 3, "Notes", task.notes);
             appendTaskExtendedAttributes(builder, task);
             appendTaskBaselines(builder, task);
             appendTaskTimephasedData(builder, task);
@@ -788,147 +792,129 @@ public class MsProjectCodec {
         if (task.extendedAttributes == null || task.extendedAttributes.isEmpty()) {
             return;
         }
-        builder.append("      <ExtendedAttributes>\n");
         for (TaskExtendedAttributeModel attribute : task.extendedAttributes) {
-            builder.append("        <ExtendedAttribute>\n");
-            appendTextElement(builder, 5, "FieldID", attribute.fieldID);
-            appendTextElement(builder, 5, "Value", attribute.value);
-            builder.append("        </ExtendedAttribute>\n");
+            builder.append("      <ExtendedAttribute>\n");
+            appendTextElement(builder, 4, "FieldID", attribute.fieldID);
+            appendTextElement(builder, 4, "Value", attribute.value);
+            builder.append("      </ExtendedAttribute>\n");
         }
-        builder.append("      </ExtendedAttributes>\n");
     }
 
     private void appendResourceExtendedAttributes(StringBuilder builder, ResourceModel resource) {
         if (resource.extendedAttributes == null || resource.extendedAttributes.isEmpty()) {
             return;
         }
-        builder.append("      <ExtendedAttributes>\n");
         for (ResourceExtendedAttributeModel attribute : resource.extendedAttributes) {
-            builder.append("        <ExtendedAttribute>\n");
-            appendTextElement(builder, 5, "FieldID", attribute.fieldID);
-            appendTextElement(builder, 5, "Value", attribute.value);
-            builder.append("        </ExtendedAttribute>\n");
+            builder.append("      <ExtendedAttribute>\n");
+            appendTextElement(builder, 4, "FieldID", attribute.fieldID);
+            appendTextElement(builder, 4, "Value", attribute.value);
+            builder.append("      </ExtendedAttribute>\n");
         }
-        builder.append("      </ExtendedAttributes>\n");
     }
 
     private void appendAssignmentExtendedAttributes(StringBuilder builder, AssignmentModel assignment) {
         if (assignment.extendedAttributes == null || assignment.extendedAttributes.isEmpty()) {
             return;
         }
-        builder.append("      <ExtendedAttributes>\n");
         for (AssignmentExtendedAttributeModel attribute : assignment.extendedAttributes) {
-            builder.append("        <ExtendedAttribute>\n");
-            appendTextElement(builder, 5, "FieldID", attribute.fieldID);
-            appendTextElement(builder, 5, "Value", attribute.value);
-            builder.append("        </ExtendedAttribute>\n");
+            builder.append("      <ExtendedAttribute>\n");
+            appendTextElement(builder, 4, "FieldID", attribute.fieldID);
+            appendTextElement(builder, 4, "Value", attribute.value);
+            builder.append("      </ExtendedAttribute>\n");
         }
-        builder.append("      </ExtendedAttributes>\n");
     }
 
     private void appendTaskBaselines(StringBuilder builder, TaskModel task) {
         if (task.baselines == null || task.baselines.isEmpty()) {
             return;
         }
-        builder.append("      <Baselines>\n");
         for (TaskBaselineModel baseline : task.baselines) {
-            builder.append("        <Baseline>\n");
-            appendTextElement(builder, 5, "Number", baseline.number);
-            appendTextElement(builder, 5, "Start", baseline.start);
-            appendTextElement(builder, 5, "Finish", baseline.finish);
-            appendTextElement(builder, 5, "Work", baseline.work);
-            appendTextElement(builder, 5, "Cost", baseline.cost);
-            builder.append("        </Baseline>\n");
+            builder.append("      <Baseline>\n");
+            appendTextElement(builder, 4, "Number", baseline.number);
+            appendTextElement(builder, 4, "Start", baseline.start);
+            appendTextElement(builder, 4, "Finish", baseline.finish);
+            appendTextElement(builder, 4, "Work", baseline.work);
+            appendTextElement(builder, 4, "Cost", baseline.cost);
+            builder.append("      </Baseline>\n");
         }
-        builder.append("      </Baselines>\n");
     }
 
     private void appendResourceBaselines(StringBuilder builder, ResourceModel resource) {
         if (resource.baselines == null || resource.baselines.isEmpty()) {
             return;
         }
-        builder.append("      <Baselines>\n");
         for (ResourceBaselineModel baseline : resource.baselines) {
-            builder.append("        <Baseline>\n");
-            appendTextElement(builder, 5, "Number", baseline.number);
-            appendTextElement(builder, 5, "Start", baseline.start);
-            appendTextElement(builder, 5, "Finish", baseline.finish);
-            appendTextElement(builder, 5, "Work", baseline.work);
-            appendTextElement(builder, 5, "Cost", baseline.cost);
-            builder.append("        </Baseline>\n");
+            builder.append("      <Baseline>\n");
+            appendTextElement(builder, 4, "Number", baseline.number);
+            appendTextElement(builder, 4, "Start", baseline.start);
+            appendTextElement(builder, 4, "Finish", baseline.finish);
+            appendTextElement(builder, 4, "Work", baseline.work);
+            appendTextElement(builder, 4, "Cost", baseline.cost);
+            builder.append("      </Baseline>\n");
         }
-        builder.append("      </Baselines>\n");
     }
 
     private void appendAssignmentBaselines(StringBuilder builder, AssignmentModel assignment) {
         if (assignment.baselines == null || assignment.baselines.isEmpty()) {
             return;
         }
-        builder.append("      <Baselines>\n");
         for (AssignmentBaselineModel baseline : assignment.baselines) {
-            builder.append("        <Baseline>\n");
-            appendTextElement(builder, 5, "Number", baseline.number);
-            appendTextElement(builder, 5, "Start", baseline.start);
-            appendTextElement(builder, 5, "Finish", baseline.finish);
-            appendTextElement(builder, 5, "Work", baseline.work);
-            appendTextElement(builder, 5, "Cost", baseline.cost);
-            builder.append("        </Baseline>\n");
+            builder.append("      <Baseline>\n");
+            appendTextElement(builder, 4, "Number", baseline.number);
+            appendTextElement(builder, 4, "Start", baseline.start);
+            appendTextElement(builder, 4, "Finish", baseline.finish);
+            appendTextElement(builder, 4, "Work", baseline.work);
+            appendTextElement(builder, 4, "Cost", baseline.cost);
+            builder.append("      </Baseline>\n");
         }
-        builder.append("      </Baselines>\n");
     }
 
     private void appendTaskTimephasedData(StringBuilder builder, TaskModel task) {
         if (task.timephasedData == null || task.timephasedData.isEmpty()) {
             return;
         }
-        builder.append("      <TimephasedData>\n");
         for (TaskTimephasedDataModel value : task.timephasedData) {
-            builder.append("        <TimephasedData>\n");
-            appendTextElement(builder, 5, "Type", value.type);
-            appendTextElement(builder, 5, "UID", value.uid);
-            appendTextElement(builder, 5, "Start", value.start);
-            appendTextElement(builder, 5, "Finish", value.finish);
-            appendTextElement(builder, 5, "Unit", value.unit);
-            appendTextElement(builder, 5, "Value", value.value);
-            builder.append("        </TimephasedData>\n");
+            builder.append("      <TimephasedData>\n");
+            appendTextElement(builder, 4, "Type", value.type);
+            appendTextElement(builder, 4, "UID", value.uid);
+            appendTextElement(builder, 4, "Start", value.start);
+            appendTextElement(builder, 4, "Finish", value.finish);
+            appendTextElement(builder, 4, "Unit", value.unit);
+            appendTextElement(builder, 4, "Value", value.value);
+            builder.append("      </TimephasedData>\n");
         }
-        builder.append("      </TimephasedData>\n");
     }
 
     private void appendResourceTimephasedData(StringBuilder builder, ResourceModel resource) {
         if (resource.timephasedData == null || resource.timephasedData.isEmpty()) {
             return;
         }
-        builder.append("      <TimephasedData>\n");
         for (ResourceTimephasedDataModel value : resource.timephasedData) {
-            builder.append("        <TimephasedData>\n");
-            appendTextElement(builder, 5, "Type", value.type);
-            appendTextElement(builder, 5, "UID", value.uid);
-            appendTextElement(builder, 5, "Start", value.start);
-            appendTextElement(builder, 5, "Finish", value.finish);
-            appendTextElement(builder, 5, "Unit", value.unit);
-            appendTextElement(builder, 5, "Value", value.value);
-            builder.append("        </TimephasedData>\n");
+            builder.append("      <TimephasedData>\n");
+            appendTextElement(builder, 4, "Type", value.type);
+            appendTextElement(builder, 4, "UID", value.uid);
+            appendTextElement(builder, 4, "Start", value.start);
+            appendTextElement(builder, 4, "Finish", value.finish);
+            appendTextElement(builder, 4, "Unit", value.unit);
+            appendTextElement(builder, 4, "Value", value.value);
+            builder.append("      </TimephasedData>\n");
         }
-        builder.append("      </TimephasedData>\n");
     }
 
     private void appendAssignmentTimephasedData(StringBuilder builder, AssignmentModel assignment) {
         if (assignment.timephasedData == null || assignment.timephasedData.isEmpty()) {
             return;
         }
-        builder.append("      <TimephasedData>\n");
         for (AssignmentTimephasedDataModel value : assignment.timephasedData) {
-            builder.append("        <TimephasedData>\n");
-            appendTextElement(builder, 5, "Type", value.type);
-            appendTextElement(builder, 5, "UID", value.uid);
-            appendTextElement(builder, 5, "Start", value.start);
-            appendTextElement(builder, 5, "Finish", value.finish);
-            appendTextElement(builder, 5, "Unit", value.unit);
-            appendTextElement(builder, 5, "Value", value.value);
-            builder.append("        </TimephasedData>\n");
+            builder.append("      <TimephasedData>\n");
+            appendTextElement(builder, 4, "Type", value.type);
+            appendTextElement(builder, 4, "UID", value.uid);
+            appendTextElement(builder, 4, "Start", value.start);
+            appendTextElement(builder, 4, "Finish", value.finish);
+            appendTextElement(builder, 4, "Unit", value.unit);
+            appendTextElement(builder, 4, "Value", value.value);
+            builder.append("      </TimephasedData>\n");
         }
-        builder.append("      </TimephasedData>\n");
     }
 
     private void appendWeekDays(StringBuilder builder, int indentLevel, java.util.List<WeekDayModel> weekDays) {

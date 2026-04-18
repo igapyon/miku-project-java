@@ -11,7 +11,7 @@
 
 ## 構成方針
 
-- [ ] Node.js upstream の主要ファイルと Java 側クラス/package の対応表を作る
+- [x] Node.js upstream の主要ファイルと Java 側クラス/package の対応表を作る
 - [ ] Java 側は過度な Java 流再編を避け、upstream のファイル境界を尊重して分割する
 - [ ] upstream 1ファイルに対して Java 側で複数クラスへ分ける場合も、追跡しやすい命名規則を決める
 - [ ] upstream 更新追随時の確認単位を、Java 側でも対応ファイル単位で辿れるようにする
@@ -46,11 +46,11 @@
 - [ ] 最小の Java エントリポイントを置く
 - [x] `src/test/java/` を用意する
 - [x] JUnit Jupiter を Maven に追加する
-- [ ] upstream 対応を意識したテスト class 命名規則を決める
-- [ ] upstream の主要テストと Java 側テストの対応表を作る
-- [ ] `README.md` に Java 版の目的を追記する
-- [ ] upstream 対応方針を `README.md` に追記する
-- [ ] ソースヘッダーにライセンス表記を追加する
+- [x] upstream 対応を意識したテスト class 命名規則を決める
+- [x] upstream の主要テストと Java 側テストの対応表を作る
+- [x] `README.md` に Java 版の目的を追記する
+- [x] upstream 対応方針を `README.md` に追記する
+- [x] ソースヘッダーにライセンス表記を追加する
 
 ## upstream 連絡事項
 

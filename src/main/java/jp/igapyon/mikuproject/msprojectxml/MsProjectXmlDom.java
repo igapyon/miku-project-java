@@ -1,3 +1,7 @@
+/*
+ * Copyright 2026 Toshiki Iga
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package jp.igapyon.mikuproject.msprojectxml;
 
 import java.io.StringReader;
@@ -363,12 +367,23 @@ public class MsProjectXmlDom {
     public java.util.List<TaskExtendedAttributeModel> parseTaskExtendedAttributes(Element parent) {
         java.util.List<TaskExtendedAttributeModel> result = new java.util.ArrayList<TaskExtendedAttributeModel>();
         Element extendedAttributesElement = firstChildElement(parent, "ExtendedAttributes");
-        if (extendedAttributesElement == null) {
-            return result;
+        if (extendedAttributesElement != null) {
+            NodeList nodes = extendedAttributesElement.getChildNodes();
+            for (int index = 0; index < nodes.getLength(); index += 1) {
+                Node node = nodes.item(index);
+                if (!(node instanceof Element) || !"ExtendedAttribute".equals(((Element) node).getTagName())) {
+                    continue;
+                }
+                Element attributeElement = (Element) node;
+                TaskExtendedAttributeModel attribute = new TaskExtendedAttributeModel();
+                attribute.fieldID = textContent(attributeElement, "FieldID");
+                attribute.value = textContent(attributeElement, "Value");
+                result.add(attribute);
+            }
         }
-        NodeList nodes = extendedAttributesElement.getChildNodes();
-        for (int index = 0; index < nodes.getLength(); index += 1) {
-            Node node = nodes.item(index);
+        NodeList childNodes = parent.getChildNodes();
+        for (int index = 0; index < childNodes.getLength(); index += 1) {
+            Node node = childNodes.item(index);
             if (!(node instanceof Element) || !"ExtendedAttribute".equals(((Element) node).getTagName())) {
                 continue;
             }
@@ -384,12 +399,23 @@ public class MsProjectXmlDom {
     public java.util.List<ResourceExtendedAttributeModel> parseResourceExtendedAttributes(Element parent) {
         java.util.List<ResourceExtendedAttributeModel> result = new java.util.ArrayList<ResourceExtendedAttributeModel>();
         Element extendedAttributesElement = firstChildElement(parent, "ExtendedAttributes");
-        if (extendedAttributesElement == null) {
-            return result;
+        if (extendedAttributesElement != null) {
+            NodeList nodes = extendedAttributesElement.getChildNodes();
+            for (int index = 0; index < nodes.getLength(); index += 1) {
+                Node node = nodes.item(index);
+                if (!(node instanceof Element) || !"ExtendedAttribute".equals(((Element) node).getTagName())) {
+                    continue;
+                }
+                Element attributeElement = (Element) node;
+                ResourceExtendedAttributeModel attribute = new ResourceExtendedAttributeModel();
+                attribute.fieldID = textContent(attributeElement, "FieldID");
+                attribute.value = textContent(attributeElement, "Value");
+                result.add(attribute);
+            }
         }
-        NodeList nodes = extendedAttributesElement.getChildNodes();
-        for (int index = 0; index < nodes.getLength(); index += 1) {
-            Node node = nodes.item(index);
+        NodeList childNodes = parent.getChildNodes();
+        for (int index = 0; index < childNodes.getLength(); index += 1) {
+            Node node = childNodes.item(index);
             if (!(node instanceof Element) || !"ExtendedAttribute".equals(((Element) node).getTagName())) {
                 continue;
             }
@@ -405,12 +431,23 @@ public class MsProjectXmlDom {
     public java.util.List<AssignmentExtendedAttributeModel> parseAssignmentExtendedAttributes(Element parent) {
         java.util.List<AssignmentExtendedAttributeModel> result = new java.util.ArrayList<AssignmentExtendedAttributeModel>();
         Element extendedAttributesElement = firstChildElement(parent, "ExtendedAttributes");
-        if (extendedAttributesElement == null) {
-            return result;
+        if (extendedAttributesElement != null) {
+            NodeList nodes = extendedAttributesElement.getChildNodes();
+            for (int index = 0; index < nodes.getLength(); index += 1) {
+                Node node = nodes.item(index);
+                if (!(node instanceof Element) || !"ExtendedAttribute".equals(((Element) node).getTagName())) {
+                    continue;
+                }
+                Element attributeElement = (Element) node;
+                AssignmentExtendedAttributeModel attribute = new AssignmentExtendedAttributeModel();
+                attribute.fieldID = textContent(attributeElement, "FieldID");
+                attribute.value = textContent(attributeElement, "Value");
+                result.add(attribute);
+            }
         }
-        NodeList nodes = extendedAttributesElement.getChildNodes();
-        for (int index = 0; index < nodes.getLength(); index += 1) {
-            Node node = nodes.item(index);
+        NodeList childNodes = parent.getChildNodes();
+        for (int index = 0; index < childNodes.getLength(); index += 1) {
+            Node node = childNodes.item(index);
             if (!(node instanceof Element) || !"ExtendedAttribute".equals(((Element) node).getTagName())) {
                 continue;
             }
@@ -426,12 +463,32 @@ public class MsProjectXmlDom {
     public java.util.List<TaskBaselineModel> parseTaskBaselines(Element parent) {
         java.util.List<TaskBaselineModel> result = new java.util.ArrayList<TaskBaselineModel>();
         Element baselinesElement = firstChildElement(parent, "Baselines");
-        if (baselinesElement == null) {
-            return result;
+        if (baselinesElement != null) {
+            NodeList nodes = baselinesElement.getChildNodes();
+            for (int index = 0; index < nodes.getLength(); index += 1) {
+                Node node = nodes.item(index);
+                if (!(node instanceof Element) || !"Baseline".equals(((Element) node).getTagName())) {
+                    continue;
+                }
+                Element baselineElement = (Element) node;
+                TaskBaselineModel baseline = new TaskBaselineModel();
+                String number = textContent(baselineElement, "Number");
+                if (!number.isEmpty()) {
+                    baseline.number = Integer.valueOf(parseNumber(number, 0));
+                }
+                baseline.start = textContent(baselineElement, "Start");
+                baseline.finish = textContent(baselineElement, "Finish");
+                baseline.work = textContent(baselineElement, "Work");
+                String cost = textContent(baselineElement, "Cost");
+                if (!cost.isEmpty()) {
+                    baseline.cost = Double.valueOf(parseDouble(cost, 0.0d));
+                }
+                result.add(baseline);
+            }
         }
-        NodeList nodes = baselinesElement.getChildNodes();
-        for (int index = 0; index < nodes.getLength(); index += 1) {
-            Node node = nodes.item(index);
+        NodeList childNodes = parent.getChildNodes();
+        for (int index = 0; index < childNodes.getLength(); index += 1) {
+            Node node = childNodes.item(index);
             if (!(node instanceof Element) || !"Baseline".equals(((Element) node).getTagName())) {
                 continue;
             }
@@ -456,12 +513,32 @@ public class MsProjectXmlDom {
     public java.util.List<ResourceBaselineModel> parseResourceBaselines(Element parent) {
         java.util.List<ResourceBaselineModel> result = new java.util.ArrayList<ResourceBaselineModel>();
         Element baselinesElement = firstChildElement(parent, "Baselines");
-        if (baselinesElement == null) {
-            return result;
+        if (baselinesElement != null) {
+            NodeList nodes = baselinesElement.getChildNodes();
+            for (int index = 0; index < nodes.getLength(); index += 1) {
+                Node node = nodes.item(index);
+                if (!(node instanceof Element) || !"Baseline".equals(((Element) node).getTagName())) {
+                    continue;
+                }
+                Element baselineElement = (Element) node;
+                ResourceBaselineModel baseline = new ResourceBaselineModel();
+                String number = textContent(baselineElement, "Number");
+                if (!number.isEmpty()) {
+                    baseline.number = Integer.valueOf(parseNumber(number, 0));
+                }
+                baseline.start = textContent(baselineElement, "Start");
+                baseline.finish = textContent(baselineElement, "Finish");
+                baseline.work = textContent(baselineElement, "Work");
+                String cost = textContent(baselineElement, "Cost");
+                if (!cost.isEmpty()) {
+                    baseline.cost = Double.valueOf(parseDouble(cost, 0.0d));
+                }
+                result.add(baseline);
+            }
         }
-        NodeList nodes = baselinesElement.getChildNodes();
-        for (int index = 0; index < nodes.getLength(); index += 1) {
-            Node node = nodes.item(index);
+        NodeList childNodes = parent.getChildNodes();
+        for (int index = 0; index < childNodes.getLength(); index += 1) {
+            Node node = childNodes.item(index);
             if (!(node instanceof Element) || !"Baseline".equals(((Element) node).getTagName())) {
                 continue;
             }
@@ -486,12 +563,32 @@ public class MsProjectXmlDom {
     public java.util.List<AssignmentBaselineModel> parseAssignmentBaselines(Element parent) {
         java.util.List<AssignmentBaselineModel> result = new java.util.ArrayList<AssignmentBaselineModel>();
         Element baselinesElement = firstChildElement(parent, "Baselines");
-        if (baselinesElement == null) {
-            return result;
+        if (baselinesElement != null) {
+            NodeList nodes = baselinesElement.getChildNodes();
+            for (int index = 0; index < nodes.getLength(); index += 1) {
+                Node node = nodes.item(index);
+                if (!(node instanceof Element) || !"Baseline".equals(((Element) node).getTagName())) {
+                    continue;
+                }
+                Element baselineElement = (Element) node;
+                AssignmentBaselineModel baseline = new AssignmentBaselineModel();
+                String number = textContent(baselineElement, "Number");
+                if (!number.isEmpty()) {
+                    baseline.number = Integer.valueOf(parseNumber(number, 0));
+                }
+                baseline.start = textContent(baselineElement, "Start");
+                baseline.finish = textContent(baselineElement, "Finish");
+                baseline.work = textContent(baselineElement, "Work");
+                String cost = textContent(baselineElement, "Cost");
+                if (!cost.isEmpty()) {
+                    baseline.cost = Double.valueOf(parseDouble(cost, 0.0d));
+                }
+                result.add(baseline);
+            }
         }
-        NodeList nodes = baselinesElement.getChildNodes();
-        for (int index = 0; index < nodes.getLength(); index += 1) {
-            Node node = nodes.item(index);
+        NodeList childNodes = parent.getChildNodes();
+        for (int index = 0; index < childNodes.getLength(); index += 1) {
+            Node node = childNodes.item(index);
             if (!(node instanceof Element) || !"Baseline".equals(((Element) node).getTagName())) {
                 continue;
             }
@@ -516,12 +613,23 @@ public class MsProjectXmlDom {
     public java.util.List<TaskTimephasedDataModel> parseTaskTimephasedData(Element parent) {
         java.util.List<TaskTimephasedDataModel> result = new java.util.ArrayList<TaskTimephasedDataModel>();
         Element timephasedDataElement = firstChildElement(parent, "TimephasedData");
-        if (timephasedDataElement == null) {
+        if (timephasedDataElement != null && hasDirectChildElement(timephasedDataElement, "TimephasedData")) {
+            NodeList nodes = timephasedDataElement.getChildNodes();
+            for (int index = 0; index < nodes.getLength(); index += 1) {
+                Node node = nodes.item(index);
+                if (!(node instanceof Element) || !"TimephasedData".equals(((Element) node).getTagName())) {
+                    continue;
+                }
+                Element valueElement = (Element) node;
+                TaskTimephasedDataModel value = new TaskTimephasedDataModel();
+                fillTimephasedData(valueElement, value);
+                result.add(value);
+            }
             return result;
         }
-        NodeList nodes = timephasedDataElement.getChildNodes();
-        for (int index = 0; index < nodes.getLength(); index += 1) {
-            Node node = nodes.item(index);
+        NodeList childNodes = parent.getChildNodes();
+        for (int index = 0; index < childNodes.getLength(); index += 1) {
+            Node node = childNodes.item(index);
             if (!(node instanceof Element) || !"TimephasedData".equals(((Element) node).getTagName())) {
                 continue;
             }
@@ -536,12 +644,23 @@ public class MsProjectXmlDom {
     public java.util.List<ResourceTimephasedDataModel> parseResourceTimephasedData(Element parent) {
         java.util.List<ResourceTimephasedDataModel> result = new java.util.ArrayList<ResourceTimephasedDataModel>();
         Element timephasedDataElement = firstChildElement(parent, "TimephasedData");
-        if (timephasedDataElement == null) {
+        if (timephasedDataElement != null && hasDirectChildElement(timephasedDataElement, "TimephasedData")) {
+            NodeList nodes = timephasedDataElement.getChildNodes();
+            for (int index = 0; index < nodes.getLength(); index += 1) {
+                Node node = nodes.item(index);
+                if (!(node instanceof Element) || !"TimephasedData".equals(((Element) node).getTagName())) {
+                    continue;
+                }
+                Element valueElement = (Element) node;
+                ResourceTimephasedDataModel value = new ResourceTimephasedDataModel();
+                fillTimephasedData(valueElement, value);
+                result.add(value);
+            }
             return result;
         }
-        NodeList nodes = timephasedDataElement.getChildNodes();
-        for (int index = 0; index < nodes.getLength(); index += 1) {
-            Node node = nodes.item(index);
+        NodeList childNodes = parent.getChildNodes();
+        for (int index = 0; index < childNodes.getLength(); index += 1) {
+            Node node = childNodes.item(index);
             if (!(node instanceof Element) || !"TimephasedData".equals(((Element) node).getTagName())) {
                 continue;
             }
@@ -556,12 +675,23 @@ public class MsProjectXmlDom {
     public java.util.List<AssignmentTimephasedDataModel> parseAssignmentTimephasedData(Element parent) {
         java.util.List<AssignmentTimephasedDataModel> result = new java.util.ArrayList<AssignmentTimephasedDataModel>();
         Element timephasedDataElement = firstChildElement(parent, "TimephasedData");
-        if (timephasedDataElement == null) {
+        if (timephasedDataElement != null && hasDirectChildElement(timephasedDataElement, "TimephasedData")) {
+            NodeList nodes = timephasedDataElement.getChildNodes();
+            for (int index = 0; index < nodes.getLength(); index += 1) {
+                Node node = nodes.item(index);
+                if (!(node instanceof Element) || !"TimephasedData".equals(((Element) node).getTagName())) {
+                    continue;
+                }
+                Element valueElement = (Element) node;
+                AssignmentTimephasedDataModel value = new AssignmentTimephasedDataModel();
+                fillTimephasedData(valueElement, value);
+                result.add(value);
+            }
             return result;
         }
-        NodeList nodes = timephasedDataElement.getChildNodes();
-        for (int index = 0; index < nodes.getLength(); index += 1) {
-            Node node = nodes.item(index);
+        NodeList childNodes = parent.getChildNodes();
+        for (int index = 0; index < childNodes.getLength(); index += 1) {
+            Node node = childNodes.item(index);
             if (!(node instanceof Element) || !"TimephasedData".equals(((Element) node).getTagName())) {
                 continue;
             }
@@ -628,6 +758,17 @@ public class MsProjectXmlDom {
                 return 0;
             }
         };
+    }
+
+    private boolean hasDirectChildElement(Element parent, String tagName) {
+        NodeList childNodes = parent.getChildNodes();
+        for (int index = 0; index < childNodes.getLength(); index += 1) {
+            Node node = childNodes.item(index);
+            if (node instanceof Element && tagName.equals(((Element) node).getTagName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public Document parseXmlDocument(String xmlText) {

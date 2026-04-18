@@ -1,3 +1,7 @@
+/*
+ * Copyright 2026 Toshiki Iga
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package jp.igapyon.mikuproject.msprojectxml;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -5,6 +9,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -117,6 +125,58 @@ public class MsProjectXmlTest {
         assertEquals("Memo", model.project.extendedAttributes.get(0).alias);
         assertTrue(model.project.scheduleFromStart);
         assertFalse(model.calendars.isEmpty());
+    }
+
+    @Test
+    public void roundTripsUpstreamMinimalXmlFixture() throws IOException {
+        MsProjectXml xml = new MsProjectXml();
+        String xmlText = readVendorTestdata("minimal.xml");
+
+        ProjectModel model = xml.importFromXml(xmlText);
+        String exportedXml = xml.exportToXml(model);
+        ProjectModel reparsed = xml.importFromXml(exportedXml);
+
+        assertEquals("Minimal Project", model.project.name);
+        assertEquals("Minimal Project", reparsed.project.name);
+        assertEquals(1, reparsed.tasks.size());
+        assertEquals("Single Task", reparsed.tasks.get(0).name);
+        assertTrue(xml.validateProjectModel(reparsed).isEmpty());
+    }
+
+    @Test
+    public void importsUpstreamHierarchyXmlFixture() throws IOException {
+        MsProjectXml xml = new MsProjectXml();
+        String xmlText = readVendorTestdata("hierarchy.xml");
+
+        ProjectModel model = xml.importFromXml(xmlText);
+
+        assertEquals("Hierarchy Project", model.project.name);
+        assertEquals(3, model.tasks.size());
+        assertEquals("Summary", model.tasks.get(0).name);
+        assertEquals("1", model.tasks.get(0).outlineNumber);
+        assertEquals("1.1", model.tasks.get(1).outlineNumber);
+        assertEquals("1.2", model.tasks.get(2).outlineNumber);
+        assertEquals("Second child task", model.tasks.get(2).notes);
+    }
+
+    @Test
+    public void importsUpstreamDependencyXmlFixture() throws IOException {
+        MsProjectXml xml = new MsProjectXml();
+        String xmlText = readVendorTestdata("dependency.xml");
+
+        ProjectModel model = xml.importFromXml(xmlText);
+
+        assertEquals("Dependency Project", model.project.name);
+        assertEquals("1", model.project.calendarUID);
+        assertEquals(1, model.calendars.size());
+        assertEquals(2, model.tasks.size());
+        assertEquals(1, model.tasks.get(1).predecessors.size());
+        assertEquals("1", model.tasks.get(1).predecessors.get(0).predecessorUid);
+        assertEquals(1, model.resources.size());
+        assertEquals("Miku", model.resources.get(0).name);
+        assertEquals(1, model.assignments.size());
+        assertEquals("2", model.assignments.get(0).taskUid);
+        assertEquals("1", model.assignments.get(0).resourceUid);
     }
 
     @Test
@@ -345,8 +405,9 @@ public class MsProjectXmlTest {
         task.outlineLevel = Integer.valueOf(1);
         task.outlineNumber = "1";
         task.type = Integer.valueOf(2);
+        task.calendarUID = "10";
         task.priority = Integer.valueOf(500);
-        task.start = "2026-04-01T09:00:00";
+        task.start = "2026-04-03T09:00:00";
         task.finish = "2026-04-02T18:00:00";
         task.duration = "PT16H0M0S";
         task.actualStart = "2026-04-01T09:00:00";
@@ -486,6 +547,8 @@ public class MsProjectXmlTest {
         assertTrue(xmlText.contains("<CreationDate>2026-03-01T09:00:00</CreationDate>"));
         assertTrue(xmlText.contains("<LastSaved>2026-03-31T18:00:00</LastSaved>"));
         assertTrue(xmlText.contains("<SaveVersion>15</SaveVersion>"));
+        assertTrue(xmlText.indexOf("<Title>Sample Title</Title>") < xmlText.indexOf("<Company>Sample Company</Company>"));
+        assertTrue(xmlText.indexOf("<Company>Sample Company</Company>") < xmlText.indexOf("<Author>Sample Author</Author>"));
         assertTrue(xmlText.contains("<MinutesPerDay>480</MinutesPerDay>"));
         assertTrue(xmlText.contains("<WeekStartDay>2</WeekStartDay>"));
         assertTrue(xmlText.contains("<CurrencyCode>JPY</CurrencyCode>"));
@@ -500,6 +563,8 @@ public class MsProjectXmlTest {
         assertTrue(xmlText.contains("<Mask>##</Mask>"));
         assertTrue(xmlText.contains("<ExtendedAttributes>"));
         assertTrue(xmlText.contains("<Alias>Memo</Alias>"));
+        assertTrue(xmlText.indexOf("<Type>2</Type>") < xmlText.indexOf("<CalendarUID>10</CalendarUID>"));
+        assertTrue(xmlText.indexOf("<CalendarUID>10</CalendarUID>") < xmlText.indexOf("<Priority>500</Priority>"));
         assertTrue(xmlText.contains("<Type>2</Type>"));
         assertTrue(xmlText.contains("<Priority>500</Priority>"));
         assertTrue(xmlText.contains("<ActualStart>2026-04-01T09:00:00</ActualStart>"));
@@ -516,10 +581,14 @@ public class MsProjectXmlTest {
         assertTrue(xmlText.contains("<ActualWork>PT8H0M0S</ActualWork>"));
         assertTrue(xmlText.contains("<Critical>1</Critical>"));
         assertTrue(xmlText.contains("<PercentWorkComplete>60</PercentWorkComplete>"));
+        assertTrue(xmlText.indexOf("<Notes>") < xmlText.indexOf("<ConstraintType>4</ConstraintType>"));
         assertTrue(xmlText.contains("<ConstraintType>4</ConstraintType>"));
         assertTrue(xmlText.contains("<ExtendedAttribute>"));
         assertTrue(xmlText.contains("<Value>Task Memo</Value>"));
-        assertTrue(xmlText.contains("<Baselines>"));
+        assertFalse(xmlText.contains("      <ExtendedAttributes>\n"));
+        assertFalse(xmlText.contains("      <Baselines>\n"));
+        assertFalse(xmlText.contains("        <TimephasedData>\n"));
+        assertTrue(xmlText.contains("<Baseline>"));
         assertTrue(xmlText.contains("<TimephasedData>"));
         assertTrue(xmlText.contains("<UID>501</UID>"));
         assertTrue(xmlText.contains("<Initials>RA</Initials>"));
@@ -583,6 +652,108 @@ public class MsProjectXmlTest {
     }
 
     @Test
+    public void exportThenImportPreservesDirectChildExtendedStructures() {
+        MsProjectXml xml = new MsProjectXml();
+        ProjectModel model = new ProjectModel();
+
+        model.project.name = "Sample Project";
+        model.project.startDate = "2026-04-01T09:00:00";
+        model.project.finishDate = "2026-04-30T18:00:00";
+        model.project.scheduleFromStart = true;
+
+        jp.igapyon.mikuproject.model.TaskModel task = new jp.igapyon.mikuproject.model.TaskModel();
+        task.uid = "1";
+        task.id = "1";
+        task.name = "Task A";
+        task.outlineLevel = Integer.valueOf(1);
+        task.outlineNumber = "1";
+        task.start = "2026-04-01T09:00:00";
+        task.finish = "2026-04-02T18:00:00";
+        task.duration = "PT16H0M0S";
+        task.percentComplete = Integer.valueOf(0);
+        jp.igapyon.mikuproject.model.TaskExtendedAttributeModel taskAttribute =
+                new jp.igapyon.mikuproject.model.TaskExtendedAttributeModel();
+        taskAttribute.fieldID = "188743734";
+        taskAttribute.value = "Task Memo";
+        task.extendedAttributes.add(taskAttribute);
+        jp.igapyon.mikuproject.model.TaskBaselineModel taskBaseline =
+                new jp.igapyon.mikuproject.model.TaskBaselineModel();
+        taskBaseline.number = Integer.valueOf(0);
+        taskBaseline.start = "2026-04-01T09:00:00";
+        taskBaseline.finish = "2026-04-02T18:00:00";
+        task.baselines.add(taskBaseline);
+        jp.igapyon.mikuproject.model.TaskTimephasedDataModel taskTimephased =
+                new jp.igapyon.mikuproject.model.TaskTimephasedDataModel();
+        taskTimephased.type = Integer.valueOf(1);
+        taskTimephased.uid = "501";
+        taskTimephased.start = "2026-04-01T09:00:00";
+        taskTimephased.finish = "2026-04-01T18:00:00";
+        task.timephasedData.add(taskTimephased);
+        model.tasks.add(task);
+
+        jp.igapyon.mikuproject.model.ResourceModel resource = new jp.igapyon.mikuproject.model.ResourceModel();
+        resource.uid = "2";
+        resource.id = "2";
+        resource.name = "Res A";
+        jp.igapyon.mikuproject.model.ResourceExtendedAttributeModel resourceAttribute =
+                new jp.igapyon.mikuproject.model.ResourceExtendedAttributeModel();
+        resourceAttribute.fieldID = "188743735";
+        resourceAttribute.value = "Res Memo";
+        resource.extendedAttributes.add(resourceAttribute);
+        jp.igapyon.mikuproject.model.ResourceBaselineModel resourceBaseline =
+                new jp.igapyon.mikuproject.model.ResourceBaselineModel();
+        resourceBaseline.number = Integer.valueOf(0);
+        resourceBaseline.start = "2026-04-01T09:00:00";
+        resourceBaseline.finish = "2026-04-02T18:00:00";
+        resource.baselines.add(resourceBaseline);
+        jp.igapyon.mikuproject.model.ResourceTimephasedDataModel resourceTimephased =
+                new jp.igapyon.mikuproject.model.ResourceTimephasedDataModel();
+        resourceTimephased.type = Integer.valueOf(2);
+        resourceTimephased.uid = "601";
+        resourceTimephased.start = "2026-04-01T09:00:00";
+        resourceTimephased.finish = "2026-04-01T18:00:00";
+        resource.timephasedData.add(resourceTimephased);
+        model.resources.add(resource);
+
+        jp.igapyon.mikuproject.model.AssignmentModel assignment = new jp.igapyon.mikuproject.model.AssignmentModel();
+        assignment.uid = "3";
+        assignment.taskUid = "1";
+        assignment.resourceUid = "2";
+        jp.igapyon.mikuproject.model.AssignmentExtendedAttributeModel assignmentAttribute =
+                new jp.igapyon.mikuproject.model.AssignmentExtendedAttributeModel();
+        assignmentAttribute.fieldID = "188743736";
+        assignmentAttribute.value = "Assign Memo";
+        assignment.extendedAttributes.add(assignmentAttribute);
+        jp.igapyon.mikuproject.model.AssignmentBaselineModel assignmentBaseline =
+                new jp.igapyon.mikuproject.model.AssignmentBaselineModel();
+        assignmentBaseline.number = Integer.valueOf(0);
+        assignmentBaseline.start = "2026-04-01T09:00:00";
+        assignmentBaseline.finish = "2026-04-02T18:00:00";
+        assignment.baselines.add(assignmentBaseline);
+        jp.igapyon.mikuproject.model.AssignmentTimephasedDataModel assignmentTimephased =
+                new jp.igapyon.mikuproject.model.AssignmentTimephasedDataModel();
+        assignmentTimephased.type = Integer.valueOf(3);
+        assignmentTimephased.uid = "701";
+        assignmentTimephased.start = "2026-04-01T09:00:00";
+        assignmentTimephased.finish = "2026-04-01T18:00:00";
+        assignment.timephasedData.add(assignmentTimephased);
+        model.assignments.add(assignment);
+
+        String xmlText = xml.exportToXml(model);
+        ProjectModel reparsed = xml.importFromXml(xmlText);
+
+        assertEquals(1, reparsed.tasks.get(0).extendedAttributes.size());
+        assertEquals(1, reparsed.tasks.get(0).baselines.size());
+        assertEquals(1, reparsed.tasks.get(0).timephasedData.size());
+        assertEquals(1, reparsed.resources.get(0).extendedAttributes.size());
+        assertEquals(1, reparsed.resources.get(0).baselines.size());
+        assertEquals(1, reparsed.resources.get(0).timephasedData.size());
+        assertEquals(1, reparsed.assignments.get(0).extendedAttributes.size());
+        assertEquals(1, reparsed.assignments.get(0).baselines.size());
+        assertEquals(1, reparsed.assignments.get(0).timephasedData.size());
+    }
+
+    @Test
     public void validateProjectModelReturnsWarningsForMissingCoreFields() {
         MsProjectXml xml = new MsProjectXml();
 
@@ -609,6 +780,7 @@ public class MsProjectXmlTest {
         model.project.saveVersion = Integer.valueOf(-1);
         model.project.currencyDigits = Integer.valueOf(-1);
         model.project.currencySymbolPosition = Integer.valueOf(-1);
+        model.project.fyStartDate = "not-a-date";
         model.project.criticalSlackLimit = Integer.valueOf(-1);
         model.project.defaultTaskType = Integer.valueOf(-1);
         model.project.defaultFixedCostAccrual = Integer.valueOf(-1);
@@ -640,6 +812,7 @@ public class MsProjectXmlTest {
         assertTrue(containsMessage(issues, "Project DurationFormat は 0 以上が望ましいです"));
         assertTrue(containsMessage(issues, "Project CurrencyDigits は 0 以上が望ましいです"));
         assertTrue(containsMessage(issues, "Project CurrencySymbolPosition は 0 以上が望ましいです"));
+        assertTrue(containsMessage(issues, "Project FYStartDate の日付形式が解釈できません"));
         assertTrue(containsMessage(issues, "Project CriticalSlackLimit は 0 以上が望ましいです"));
         assertTrue(containsMessage(issues, "Project DefaultTaskType は 0 以上が望ましいです"));
         assertTrue(containsMessage(issues, "Project DefaultFixedCostAccrual は 0 以上が望ましいです"));
@@ -650,6 +823,59 @@ public class MsProjectXmlTest {
         assertTrue(containsMessage(issues, "Project WBSMask Level は 1 以上が望ましいです"));
         assertTrue(containsMessage(issues, "Project ExtendedAttribute は FieldID または FieldName を持つことが望ましいです"));
         assertTrue(containsMessage(issues, "Project ExtendedAttribute CalculationType は 0 以上が望ましいです"));
+    }
+
+    @Test
+    public void validateProjectModelChecksCalendarStructures() {
+        MsProjectXml xml = new MsProjectXml();
+        ProjectModel model = new ProjectModel();
+
+        model.project.name = "Sample Project";
+        model.project.startDate = "2026-04-01T09:00:00";
+        model.project.finishDate = "2026-04-30T18:00:00";
+
+        jp.igapyon.mikuproject.model.CalendarModel calendar = new jp.igapyon.mikuproject.model.CalendarModel();
+        calendar.uid = "10";
+        calendar.name = "Standard";
+        calendar.isBaseCalendar = false;
+        calendar.isBaselineCalendar = Boolean.TRUE;
+        calendar.baseCalendarUID = "10";
+
+        jp.igapyon.mikuproject.model.WeekDayModel weekDay = new jp.igapyon.mikuproject.model.WeekDayModel();
+        weekDay.dayType = Integer.valueOf(8);
+        jp.igapyon.mikuproject.model.WorkingTimeModel workingTime = new jp.igapyon.mikuproject.model.WorkingTimeModel();
+        workingTime.fromTime = "09:00:00";
+        weekDay.workingTimes.add(workingTime);
+        calendar.weekDays.add(weekDay);
+
+        jp.igapyon.mikuproject.model.CalendarExceptionModel exception = new jp.igapyon.mikuproject.model.CalendarExceptionModel();
+        exception.fromDate = "2026-04-10T23:59:59";
+        exception.toDate = "2026-04-10T00:00:00";
+        jp.igapyon.mikuproject.model.WorkingTimeModel exceptionWorkingTime = new jp.igapyon.mikuproject.model.WorkingTimeModel();
+        exceptionWorkingTime.toTime = "12:00:00";
+        exception.workingTimes.add(exceptionWorkingTime);
+        calendar.exceptions.add(exception);
+
+        jp.igapyon.mikuproject.model.WorkWeekModel workWeek = new jp.igapyon.mikuproject.model.WorkWeekModel();
+        workWeek.fromDate = "2026-05-08T23:59:59";
+        workWeek.toDate = "2026-05-01T00:00:00";
+        jp.igapyon.mikuproject.model.WeekDayModel workWeekDay = new jp.igapyon.mikuproject.model.WeekDayModel();
+        workWeekDay.dayType = Integer.valueOf(9);
+        workWeek.weekDays.add(workWeekDay);
+        calendar.workWeeks.add(workWeek);
+
+        model.calendars.add(calendar);
+
+        List<ValidationIssue> issues = xml.validateProjectModel(model);
+
+        assertTrue(containsMessage(issues, "Calendar IsBaselineCalendar は通常 BaseCalendar と整合していることが望ましいです"));
+        assertTrue(containsMessage(issues, "Calendar WeekDay DayType が 1..7 の範囲外です"));
+        assertTrue(containsMessage(issues, "Calendar WorkingTime の時刻が不足しています"));
+        assertTrue(containsMessage(issues, "Calendar Exception FromDate が ToDate より後です"));
+        assertTrue(containsMessage(issues, "Calendar Exception WorkingTime の時刻が不足しています"));
+        assertTrue(containsMessage(issues, "Calendar WorkWeek FromDate が ToDate より後です"));
+        assertTrue(containsMessage(issues, "Calendar WorkWeek DayType が 1..7 の範囲外です"));
+        assertTrue(containsMessage(issues, "Calendar BaseCalendarUID が自身を指しています"));
     }
 
     @Test
@@ -666,7 +892,7 @@ public class MsProjectXmlTest {
         task.uid = "1";
         task.id = "1";
         task.name = "Task A";
-        task.start = "2026-04-01T09:00:00";
+        task.start = "2026-04-03T09:00:00";
         task.finish = "2026-04-02T18:00:00";
         task.percentComplete = Integer.valueOf(120);
         task.percentWorkComplete = Integer.valueOf(130);
@@ -676,6 +902,11 @@ public class MsProjectXmlTest {
         task.cost = Double.valueOf(-1.0d);
         task.actualCost = Double.valueOf(-1.0d);
         task.remainingCost = Double.valueOf(-1.0d);
+        task.outlineLevel = Integer.valueOf(2);
+        task.outlineNumber = "1";
+        task.actualStart = "2026-04-03T09:00:00";
+        task.actualFinish = "2026-04-02T18:00:00";
+        task.deadline = "2026-04-01T09:00:00";
         task.calendarUID = "missing-calendar";
         model.tasks.add(task);
 
@@ -711,12 +942,18 @@ public class MsProjectXmlTest {
         assignment.uid = "3";
         assignment.taskUid = "missing-task";
         assignment.resourceUid = "missing-resource";
+        assignment.start = "2026-04-03T09:00:00";
+        assignment.finish = "2026-04-02T18:00:00";
         assignment.units = Double.valueOf(-1.0d);
         assignment.workContour = Integer.valueOf(-1);
         assignment.cost = Double.valueOf(-1.0d);
         assignment.actualCost = Double.valueOf(-1.0d);
         assignment.remainingCost = Double.valueOf(-1.0d);
         assignment.percentWorkComplete = Integer.valueOf(150);
+        assignment.overtimeWork = "";
+        assignment.actualOvertimeWork = "";
+        assignment.startVariance = "";
+        assignment.finishVariance = "";
         jp.igapyon.mikuproject.model.AssignmentExtendedAttributeModel assignmentExtendedAttribute = new jp.igapyon.mikuproject.model.AssignmentExtendedAttributeModel();
         assignment.extendedAttributes.add(assignmentExtendedAttribute);
         jp.igapyon.mikuproject.model.AssignmentBaselineModel assignmentBaseline = new jp.igapyon.mikuproject.model.AssignmentBaselineModel();
@@ -734,30 +971,56 @@ public class MsProjectXmlTest {
         jp.igapyon.mikuproject.model.TaskBaselineModel taskBaseline = new jp.igapyon.mikuproject.model.TaskBaselineModel();
         taskBaseline.number = Integer.valueOf(-1);
         taskBaseline.cost = Double.valueOf(-1.0d);
+        taskBaseline.start = "2026-04-03T09:00:00";
+        taskBaseline.finish = "2026-04-02T18:00:00";
         task.baselines.add(taskBaseline);
         jp.igapyon.mikuproject.model.TaskTimephasedDataModel taskTimephasedData = new jp.igapyon.mikuproject.model.TaskTimephasedDataModel();
         taskTimephasedData.type = Integer.valueOf(-1);
         taskTimephasedData.unit = Integer.valueOf(-1);
+        taskTimephasedData.start = "2026-04-03T09:00:00";
+        taskTimephasedData.finish = "2026-04-02T18:00:00";
         task.timephasedData.add(taskTimephasedData);
+
+        jp.igapyon.mikuproject.model.PredecessorModel predecessor = new jp.igapyon.mikuproject.model.PredecessorModel();
+        predecessor.predecessorUid = "missing-predecessor";
+        task.predecessors.add(predecessor);
+
+        resourceBaseline.start = "2026-04-03T09:00:00";
+        resourceBaseline.finish = "2026-04-02T18:00:00";
+        resourceTimephasedData.start = "2026-04-03T09:00:00";
+        resourceTimephasedData.finish = "2026-04-02T18:00:00";
+        assignmentBaseline.start = "2026-04-03T09:00:00";
+        assignmentBaseline.finish = "2026-04-02T18:00:00";
+        assignmentTimephasedData.start = "2026-04-03T09:00:00";
+        assignmentTimephasedData.finish = "2026-04-02T18:00:00";
 
         List<ValidationIssue> issues = xml.validateProjectModel(model);
 
         assertFalse(issues.isEmpty());
         assertTrue(containsMessage(issues, "Project CalendarUID が既存 Calendar を指していません"));
+        assertTrue(containsIssue(issues, "error", "project", "Project CalendarUID が既存 Calendar を指していません"));
         assertTrue(containsMessage(issues, "Task CalendarUID が既存 Calendar を指していません"));
         assertTrue(containsMessage(issues, "Task PercentComplete が 0..100 の範囲外です"));
         assertTrue(containsMessage(issues, "Task PercentWorkComplete が 0..100 の範囲外です"));
         assertTrue(containsMessage(issues, "Task Type は 0 以上が望ましいです"));
         assertTrue(containsMessage(issues, "Task Priority が 0..1000 の範囲外です"));
         assertTrue(containsMessage(issues, "Task ConstraintType は 0 以上が望ましいです"));
-        assertTrue(containsMessage(issues, "Task Cost は 0 以上が望ましいです"));
-        assertTrue(containsMessage(issues, "Task ActualCost は 0 以上が望ましいです"));
-        assertTrue(containsMessage(issues, "Task RemainingCost は 0 以上が望ましいです"));
-        assertTrue(containsMessage(issues, "Task ExtendedAttribute FieldID が空です"));
+        assertTrue(containsMessage(issues, "Task Cost が負値です"));
+        assertTrue(containsMessage(issues, "Task ActualCost が負値です"));
+        assertTrue(containsMessage(issues, "Task RemainingCost が負値です"));
+        assertTrue(containsMessage(issues, "Task OutlineNumber と OutlineLevel の整合が取れていません"));
+        assertTrue(containsMessage(issues, "Task Start が Finish より後です"));
+        assertTrue(containsMessage(issues, "Task Finish が Deadline より後です"));
+        assertTrue(containsMessage(issues, "Task ActualStart が ActualFinish より後です"));
+        assertTrue(containsMessage(issues, "Task ExtendedAttribute に FieldID がありません"));
         assertTrue(containsMessage(issues, "Task Baseline Number は 0 以上が望ましいです"));
-        assertTrue(containsMessage(issues, "Task Baseline Cost は 0 以上が望ましいです"));
+        assertTrue(containsMessage(issues, "Task Baseline Cost が負値です"));
+        assertTrue(containsMessage(issues, "Task Baseline Start が Finish より後です"));
         assertTrue(containsMessage(issues, "Task TimephasedData Type は 0 以上が望ましいです"));
         assertTrue(containsMessage(issues, "Task TimephasedData Unit は 0 以上が望ましいです"));
+        assertTrue(containsMessage(issues, "Task TimephasedData Start が Finish より後です"));
+        assertTrue(containsMessage(issues, "PredecessorUID が既存 Task を指していません"));
+        assertTrue(containsIssue(issues, "error", "tasks", "PredecessorUID が既存 Task を指していません"));
         assertTrue(containsMessage(issues, "Resource CalendarUID が既存 Calendar を指していません"));
         assertTrue(containsMessage(issues, "Resource Type は 0 以上が望ましいです"));
         assertTrue(containsMessage(issues, "Resource WorkGroup は 0 以上が望ましいです"));
@@ -765,33 +1028,159 @@ public class MsProjectXmlTest {
         assertTrue(containsMessage(issues, "Resource StandardRateFormat は 0 以上が望ましいです"));
         assertTrue(containsMessage(issues, "Resource OvertimeRateFormat は 0 以上が望ましいです"));
         assertTrue(containsMessage(issues, "Resource CostPerUse は 0 以上が望ましいです"));
-        assertTrue(containsMessage(issues, "Resource Cost は 0 以上が望ましいです"));
-        assertTrue(containsMessage(issues, "Resource ActualCost は 0 以上が望ましいです"));
-        assertTrue(containsMessage(issues, "Resource RemainingCost は 0 以上が望ましいです"));
+        assertTrue(containsMessage(issues, "Resource Cost が負値です"));
+        assertTrue(containsMessage(issues, "Resource ActualCost が負値です"));
+        assertTrue(containsMessage(issues, "Resource RemainingCost が負値です"));
         assertTrue(containsMessage(issues, "Resource PercentWorkComplete が 0..100 の範囲外です"));
-        assertTrue(containsMessage(issues, "Resource ExtendedAttribute FieldID が空です"));
+        assertTrue(containsMessage(issues, "Resource ExtendedAttribute に FieldID がありません"));
         assertTrue(containsMessage(issues, "Resource Baseline Number は 0 以上が望ましいです"));
-        assertTrue(containsMessage(issues, "Resource Baseline Cost は 0 以上が望ましいです"));
+        assertTrue(containsMessage(issues, "Resource Baseline Cost が負値です"));
+        assertTrue(containsMessage(issues, "Resource Baseline Start が Finish より後です"));
         assertTrue(containsMessage(issues, "Resource TimephasedData Type は 0 以上が望ましいです"));
         assertTrue(containsMessage(issues, "Resource TimephasedData Unit は 0 以上が望ましいです"));
+        assertTrue(containsMessage(issues, "Resource TimephasedData Start が Finish より後です"));
         assertTrue(containsMessage(issues, "Assignment TaskUID が既存 Task を指していません"));
+        assertTrue(containsIssue(issues, "error", "assignments", "Assignment TaskUID が既存 Task を指していません"));
         assertTrue(containsMessage(issues, "Assignment ResourceUID が既存 Resource を指していません"));
-        assertTrue(containsMessage(issues, "Assignment Units は 0 以上が望ましいです"));
+        assertTrue(containsIssue(issues, "error", "assignments", "Assignment ResourceUID が既存 Resource を指していません"));
+        assertTrue(containsMessage(issues, "Assignment Start が Finish より後です"));
+        assertTrue(containsMessage(issues, "Assignment Units が負値です"));
         assertTrue(containsMessage(issues, "Assignment WorkContour は 0 以上が望ましいです"));
-        assertTrue(containsMessage(issues, "Assignment Cost は 0 以上が望ましいです"));
-        assertTrue(containsMessage(issues, "Assignment ActualCost は 0 以上が望ましいです"));
-        assertTrue(containsMessage(issues, "Assignment RemainingCost は 0 以上が望ましいです"));
+        assertTrue(containsMessage(issues, "Assignment Cost が負値です"));
+        assertTrue(containsMessage(issues, "Assignment ActualCost が負値です"));
+        assertTrue(containsMessage(issues, "Assignment RemainingCost が負値です"));
         assertTrue(containsMessage(issues, "Assignment PercentWorkComplete が 0..100 の範囲外です"));
-        assertTrue(containsMessage(issues, "Assignment ExtendedAttribute FieldID が空です"));
+        assertTrue(containsMessage(issues, "Assignment OvertimeWork が空です"));
+        assertTrue(containsMessage(issues, "Assignment ActualOvertimeWork が空です"));
+        assertTrue(containsMessage(issues, "Assignment StartVariance が空です"));
+        assertTrue(containsMessage(issues, "Assignment FinishVariance が空です"));
+        assertTrue(containsMessage(issues, "Assignment ExtendedAttribute に FieldID がありません"));
         assertTrue(containsMessage(issues, "Assignment Baseline Number は 0 以上が望ましいです"));
-        assertTrue(containsMessage(issues, "Assignment Baseline Cost は 0 以上が望ましいです"));
+        assertTrue(containsMessage(issues, "Assignment Baseline Cost が負値です"));
+        assertTrue(containsMessage(issues, "Assignment Baseline Start が Finish より後です"));
         assertTrue(containsMessage(issues, "Assignment TimephasedData Type は 0 以上が望ましいです"));
         assertTrue(containsMessage(issues, "Assignment TimephasedData Unit は 0 以上が望ましいです"));
+        assertTrue(containsMessage(issues, "Assignment TimephasedData Start が Finish より後です"));
+    }
+
+    @Test
+    public void validateProjectModelChecksTaskOrderIssueAndUnassignedResource() {
+        MsProjectXml xml = new MsProjectXml();
+        ProjectModel model = new ProjectModel();
+
+        model.project.name = "Sample Project";
+        model.project.startDate = "2026-04-01T09:00:00";
+        model.project.finishDate = "2026-04-30T18:00:00";
+
+        jp.igapyon.mikuproject.model.TaskModel task1 = new jp.igapyon.mikuproject.model.TaskModel();
+        task1.uid = "1";
+        task1.id = "1";
+        task1.name = "Task 2";
+        task1.outlineLevel = Integer.valueOf(1);
+        task1.outlineNumber = "2";
+        task1.start = "2026-04-01T09:00:00";
+        task1.finish = "2026-04-01T18:00:00";
+        task1.percentComplete = Integer.valueOf(0);
+        model.tasks.add(task1);
+
+        jp.igapyon.mikuproject.model.TaskModel task2 = new jp.igapyon.mikuproject.model.TaskModel();
+        task2.uid = "2";
+        task2.id = "2";
+        task2.name = "Task 1";
+        task2.outlineLevel = Integer.valueOf(1);
+        task2.outlineNumber = "1";
+        task2.start = "2026-04-02T09:00:00";
+        task2.finish = "2026-04-02T18:00:00";
+        task2.percentComplete = Integer.valueOf(0);
+        model.tasks.add(task2);
+
+        jp.igapyon.mikuproject.model.AssignmentModel assignment = new jp.igapyon.mikuproject.model.AssignmentModel();
+        assignment.uid = "10";
+        assignment.taskUid = "1";
+        assignment.resourceUid = "-65535";
+        assignment.start = "2026-04-01T09:00:00";
+        assignment.finish = "2026-04-01T18:00:00";
+        model.assignments.add(assignment);
+
+        List<ValidationIssue> issues = xml.validateProjectModel(model);
+
+        assertTrue(containsMessage(issues, "Task の並び順が OutlineNumber 順と一致していない可能性があります"));
+        assertFalse(containsMessage(issues, "Assignment ResourceUID が既存 Resource を指していません"));
+    }
+
+    @Test
+    public void ensureDefaultProjectCalendarBuildsJapaneseHolidayExceptions() {
+        MsProjectCalendar calendarService = new MsProjectCalendar();
+        ProjectModel model = new ProjectModel();
+
+        model.project.startDate = "2026-05-01T09:00:00";
+        model.project.finishDate = "2026-05-05T18:00:00";
+        model.project.defaultStartTime = "08:00:00";
+        model.project.defaultFinishTime = "17:00:00";
+
+        jp.igapyon.mikuproject.model.CalendarModel existing = new jp.igapyon.mikuproject.model.CalendarModel();
+        existing.uid = "1";
+        existing.name = "Existing";
+        existing.isBaseCalendar = true;
+        model.calendars.add(existing);
+
+        calendarService.ensureDefaultProjectCalendar(model);
+
+        assertEquals(1, model.calendars.size());
+
+        ProjectModel emptyModel = new ProjectModel();
+        emptyModel.project.startDate = "2026-05-01T09:00:00";
+        emptyModel.project.finishDate = "2026-05-05T18:00:00";
+        emptyModel.project.defaultStartTime = "08:00:00";
+        emptyModel.project.defaultFinishTime = "17:00:00";
+
+        calendarService.ensureDefaultProjectCalendar(emptyModel);
+
+        assertEquals(1, emptyModel.calendars.size());
+        assertEquals("1", emptyModel.project.calendarUID);
+        assertEquals("Standard", emptyModel.calendars.get(0).name);
+        assertEquals(7, emptyModel.calendars.get(0).weekDays.size());
+        assertEquals("08:00:00", emptyModel.calendars.get(0).weekDays.get(1).workingTimes.get(0).fromTime);
+        assertEquals("12:00:00", emptyModel.calendars.get(0).weekDays.get(1).workingTimes.get(0).toTime);
+        assertEquals("13:00:00", emptyModel.calendars.get(0).weekDays.get(1).workingTimes.get(1).fromTime);
+        assertEquals("17:00:00", emptyModel.calendars.get(0).weekDays.get(1).workingTimes.get(1).toTime);
+        assertTrue(containsCalendarException(emptyModel, "2026-05-03T00:00:00", "憲法記念日"));
+        assertTrue(containsCalendarException(emptyModel, "2026-05-04T00:00:00", "みどりの日"));
+        assertTrue(containsCalendarException(emptyModel, "2026-05-05T00:00:00", "こどもの日"));
     }
 
     private boolean containsMessage(List<ValidationIssue> issues, String fragment) {
         for (ValidationIssue issue : issues) {
             if (issue.message != null && issue.message.contains(fragment)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean containsIssue(List<ValidationIssue> issues, String level, String scope, String fragment) {
+        for (ValidationIssue issue : issues) {
+            if (level.equals(issue.level)
+                    && scope.equals(issue.scope)
+                    && issue.message != null
+                    && issue.message.contains(fragment)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String readVendorTestdata(String name) throws IOException {
+        return new String(Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", name)),
+                StandardCharsets.UTF_8);
+    }
+
+    private boolean containsCalendarException(ProjectModel model, String fromDate, String name) {
+        if (model == null || model.calendars == null || model.calendars.isEmpty()) {
+            return false;
+        }
+        for (jp.igapyon.mikuproject.model.CalendarExceptionModel exception : model.calendars.get(0).exceptions) {
+            if (fromDate.equals(exception.fromDate) && name.equals(exception.name)) {
                 return true;
             }
         }
