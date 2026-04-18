@@ -24,39 +24,27 @@ Java 版のテストは、Node.js upstream のテスト意図と fixture を追�
 
 - `round-trips hierarchy through CSV + ParentID export and import`
   - Java 側対応:
-    - 未対応
-  - 補足:
-    - これは CSV import/export 系であり、現在の Java STEP1 対象外
+    - `MsProjectCsvTest.roundTripsHierarchyThroughCsvParentId`
 
 - `exports project overview and default phase detail views from hierarchy`
   - Java 側対応:
-    - 未対応
-  - 補足:
-    - これは AI view / projection 系であり、現在の Java STEP1 対象外
+    - `MsProjectAiViewsTest.exportsProjectOverviewAndDefaultPhaseDetailViewsFromHierarchy`
 
 - `exports task_edit_view with predecessors, successors, and assignments`
   - Java 側対応:
-    - 未対応
-  - 補足:
-    - これは AI view / projection 系であり、現在の Java STEP1 対象外
+    - `MsProjectAiViewsTest.exportsTaskEditViewWithPredecessorsSuccessorsAndAssignments`
 
 - `exports scoped phase detail with root_uid and max_depth`
   - Java 側対応:
-    - 未対応
-  - 補足:
-    - これは AI view / projection 系であり、現在の Java STEP1 対象外
+    - `MsProjectAiViewsTest.exportsScopedPhaseDetailAndRejectsInvalidRootUid`
 
 - `rejects scoped phase detail when root_uid is outside the phase`
   - Java 側対応:
-    - 未対応
-  - 補足:
-    - これは AI view / projection 系であり、現在の Java STEP1 対象外
+    - `MsProjectAiViewsTest.exportsScopedPhaseDetailAndRejectsInvalidRootUid`
 
 - `builds project draft request and imports predecessor mapping from project_draft_view`
   - Java 側対応:
-    - 未対応
-  - 補足:
-    - これは AI draft / import 系であり、現在の Java STEP1 対象外
+    - `MsProjectAiViewsTest.buildsProjectDraftRequestAndImportsPredecessorMappingFromProjectDraftView`
 
 ## fixture 対応
 
@@ -85,3 +73,64 @@ Java 側テスト名は、次の基準で付ける。
 - `roundTripsUpstreamMinimalXmlFixture`
 - `importsUpstreamHierarchyXmlFixture`
 - `ensureDefaultProjectCalendarBuildsJapaneseHolidayExceptions`
+
+## Java 側固有の sample test
+
+- `MsProjectSamplesTest.buildSampleProjectModelCreatesExpectedSample`
+  - `msproject-samples.ts` の sample 内容に対応する Java 側確認
+
+- `MsProjectSamplesTest.buildSampleXmlRoundTripsThroughMsProjectXml`
+  - `msproject-samples.ts` の sample XML 生成に対応する Java 側確認
+
+## Java 側 CSV test
+
+- `MsProjectCsvTest.roundTripsHierarchyThroughCsvParentId`
+  - upstream の CSV + ParentID round-trip test に対応
+
+- `MsProjectCsvTest.rejectsDuplicateIdInCsvImport`
+  - upstream の duplicate ID 異常系に対応
+
+- `MsProjectCsvTest.rejectsMissingParentIdInCsvImport`
+  - upstream の missing parent 異常系に対応
+
+- `MsProjectCsvTest.rejectsCyclicParentIdInCsvImport`
+  - upstream の cyclic parent 異常系に対応
+
+## Java 側 Mermaid test
+
+- `MsProjectMermaidTest.exportsMermaidFromSampleProject`
+  - sample project からの Mermaid gantt 出力確認
+
+- `MsProjectMermaidTest.keepsComplexMermaidDependenciesAsComments`
+  - upstream の complex dependency comment 出力に対応
+
+- `MsProjectMermaidTest.sanitizesDateLeadingMermaidGanttLabels`
+  - upstream の date-leading label sanitize に対応
+
+## Java 側 AI view test
+
+- `MsProjectAiViewsTest.exportsProjectOverviewAndDefaultPhaseDetailViewsFromHierarchy`
+  - upstream の overview / default phase detail に対応
+
+- `MsProjectAiViewsTest.exportsTaskEditViewWithPredecessorsSuccessorsAndAssignments`
+  - upstream の task_edit_view 出力に対応
+
+- `MsProjectAiViewsTest.exportsScopedPhaseDetailAndRejectsInvalidRootUid`
+  - upstream の scoped phase detail と invalid root_uid 異常系に対応
+
+- `MsProjectAiViewsTest.buildsProjectDraftRequestAndImportsPredecessorMappingFromProjectDraftView`
+  - upstream の project_draft_request / project_draft_view import に対応
+
+- `MsProjectAiViewsTest.rejectsInvalidProjectDraftViewReferences`
+  - upstream の invalid project_draft_view reference 異常系に対応
+
+## Java 側 Patch test
+
+- `ProjectPatchJsonTest.validatesPatchDocuments`
+  - patch document validate の first cut 確認
+
+- `ProjectPatchJsonTest.rejectsInvalidPatchJsonOperationsWithoutMainUi`
+  - upstream の invalid patch warning を first cut で確認
+
+- `ProjectPatchJsonTest.reportsPatchJsonWarningDetailsWithoutMainUi`
+  - upstream の link/unlink と resource/calendar warning を first cut で確認

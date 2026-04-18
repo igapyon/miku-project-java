@@ -94,6 +94,113 @@
   - describe helper
   - task order helper
 
+### `vendor/mikuproject/src/ts/msproject-samples.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.msprojectxml.MsProjectSamples`
+- 責務:
+  - upstream sample 相当の `ProjectModel` 生成
+  - sample XML 生成
+  - Java 側では `project_draft_view` import 層が未実装のため、sample 内容を `ProjectModel` へ直接組み立てる
+
+### `vendor/mikuproject/src/ts/msproject-csv.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.msprojectxml.MsProjectCsv`
+- 責務:
+  - CSV + ParentID export
+  - CSV + ParentID import
+  - CSV parse / escape のスクラッチ実装
+  - Java 側でも upstream 同様に `ProjectModel` を直接組み立てる
+
+### `vendor/mikuproject/src/ts/msproject-mermaid.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.msprojectxml.MsProjectMermaid`
+- 責務:
+  - Mermaid gantt 出力
+  - dependency comment / native dependency の出し分け
+  - label / task id / duration の正規化
+
+### `vendor/mikuproject/src/ts/msproject-ai-views.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.msprojectxml.MsProjectAiViews`
+- 責務:
+  - `project_draft_request` 生成
+  - `project_draft_view` import
+  - `project_overview_view` 出力
+  - `phase_detail_view` 出力
+  - `task_edit_view` 出力
+  - Java 側の JSON view は `Map / List` ベースで表現する
+
+### `vendor/mikuproject/src/ts/project-patch-json.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJson`
+- 責務:
+  - patch JSON 公開入口
+
+### `vendor/mikuproject/src/ts/project-patch-json-core.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonCore`
+- 責務:
+  - patch document validate
+  - patch operation dispatch
+  - import result 組み立て
+
+### `vendor/mikuproject/src/ts/project-patch-json-util.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonUtil`
+- 責務:
+  - dependency type / lag helper
+  - date normalize helper
+  - duration helper
+  - clone helper
+
+### `vendor/mikuproject/src/ts/project-patch-json-links.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonLinks`
+- 責務:
+  - `link_tasks`
+  - `unlink_tasks`
+
+### `vendor/mikuproject/src/ts/project-patch-json-entities.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonEntities`
+- 責務:
+  - `add_assignment`
+  - `add_resource`
+  - `add_calendar`
+  - `delete_resource`
+  - `delete_calendar`
+
+### `vendor/mikuproject/src/ts/project-patch-json-updates.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonUpdates`
+- 責務:
+  - `update_project`
+  - `update_assignment`
+  - `update_resource`
+  - `update_calendar`
+
+### `vendor/mikuproject/src/ts/msproject-ai-views.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.msprojectxml.MsProjectAiViews`
+- 責務:
+  - `project_draft_request` 生成
+  - `project_draft_view` import
+  - `project_overview_view` 出力
+  - `phase_detail_view` 出力
+  - `task_edit_view` 出力
+  - Java 側の JSON view は `Map / List` ベースで表現する
+
 ## testdata 対応
 
 ### `vendor/mikuproject/testdata/minimal.xml`
@@ -117,15 +224,10 @@
 
 ### AI / patch / workbook / CSV / report
 
-- `msproject-ai-views.ts`
-- `msproject-samples.ts`
-- `msproject-csv.ts`
-- `project-patch-json*.ts`
 - `project-workbook-json*.ts`
 - `project-xlsx*.ts`
 - `wbs-svg*.ts`
 - `wbs-markdown.ts`
-- `msproject-mermaid.ts`
 
 ## 補足
 

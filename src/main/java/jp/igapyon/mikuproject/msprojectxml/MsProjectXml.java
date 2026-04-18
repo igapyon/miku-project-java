@@ -13,6 +13,8 @@ public class MsProjectXml {
     private final MsProjectCodec codec = new MsProjectCodec();
     private final MsProjectCalendar calendar = new MsProjectCalendar();
     private final MsProjectValidate validate = new MsProjectValidate();
+    private final MsProjectMermaid mermaid = new MsProjectMermaid();
+    private final MsProjectAiViews aiViews = new MsProjectAiViews();
 
     public ProjectModel importFromXml(String xmlText) {
         ProjectModel model = codec.importMsProjectXml(xmlText);
@@ -126,5 +128,35 @@ public class MsProjectXml {
 
     public List<ValidationIssue> validateProjectModel(ProjectModel model) {
         return validate.validateProjectModel(normalizeProjectModel(model));
+    }
+
+    public String exportMermaidGantt(ProjectModel model) {
+        return mermaid.exportMermaidGantt(normalizeProjectModel(model));
+    }
+
+    public java.util.Map<String, Object> buildProjectDraftRequest(String name, String plannedStart, String goal, Integer teamCount,
+            java.util.List<String> mustHavePhases, java.util.List<String> mustHaveMilestones) {
+        return aiViews.buildProjectDraftRequest(name, plannedStart, goal, teamCount, mustHavePhases, mustHaveMilestones);
+    }
+
+    public ProjectModel importProjectDraftView(Object draft) {
+        return aiViews.importProjectDraftView(draft);
+    }
+
+    public java.util.Map<String, Object> exportProjectOverviewView(ProjectModel model) {
+        return aiViews.exportProjectOverviewView(normalizeProjectModel(model));
+    }
+
+    public java.util.Map<String, Object> exportPhaseDetailView(ProjectModel model) {
+        return aiViews.exportPhaseDetailView(normalizeProjectModel(model));
+    }
+
+    public java.util.Map<String, Object> exportPhaseDetailView(ProjectModel model, String requestedPhaseUid, String mode,
+            String rootUid, Integer maxDepth) {
+        return aiViews.exportPhaseDetailView(normalizeProjectModel(model), requestedPhaseUid, mode, rootUid, maxDepth);
+    }
+
+    public java.util.Map<String, Object> exportTaskEditView(ProjectModel model, String requestedTaskUid) {
+        return aiViews.exportTaskEditView(normalizeProjectModel(model), requestedTaskUid);
     }
 }
