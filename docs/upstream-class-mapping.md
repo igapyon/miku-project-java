@@ -189,17 +189,451 @@
   - `update_resource`
   - `update_calendar`
 
-### `vendor/mikuproject/src/ts/msproject-ai-views.ts`
+### `vendor/mikuproject/src/ts/project-patch-json-tasks.ts`
 
 - Java 側 class:
-  - `jp.igapyon.mikuproject.msprojectxml.MsProjectAiViews`
+  - `jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonTasks`
 - 責務:
-  - `project_draft_request` 生成
-  - `project_draft_view` import
-  - `project_overview_view` 出力
-  - `phase_detail_view` 出力
-  - `task_edit_view` 出力
-  - Java 側の JSON view は `Map / List` ベースで表現する
+  - `add_task`
+  - `move_task`
+  - `delete_task`
+  - task hierarchy rebuild
+  - task parent / position helper
+
+### `vendor/mikuproject/src/ts/project-workbook-schema.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookSchema`
+- 責務:
+  - workbook JSON sheet 名
+  - project field order
+  - sheet header 定義
+
+### `vendor/mikuproject/src/ts/project-workbook-json-validate.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonValidate`
+- 責務:
+  - workbook JSON document validate
+  - unknown sheet / unknown column warning
+
+### `vendor/mikuproject/src/ts/project-workbook-json-export.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonExport`
+- 責務:
+  - `ProjectModel -> workbook JSON` export
+  - fixed sheet order / row shape の組み立て
+
+### `vendor/mikuproject/src/ts/project-workbook-json-import.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonImport`
+- 責務:
+  - workbook JSON import
+  - `baseModel` への merge import
+  - workbook JSON からの `ProjectModel` 構築
+
+### `vendor/mikuproject/src/ts/project-workbook-json.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJson`
+- 責務:
+  - workbook JSON 公開入口
+
+### `vendor/mikuproject/src/ts/project-xlsx.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectxlsx.ProjectXlsx`
+- 責務:
+  - workbook object 公開入口
+
+### `vendor/mikuproject/src/ts/project-xlsx-export.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectxlsx.ProjectXlsxExport`
+- 責務:
+  - `ProjectModel -> XlsxWorkbookLike` export
+  - fixed sheet order の組み立て
+
+### `vendor/mikuproject/src/ts/project-xlsx-export-project.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectxlsx.ProjectXlsxExportProject`
+- 責務:
+  - Project sheet 構築
+
+### `vendor/mikuproject/src/ts/project-xlsx-export-entities.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectxlsx.ProjectXlsxExportEntities`
+- 責務:
+  - Tasks / Resources / Assignments の tabular sheet 構築
+
+### `vendor/mikuproject/src/ts/project-xlsx-export-calendars.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectxlsx.ProjectXlsxExportCalendars`
+- 責務:
+  - Calendars / NonWorkingDays sheet 構築
+
+### `vendor/mikuproject/src/ts/project-xlsx-export-util.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectxlsx.ProjectXlsxExportUtil`
+- 責務:
+  - title / section / header / key-value / option row helper
+
+### `vendor/mikuproject/src/ts/project-xlsx-import.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectxlsx.ProjectXlsxImport`
+- 責務:
+  - `XlsxWorkbookLike -> ProjectModel` import
+  - detailed import changes
+  - workbook JSON bridge
+
+### `vendor/mikuproject/src/ts/project-xlsx-import-project.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectxlsx.ProjectXlsxImportProject`
+- 責務:
+  - Project sheet import
+
+### `vendor/mikuproject/src/ts/project-xlsx-import-entities.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectxlsx.ProjectXlsxImportEntities`
+- 責務:
+  - Tasks / Resources / Assignments の tabular sheet import
+
+### `vendor/mikuproject/src/ts/project-xlsx-import-calendars.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectxlsx.ProjectXlsxImportCalendars`
+- 責務:
+  - Calendars / NonWorkingDays sheet import
+
+### `vendor/mikuproject/src/ts/project-xlsx-import-util.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.projectxlsx.ProjectXlsxImportUtil`
+- 責務:
+  - workbook document-like 変換
+  - tabular read helper
+  - known sheet 補完
+
+### `vendor/mikuproject/src/ts/core-api-workbook-xlsx.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.coreapi.CoreApiWorkbookXlsx`
+- 責務:
+  - xlsx workbook API wrapper
+  - `ProjectXlsx` への委譲
+  - `encode/decode` は `excel-io*` 未移植のため現時点では未対応
+
+### `vendor/mikuproject/src/ts/core-api-workbook.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.coreapi.CoreApiWorkbook`
+- 責務:
+  - workbook JSON API wrapper
+  - xlsx API wrapper
+  - patch JSON API wrapper
+
+### `vendor/mikuproject/src/ts/ai-json-util.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.coreapi.CoreApiAiJsonUtil`
+- 責務:
+  - last fenced `json` block 抽出
+  - AI JSON kind 判定
+  - Java first cut の最小 JSON parse
+
+### `vendor/mikuproject/src/ts/ai-json-spec.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.coreapi.CoreApiAiJson`
+  - `jp.igapyon.mikuproject.coreapi.CoreApiAiJsonSpec`
+- 責務:
+  - `mikuproject-ai-json-spec` の安定取得
+  - version 抽出
+  - Java 側では `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` を参照
+
+### `vendor/mikuproject/src/ts/core-api-msproject-ai.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.coreapi.CoreApiMsprojectAi`
+- 責務:
+  - ai view wrapper
+  - mermaid wrapper
+
+### `vendor/mikuproject/src/ts/core-api-msproject.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.coreapi.CoreApiMsproject`
+- 責務:
+  - sample XML / sample model wrapper
+  - project model normalize / validate wrapper
+  - MS Project XML / CSV wrapper
+  - ai view / mermaid wrapper
+
+### `vendor/mikuproject/src/ts/core-api-ai-json-import.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.coreapi.CoreApiAiJsonImport`
+  - `jp.igapyon.mikuproject.coreapi.CoreApiImportResult`
+- 責務:
+  - AI JSON kind 判定
+  - `project_draft_view / workbook_json / patch_json` import dispatch
+  - mode / baseModel 制約の維持
+
+### `vendor/mikuproject/src/ts/core-api-ai-json.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.coreapi.CoreApiAiJson`
+  - `jp.igapyon.mikuproject.coreapi.CoreApiAiJsonParseResult`
+- 責務:
+  - AI JSON spec 取得
+  - fenced text parse
+  - unified AI JSON import wrapper
+
+### `vendor/mikuproject/src/ts/core-api-external-binary.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.coreapi.CoreApiExternalBinary`
+- 責務:
+  - `ms_project_xml` replace import
+  - `xlsx` replace / merge import
+
+### `vendor/mikuproject/src/ts/core-api-external-document.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.coreapi.CoreApiExternalDocument`
+- 責務:
+  - `workbook_json / project_draft_view / patch_json` の document import dispatch
+
+### `vendor/mikuproject/src/ts/core-api-external-import.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.coreapi.CoreApiExternalImport`
+- 責務:
+  - external import mode 制約
+  - `source.format` ごとの dispatch
+
+### `vendor/mikuproject/src/ts/core-api-import.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.coreapi.CoreApiImport`
+- 責務:
+  - AI JSON import と external import の unified entrypoint
+
+### `vendor/mikuproject/src/ts/core-api-registry.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.coreapi.CoreApiRegistry`
+- 責務:
+  - import / msproject / workbook API の束ね直し
+  - Java 側では `report` を placeholder 付きで公開
+
+### `vendor/mikuproject/src/ts/core-api-public.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.coreapi.CoreApiPublic`
+- 責務:
+  - `version = 1` を持つ公開 API 面
+  - registry の薄い公開ラッパ
+
+### `vendor/mikuproject/src/ts/core-api.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.coreapi.CoreApi`
+- 責務:
+  - Java 側の最終公開入口
+  - `CoreApiPublic` の alias
+
+### `vendor/mikuproject/src/ts/core-api-report.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.coreapi.CoreApiReport`
+- 責務:
+  - report entry export
+  - Java first cut では `wbs.md`, `mermaid.mmd`, `wbs.xlsx`, `daily.svg`, `weekly.svg`, `monthly-calendar/*` を生成
+  - zip bundle 作成
+
+### `vendor/mikuproject/src/ts/core-api-report-adapters.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.coreapi.CoreApiReportAdapters`
+- 責務:
+  - report 公開面の adapter
+  - first cut では `all / wbsMarkdown / mermaid / svg / wbsXlsx` を実動
+
+### `vendor/mikuproject/src/ts/core-api-report-public.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.coreapi.CoreApiReportPublic`
+- 責務:
+  - report 公開面の薄い wrapper
+
+### `vendor/mikuproject/src/ts/excel-io.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.excelio.XlsxWorkbookCodec`
+  - `jp.igapyon.mikuproject.excelio.ExcelIoUtil`
+- 責務:
+  - workbook byte codec
+  - UTF-8 helper
+  - workbook archive export
+  - package entry list / unpack
+  - archive import の公開入口
+  - Java first cut では workbook object の round-trip byte codec と OOXML-like zip package import/export を提供
+
+### `vendor/mikuproject/src/ts/excel-io-package-xml.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.excelio.ExcelIoPackageXml`
+- 責務:
+  - `[Content_Types].xml` 生成
+  - root/workbook relationships XML 生成
+  - workbook XML 生成
+
+### `vendor/mikuproject/src/ts/excel-io-zip.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.excelio.ExcelIoZip`
+- 責務:
+  - zip pack
+  - zip unpack
+  - entry list helper
+
+### `vendor/mikuproject/src/ts/excel-io-normalize.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.excelio.ExcelIoNormalize`
+- 責務:
+  - workbook shape normalize
+  - sheet name / merged range / sqref validate
+  - color normalize / denormalize
+
+### `vendor/mikuproject/src/ts/excel-io-workbook-build.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.excelio.ExcelIoWorkbookBuild`
+- 責務:
+  - workbook package entry 組み立て
+  - workbook / rels / styles / worksheet entry の束ね
+
+### `vendor/mikuproject/src/ts/excel-io-workbook-parse.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.excelio.ExcelIoWorkbookParse`
+- 責務:
+  - workbook.xml / workbook rels parse
+  - worksheet target 解決
+  - archive からの workbook 復元
+
+### `vendor/mikuproject/src/ts/excel-io-worksheet-build.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.excelio.ExcelIoWorksheetBuild`
+- 責務:
+  - worksheet XML build
+  - columns / rows / cells / mergedRanges の出力
+
+### `vendor/mikuproject/src/ts/excel-io-worksheet-parse.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.excelio.ExcelIoWorksheetParse`
+- 責務:
+  - worksheet XML parse
+  - columns / rows / cells / mergedRanges の復元
+
+### `vendor/mikuproject/src/ts/excel-io-styles-build.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.excelio.ExcelIoStylesBuild`
+- 責務:
+  - style book 生成
+  - style index 解決
+  - styles.xml build
+
+### `vendor/mikuproject/src/ts/excel-io-styles-parse.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.excelio.ExcelIoStylesParse`
+- 責務:
+  - styles.xml parse
+  - alignment / wrapText などの最小 style 復元
+
+### `vendor/mikuproject/src/ts/markdown-escape.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.markdownescape.MarkdownEscape`
+- 責務:
+  - Markdown literal escape
+  - Markdown table cell escape
+
+### `vendor/mikuproject/src/ts/wbs-dateband.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbsdateband.WbsDateband`
+- 責務:
+  - holiday / non-working day helper
+  - date band / display date band helper
+  - business day count helper
+
+### `vendor/mikuproject/src/ts/wbs-markdown.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbsmarkdown.WbsMarkdown`
+- 責務:
+  - WBS markdown export
+  - tree / table / summary の 1 文書出力
+  - `MsProjectXml.exportWbsMarkdown` からの利用
+
+### `vendor/mikuproject/src/ts/wbs-svg.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbssvg.WbsSvg`
+- 責務:
+  - daily SVG export
+  - weekly SVG export
+  - monthly calendar SVG archive export
+  - `MsProjectXml` からの利用
+
+### `vendor/mikuproject/src/ts/wbs-xlsx-layout.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbsxlsx.WbsXlsxLayout`
+- 責務:
+  - Excel-style column / cell reference helper
+  - range / parse / describe / log helper
+
+### `vendor/mikuproject/src/ts/wbs-xlsx.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbsxlsx.WbsXlsx`
+- 責務:
+  - WBS workbook export の公開入口
+  - `WbsXlsxPublic` / `WbsXlsxExport` への facade
+
+### `vendor/mikuproject/src/ts/wbs-xlsx-public.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbsxlsx.WbsXlsxPublic`
+- 責務:
+  - WBS workbook export の public API
+  - holiday date collect
+  - layout helper の公開
+
+### `vendor/mikuproject/src/ts/wbs-xlsx-export.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbsxlsx.WbsXlsxExport`
+- 責務:
+  - project info / date band / task row / legend / summary を含む first cut workbook 生成
+  - `projectxlsx.XlsxWorkbookLike` を使って report / excel-io と接続する
 
 ## testdata 対応
 
@@ -223,11 +657,6 @@
 以下は upstream には存在するが、Java STEP1 ではまだ直接対応 class を置いていない領域である。
 
 ### AI / patch / workbook / CSV / report
-
-- `project-workbook-json*.ts`
-- `project-xlsx*.ts`
-- `wbs-svg*.ts`
-- `wbs-markdown.ts`
 
 ## 補足
 

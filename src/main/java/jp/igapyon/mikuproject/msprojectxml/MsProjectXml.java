@@ -8,6 +8,11 @@ import java.util.List;
 
 import jp.igapyon.mikuproject.model.ProjectModel;
 import jp.igapyon.mikuproject.model.ValidationIssue;
+import jp.igapyon.mikuproject.wbsmarkdown.WbsMarkdown;
+import jp.igapyon.mikuproject.wbsmarkdown.WbsMarkdown.WbsMarkdownOptions;
+import jp.igapyon.mikuproject.wbssvg.WbsSvg;
+import jp.igapyon.mikuproject.wbssvg.WbsSvg.MonthlyCalendarSvgArchive;
+import jp.igapyon.mikuproject.wbssvg.WbsSvg.NativeSvgOptions;
 
 public class MsProjectXml {
     private final MsProjectCodec codec = new MsProjectCodec();
@@ -15,6 +20,8 @@ public class MsProjectXml {
     private final MsProjectValidate validate = new MsProjectValidate();
     private final MsProjectMermaid mermaid = new MsProjectMermaid();
     private final MsProjectAiViews aiViews = new MsProjectAiViews();
+    private final WbsMarkdown wbsMarkdown = new WbsMarkdown();
+    private final WbsSvg wbsSvg = new WbsSvg();
 
     public ProjectModel importFromXml(String xmlText) {
         ProjectModel model = codec.importMsProjectXml(xmlText);
@@ -132,6 +139,34 @@ public class MsProjectXml {
 
     public String exportMermaidGantt(ProjectModel model) {
         return mermaid.exportMermaidGantt(normalizeProjectModel(model));
+    }
+
+    public String exportWbsMarkdown(ProjectModel model) {
+        return wbsMarkdown.exportWbsMarkdown(normalizeProjectModel(model));
+    }
+
+    public String exportWbsMarkdown(ProjectModel model, WbsMarkdownOptions options) {
+        return wbsMarkdown.exportWbsMarkdown(normalizeProjectModel(model), options);
+    }
+
+    public String exportNativeSvg(ProjectModel model) {
+        return wbsSvg.exportNativeSvg(normalizeProjectModel(model));
+    }
+
+    public String exportNativeSvg(ProjectModel model, NativeSvgOptions options) {
+        return wbsSvg.exportNativeSvg(normalizeProjectModel(model), options);
+    }
+
+    public String exportWeeklyNativeSvg(ProjectModel model) {
+        return wbsSvg.exportWeeklyNativeSvg(normalizeProjectModel(model));
+    }
+
+    public String exportWeeklyNativeSvg(ProjectModel model, NativeSvgOptions options) {
+        return wbsSvg.exportWeeklyNativeSvg(normalizeProjectModel(model), options);
+    }
+
+    public MonthlyCalendarSvgArchive exportMonthlyWbsCalendarSvgArchive(ProjectModel model) {
+        return wbsSvg.exportMonthlyWbsCalendarSvgArchive(normalizeProjectModel(model));
     }
 
     public java.util.Map<String, Object> buildProjectDraftRequest(String name, String plannedStart, String goal, Integer teamCount,

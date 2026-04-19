@@ -18,6 +18,7 @@ public class ProjectPatchJsonCore {
     private final ProjectPatchJsonLinks links = new ProjectPatchJsonLinks();
     private final ProjectPatchJsonEntities entities = new ProjectPatchJsonEntities();
     private final ProjectPatchJsonUpdates updates = new ProjectPatchJsonUpdates();
+    private final ProjectPatchJsonTasks tasks = new ProjectPatchJsonTasks();
 
     public ImportResult importProjectPatchJson(Object documentLike, ProjectModel baseModel) {
         ValidationResult validation = validatePatchDocument(documentLike);
@@ -90,6 +91,14 @@ public class ProjectPatchJsonCore {
                 entities.applyAddAssignmentOperation(operation, nextModel, changes, warnings, index);
                 continue;
             }
+            if ("add_task".equals(op)) {
+                TaskModel addedTask = tasks.applyAddTaskOperation(operation, nextModel.tasks, nextModel.project, changes, warnings,
+                        index, entities);
+                if (addedTask != null) {
+                    taskByUid.put(addedTask.uid, addedTask);
+                }
+                continue;
+            }
             if ("add_resource".equals(op)) {
                 entities.applyAddResourceOperation(operation, nextModel, changes, warnings, index);
                 continue;
@@ -112,6 +121,22 @@ public class ProjectPatchJsonCore {
             }
             if ("unlink_tasks".equals(op)) {
                 links.applyUnlinkTasksOperation(operation, taskByUid, changes, warnings, index);
+                continue;
+            }
+            if ("move_task".equals(op)) {
+                tasks.applyMoveTaskOperation(operation, nextModel.tasks, changes, warnings, index);
+                taskByUid.clear();
+                for (TaskModel task : nextModel.tasks) {
+                    taskByUid.put(task.uid, task);
+                }
+                continue;
+            }
+            if ("delete_task".equals(op)) {
+                tasks.applyDeleteTaskOperation(operation, nextModel, changes, warnings, index);
+                taskByUid.clear();
+                for (TaskModel task : nextModel.tasks) {
+                    taskByUid.put(task.uid, task);
+                }
                 continue;
             }
             warnings.add(warning(buildUnsupportedOperationWarningMessage(op, index), null, null, null));
@@ -149,37 +174,40 @@ public class ProjectPatchJsonCore {
 
     private PatchOperation parseOperation(Map<?, ?> map) {
         PatchOperation operation = new PatchOperation();
-        operation.op = stringValue(map.get("op"));
-        operation.uid = stringValue(map.get("uid"));
-        operation.name = stringValue(map.get("name"));
-        operation.initials = stringValue(map.get("initials"));
-        operation.group = stringValue(map.get("group"));
-        operation.calendarUid = stringValue(map.get("calendar_uid"));
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            operation.sourceKeys.add(String.valueOf(entry.getKey()));
+        }
+        operation.op = optionalStringValue(map, "op");
+        operation.uid = optionalStringValue(map, "uid");
+        operation.name = optionalStringValue(map, "name");
+        operation.initials = optionalStringValue(map, "initials");
+        operation.group = optionalStringValue(map, "group");
+        operation.calendarUid = optionalStringValue(map, "calendar_uid");
         operation.maxUnits = number(map.get("max_units"));
         operation.isSummary = bool(map.get("is_summary"));
-        operation.newParentUid = map.containsKey("new_parent_uid") ? stringValue(map.get("new_parent_uid")) : null;
+        operation.newParentUid = optionalStringValue(map, "new_parent_uid");
         operation.newIndex = integer(map.get("new_index"));
         operation.isMilestone = bool(map.get("is_milestone"));
-        operation.taskUid = stringValue(map.get("task_uid"));
-        operation.resourceUid = stringValue(map.get("resource_uid"));
-        operation.start = stringValue(map.get("start"));
-        operation.finish = stringValue(map.get("finish"));
+        operation.taskUid = optionalStringValue(map, "task_uid");
+        operation.resourceUid = optionalStringValue(map, "resource_uid");
+        operation.start = optionalStringValue(map, "start");
+        operation.finish = optionalStringValue(map, "finish");
         operation.units = number(map.get("units"));
-        operation.work = stringValue(map.get("work"));
+        operation.work = optionalStringValue(map, "work");
         operation.percentWorkComplete = integer(map.get("percent_work_complete"));
-        operation.plannedStart = stringValue(map.get("planned_start"));
-        operation.plannedFinish = stringValue(map.get("planned_finish"));
-        operation.plannedDuration = stringValue(map.get("planned_duration"));
+        operation.plannedStart = optionalStringValue(map, "planned_start");
+        operation.plannedFinish = optionalStringValue(map, "planned_finish");
+        operation.plannedDuration = optionalStringValue(map, "planned_duration");
         operation.plannedDurationHours = number(map.get("planned_duration_hours"));
-        operation.fromUid = stringValue(map.get("from_uid"));
-        operation.toUid = stringValue(map.get("to_uid"));
-        operation.type = stringValue(map.get("type"));
-        operation.lag = stringValue(map.get("lag"));
+        operation.fromUid = optionalStringValue(map, "from_uid");
+        operation.toUid = optionalStringValue(map, "to_uid");
+        operation.type = optionalStringValue(map, "type");
+        operation.lag = optionalStringValue(map, "lag");
         operation.lagHours = number(map.get("lag_hours"));
         operation.isBaseCalendar = bool(map.get("is_base_calendar"));
-        operation.baseCalendarUid = stringValue(map.get("base_calendar_uid"));
-        operation.standardRate = stringValue(map.get("standard_rate"));
-        operation.overtimeRate = stringValue(map.get("overtime_rate"));
+        operation.baseCalendarUid = optionalStringValue(map, "base_calendar_uid");
+        operation.standardRate = optionalStringValue(map, "standard_rate");
+        operation.overtimeRate = optionalStringValue(map, "overtime_rate");
         operation.costPerUse = number(map.get("cost_per_use"));
         if (map.get("fields") instanceof Map<?, ?>) {
             operation.fields = new LinkedHashMap<String, Object>();
@@ -245,6 +273,10 @@ public class ProjectPatchJsonCore {
 
     private String stringValue(Object value) {
         return value == null ? "" : String.valueOf(value);
+    }
+
+    private String optionalStringValue(Map<?, ?> map, String key) {
+        return map.containsKey(key) ? stringValue(map.get(key)) : null;
     }
 
     private Integer integer(Object value) {

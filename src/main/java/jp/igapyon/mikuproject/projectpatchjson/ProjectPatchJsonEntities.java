@@ -17,6 +17,14 @@ public class ProjectPatchJsonEntities {
 
     public void warnUnsupportedPatchKeysForScope(PatchOperation operation, Set<String> allowedKeys, String opName, String scope,
             String uid, String label, List<PatchWarning> warnings) {
+        if (operation.sourceKeys != null && !operation.sourceKeys.isEmpty()) {
+            for (String key : operation.sourceKeys) {
+                if (!allowedKeys.contains(key)) {
+                    warnings.add(warning(opName + " の未対応 key は無視します: " + key, scope, uid, label));
+                }
+            }
+            return;
+        }
         java.lang.reflect.Field[] fields = PatchOperation.class.getFields();
         for (java.lang.reflect.Field field : fields) {
             try {
