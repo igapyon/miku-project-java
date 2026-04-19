@@ -44,6 +44,25 @@ The current migration scope does not include the Web UI.
 
 The Java port now includes a minimal CLI entrypoint.
 
+The distributable runtime artifact is a single fat jar produced by `mvn package`.
+
+- `target/mikuproject.jar`
+
+`mvn package` also produces a distribution archive.
+
+- `target/mikuproject-dist.zip`
+
+The expected execution path is:
+
+- `java -jar target/mikuproject.jar ...`
+
+The distribution zip contains:
+
+- `mikuproject.jar`
+- `README.md`
+- `LICENSE`
+- `docs/runtime-java-cli.md`
+
 - `validate-xml <input.xml>`
 - `validate-xml-batch <input.xml>...`
 - `export-mermaid <input.xml>`

@@ -156,3 +156,5 @@ Web UI / browser main 系を移植対象外として除いた場合、主要機�
 - Java CLI には、upstream にはない Java 側独自の複数入力 `*-batch` command を追加している
 - 現時点の独自 batch command は `validate-xml-batch`, `export-report-dir-batch`, `export-workbook-json-batch`, `export-xlsx-batch`, `export-project-overview-view-batch`, `export-phase-detail-view-batch`
 - これらは移植本体そのものではなく、CLI 運用上の利便性向上を目的にした後付け拡張として扱う
+- Java CLI の正式配布成果物は `mvn package` で生成される単一 fat jar とし、想定パスは `target/mikuproject.jar` とする
+- 利用側向けの配布パッケージとして `target/mikuproject-dist.zip` を生成し、`mikuproject.jar`, `README.md`, `LICENSE`, `docs/runtime-java-cli.md` を同梱する
