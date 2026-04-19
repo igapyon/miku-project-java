@@ -9,14 +9,15 @@ This repository is a Java 1.8 based port of `mikuproject`.
 The Java port does not try to redesign the upstream project into a Java-first architecture at the initial stage.
 The primary goal is to preserve the upstream Node.js structure, naming, and intent closely enough that upstream changes remain traceable.
 
+The long-term goal is to port the full Node.js feature set, including browser/Web UI related behavior, into the Java workspace in stages.
+STEP1 is treated as an initial slice, not as the final functional boundary.
+
 Current STEP1 scope is focused on:
 
 - `MS Project XML -> ProjectModel -> MS Project XML`
 - `ProjectModel` based internal normalization
 - validation around `Project / Tasks / Resources / Assignments / Calendars`
 - upstream-aware automated tests using JUnit Jupiter
-
-The current migration scope does not include the Web UI.
 
 ## Upstream Policy
 
