@@ -1,8 +1,8 @@
-# Remaining Migration Items
+# Migration Status
 
 ## 目的
 
-この文書は、Node.js upstream を基準にした Java 版移植の残作業一覧を整理するためのメモである。
+この文書は、Node.js upstream を基準にした Java 版移植の現在地と、保守フェーズで残る論点を整理するためのメモである。
 
 ここでの整理は、実装量の厳密な測定ではなく、upstream file 単位での進捗把握を目的とする。
 
@@ -85,9 +85,9 @@
 - upstream 全体移植: およそ `98%` 前後
 
 これは厳密な工数比ではなく、upstream file 群と Java 側の現在実装範囲から見た概算である。
-Web UI / browser main 系を移植対象外として除いた場合、主要機能の Java 側対応は一通り揃っており、残りは主に仕上げと追随性向上である。
+Web UI / browser main 系を移植対象外として除いた場合、主要機能の Java 側対応は一通り揃っており、移植本体は完了寄り、現在は主に保守フェーズとしての仕上げと追随性向上を扱っている。
 
-## 次候補
+## 保守フェーズの論点
 
 現在の自然な続きは、次の領域である。
 
@@ -97,14 +97,9 @@ Web UI / browser main 系を移植対象外として除いた場合、主要機�
 
 これらは現在の移植本体を崩さずに、精度と追随性を上げやすい。
 
-## 未着手一覧
+## 保守フェーズで残る項目
 
-### MS Project 拡張系
-
-### AI JSON / patch 系
-
-### WBS / report 出力系
-### 公開 API / 統合層
+### CLI / automation
 
 - Java CLI entry の細かな automation command 整備
   - 現状は validate / validate batch、主要 export、report zip / report directory / report directory batch、WBS xlsx、workbook JSON export / export batch / import / merge、workbook xlsx export / export batch / import / merge、project overview view export / export batch、phase detail view export / export batch、patch JSON、AI JSON spec / kind / draft request / view export / import、external import まで
@@ -141,12 +136,10 @@ Web UI / browser main 系を移植対象外として除いた場合、主要機�
 - `main-xml-actions.ts`
 - `main.ts`
 
-## 保留の考え方
+## 対象外・保留
 
 現在の Java 版では、Web UI は移植対象外としている。
 したがって、`main*.ts` 群は存在していても、現段階では保留でよい。
-
-また、AI view / patch / workbook / XLSX / WBS 出力系は、`MS Project XML STEP1` のあとに進める候補である。
 
 ## 優先順の目安
 
