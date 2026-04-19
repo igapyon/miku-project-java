@@ -85,7 +85,7 @@
 - upstream 全体移植: およそ `98%` 前後
 
 これは厳密な工数比ではなく、upstream file 群と Java 側の現在実装範囲から見た概算である。
-Web UI / browser main 系を移植対象外として除いた場合、主要機能の Java 側対応は一通り揃っており、移植本体は完了寄り、現在は主に保守フェーズとしての仕上げと追随性向上を扱っている。
+現時点では core / CLI / report 系の Java 側対応はかなり進んでいるが、最終目標は Node.js 版の全機能移植であり、Web UI / browser main 系も今後の移植対象に含む。
 
 ## 保守フェーズの論点
 
@@ -136,10 +136,10 @@ Web UI / browser main 系を移植対象外として除いた場合、主要機�
 - `main-xml-actions.ts`
 - `main.ts`
 
-## 対象外・保留
+## 保留中だが移植対象
 
-現在の Java 版では、Web UI は移植対象外としている。
-したがって、`main*.ts` 群は存在していても、現段階では保留でよい。
+現在の Java 版では、Web UI / browser main 系は未着手領域として保留している。
+ただし、これは対象外を意味せず、Node.js 版全機能移植の一部として今後追う前提とする。
 
 ## 優先順の目安
 
@@ -147,7 +147,8 @@ Web UI / browser main 系を移植対象外として除いた場合、主要機�
 
 1. `MS Project XML` / workbook / report の細部寄せとテスト厚み追加
 2. Java CLI entry の batch / option 整理
-3. upstream 更新追随時の差分吸収
+3. Web UI / browser main 系の段階的移植計画を固める
+4. upstream 更新追随時の差分吸収
 
 ## 補足
 

@@ -1,89 +1,53 @@
 # TODO
 
-この文書には、未完了の作業だけを書く。概要説明や仕様判断は `README.md` と `docs/spec.md` に寄せる。
+この文書には、`mikuproject` 本体の未完了作業だけを書く。概要説明や仕様判断は `README.md` と `docs/spec.md` に寄せる。
 
-## mikuproject
+## 使い方
 
-- 最優先: サンプルデータを更新し、利用者の好みに合う題材・構造・見た目へ見直す
-- WBS workbook と `mikuproject-sample.xlsx` のタイトル行で、フォントサイズ指定をどこまで使うか整理する
-- `Mermaid` 出力は Markdown / 設計資料向けに残しつつ、見た目を制御しやすい `WBS SVG` 描画を別系統で追加するか検討する
-- `WBS SVG` について、今の既定である `近接ラベル` 表示だけを残し、左側にテキストを描画する `一覧ラベル` モードは将来的に廃止したい
-- リファクタリングを再開する場合は、まず `main.ts` を controller としてここで止めるか再確認する
-  - `main.ts` に pure function や表示 helper が再流入していないかを見る
-  - `main.ts` の長さだけで再分割せず、責務混在が再発しているかで判断する
-- 完了済みの大分割領域を再度触る前に、本当に新しい責務混在があるか確認する
-  - `core-api*`、`msproject-*`、`project-patch-json*`、`project-xlsx*`、`project-workbook-json*`
-  - `excel-io*`、`wbs-svg*`、`wbs-xlsx*`
-- 構造変更を再開するときは、区切りごとに `npm run build:full` を回し、`tests/mikuproject-cli.test.js` の実行時間も継続確認する
-- 作成するテキストファイルについて、BOM 付き / なしを切り替えるスイッチを追加する
-- `local-data/` 配下のファイルを、参照用・検証用・生成物で整理する
-- `local-data/` に置くべきでない生成物や一時ファイルがないか見直す
-- `XLSX Import` の実地回帰観点を明文化し、少なくとも次を継続確認する
-  - export した `.xlsx` をそのまま import できる
-  - Excel で 1 セル変更した `.xlsx` を import できる
-  - 同じファイル名で保存し直した `.xlsx` を連続 import できる
-  - 空 editable セルを埋めた変更を import できる
-  - `Name / Start / Finish / PercentComplete / PercentWorkComplete / Notes` など主要 editable 列が戻る
-  - `Milestone / Summary / Critical` など現在の task 真偽値列が戻る
-- `Tasks.Predecessors` について、現状の `predecessorUid` `,` 区切り MVP から、`type / linkLag` など複雑な依存表現をどこまで戻すか整理する
-- `.xlsm` について、`xlsx` 相当の workbook として import だけ受ける first cut を追加する
-  - macro / VBA project の保持は行わず、今回の利用範囲では落ちてよい前提とする
+- `High`: 利用者誤解や仕様不一致を減らすため先に片付ける
+- `Medium`: lossless 性や保持範囲を段階的に広げる
+- `Low`: 表示改善や次段拡張
+
+## High
+
+- 派生出力 / workbook import / calendar の棚卸し結果を踏まえ、`仕様上の制約` と `実装漏れ` を一覧化したギャップメモを作る
+- workbook / CSV / Mermaid / Markdown / SVG / WBS XLSX の各出力について、`lossless 交換形式` と `片方向の人向け派生出力` を明示した対応表を docs に追加する
+- workbook `XLSX / JSON import` について、`限定列のみ` が仕様である範囲と、未対応のまま残っている列を分けて明文化する
+- workbook `Tasks.Predecessors` について、`UID` 列挙だけを戻す現状と、`type / lag` を保持しない制約を docs に明記する
+- workbook `Project` について、`OutlineCodes / WBSMasks / ExtendedAttributes` は export 上見えても import 対象外である点を docs に明記する
+- `Calendars` sheet について、`WeekDays / Exceptions / WorkWeeks` の列見出しに対して、現状は件数確認用であり lossless 編集用ではない点を明記する
+- `Patch JSON` の first cut 制約について、`delete_task / delete_resource / delete_calendar` が block する条件を docs と diagnostics で一貫して示す
+- `Patch JSON` の未対応 key / 未対応 op を warning で無視する現状について、どこまでを許容仕様として固定するか整理する
+- `CSV + ParentID` の最小逆変換で落としてよい項目と、lossless でないことを利用者へ明示すべき項目を整理する
+
+## Medium
+
+- `WbsDateband` は `weekDays / exceptions` を読む一方で workbook import/export がそこまで運べていないため、calendar ロジックと workbook 表現の責務ずれを解消する
+- `NonWorkingDays` import について、`workingTimes` など exception detail を落としている点を整理し、どこまで戻すか優先順位を決める
+- `Calendars` の workbook export について、件数表示ではなく実体編集へ広げるか、このまま read-only metadata に留めるか判断する
+- `update_calendar` / `add_calendar` の first cut が `name / is_base_calendar / base_calendar_uid` に留まる点を、calendar 実体編集の非対応範囲とあわせて docs に明記する
+- `ExtendedAttributes` について、preview/代表値確認で留める範囲と、lossless 保持・import/export 対応へ進める範囲を分けて優先順位を決める
+- `Baseline / TimephasedData` について、validation で存在だけ追う段階に留めるのか、内部保持だけ先に始めるのか、report/export まで含めて扱うのか段階案を作る
+- `Assignment` について、`ActualWork / RemainingWork / ActualCost / RemainingCost / OvertimeWork / ActualOvertimeWork` をどの入出力で保持し、どこでは意図的に落とすか整理する
+- `Calendar` について、`IsBaselineCalendar` を内部保持だけに留めるのか、validation・preview・交換形式へ出すのかを決める
 - workbook import の次段候補として、少なくとも次の列を優先順位つきで整理する
   - 優先候補: `Resources.StandardRate / OvertimeRate / CostPerUse`
   - 優先候補: `Assignments.Start / Finish`
-- `phase_detail_view scoped` の `phase UID / root UID / max depth` 指定を、より選びやすい UI に改善する
-- 既存WBSの局所修正フローを `CLI` / `Agent Skills` 主導に寄せる方針に合わせて、Web UI の AI 連携欄を軽量化するか検討する
-  - `bundle` や `phase detail full` を前面導線から外すか
-  - `project overview` / `task edit` / `phase detail scoped` / `patch_json import` に絞るか
-  - UI は軽い入口と確認用に留める説明へ寄せるか
-- import 前後で、どの `task / calendar / assignment` がどう変わったかを見やすく確認できる差分可視化を追加する
-- 差分適用を前提として、生成AI や外部編集結果を全件置換ではなく部分適用できる運用を強化する
-- `project_draft_request` を UI から生成しやすくするか整理する
-- UI の微調整として、`Input / Overview / Output` の各カードの余白・見出し・ボタン階層を見直し、`miku` 系テーマの統一感をさらに整える
-- `Overview` タブの summary / validation / preview の情報密度を見直し、どこを見る画面なのかをより直感的に伝わる構成へ調整する
-- `Overview` 画面について、簡易な task 操作機能を追加するか検討する
-  - 今は表示専用だが、軽い編集や操作だけはできると便利な可能性がある
-  - 一方で責務過多や誤操作の不幸もありうるため、まずは仕様整理から始める
-- `Output` タブの生成AI連携と各種 export ボタンの優先度表現を見直し、主操作と補助操作の区別をより明確にする
-- `build:xlsx-sample` の所要時間を個別計測し、sample workbook 生成処理の支配要因を確認する
-- `docs/spec.md` に残っている実装済み前提との差分を定期的に解消する
-- 正本 / 表示用 / import 対象 / export 専用 の扱いを、UI または docs で分かりやすく可視化する
-- `.xlsx import` の次段として、どのシート・列を今後 import 対象に広げるか整理する
-- タスク実績について、`ActualStart / ActualFinish / ActualWork / RemainingWork / ActualCost / RemainingCost` などを今後どう扱うか整理し、将来的に対応する
-- 将来検討: Earned Value (`PV / EV / AC / SPI / CPI` など) をどこまで扱うか整理し、必要なら対応する
-- 実績・Earned Value 系は、いきなり広く対応せず、まず最小整理と小さな仕様を作って MVP から段階的に進める
-- WBS 用の `ステータス` は `Task.ExtendedAttribute` で扱う前提で、`FieldID / FieldName / 値候補` を設計する
-- `TaskStatus` 用 `ExtendedAttribute` を `mikuproject-sample.xlsx` と `WBS workbook` のどちらまで見せるか決める
-- `TaskStatus` 用 `ExtendedAttribute` の値候補と、`PercentComplete` / `Active` との関係を整理する
-- 画面検索ではなく、条件指定にもとづく task の部分 export / scoped export を強化できるか整理する
-- `phase_detail_view scoped` の延長として、phase 単位の入出力をうまく取り回す方法を整理し、使い勝手のよい導線を検討する
-- 画面では `Calendars / Exceptions` を read-only 確認に留める前提で、`XLSX Import` 側の `WeekDays / Exceptions / WorkWeeks` 編集導線をどこまで整えるか整理する
-- `Calendar / Baseline / TimephasedData / ExtendedAttributes` をどの順で扱うか優先順位を決める
-- validation について、warning の重要度分け、修正候補のヒント、入力由来別の注意をどこまで出すか整理する
-- `mikuproject-sample.xlsx` の `Project` シートで、構造忠実方針を崩さない範囲の見た目調整を続ける
-- `mikuproject-sample.xlsx` の `Resources / Assignments / NonWorkingDays` で、強調色が過剰にならない最終バランスを調整する
-- `WBS` の `プロジェクト情報` / `凡例` などと、`Project` シートの `Basic Info` に入っているドット編みかけ表現を除去する
-- WBS workbook の表示改善を継続する
-- SVG 出力について、プロジェクト名の位置を少し上にできるか調整する
-- SVG 出力の phase の線を、今より少し太くするか検討する
-  - 現状は細く感じるため、可読性と全体バランスを見ながら調整可否を確認する
-- SVG のガントチャートについて、前後関係を dependency connector として表示するか検討する
-  - 参考イメージは、task bar の背面に置く細い connector line とする
-  - 完全な自由曲線ではなく、横→縦→横の直交配線を角丸でつなぐ表現を first candidate とする
-  - 始点と終点では、bar 端から少し離した短い水平セグメントを持たせる
-  - 長い区間は水平・垂直を基本にし、角だけを小さめの半径で丸める
-  - bar / milestone / label より背面に描き、dependency は補助情報として主張しすぎないようにする
-  - 線幅は task bar より細く、色は薄めにして、最後だけ小さい矢印で向きを示す
-  - first cut では `FS` だけ表示するか、`SS / FF / SF` まで含めるかを整理する
-  - connector の交差、密集時の可読性、`Daily / Weekly` の両方で成立するかを確認する
-- `Daily` 表示の日ごとの横幅を、もう少し狭くできるか検討する
-  - まずは変更仕様の整理から始め、可読性、文字詰まり、祝日/週境界の見え方、`Weekly / Monthly` とのバランスを確認する
+- `XLSX Import` の実地回帰観点を明文化し、主要 editable 列や真偽値列が戻ることを継続確認する
+
+## Low
+
+- `Mermaid` 出力は Markdown / 設計資料向けに残しつつ、見た目を制御しやすい `WBS SVG` 描画を別系統で追加するか検討する
+- `Mermaid gantt` について、summary task を section 名としてだけ使う現状で十分か、summary bar 相当の扱いが必要か整理する
+- `WBS Markdown` について、派生出力として意図的に落としている情報と、将来拡張したい項目を切り分けて整理する
+- `CSV + ParentID` について、`single CSV` を主系統に維持する条件と、`tasks.csv / resources.csv / assignments.csv` へ進む判断条件を仕様として固定する
+- `CSV + ParentID` の `Resource` 集約表現について、同名 resource 衝突や多重 assignment をどこまで warning で見せるか整理する
 - WBS workbook の見た目改善と、構造忠実 workbook との責務分離を保つ
 - WBS について、完了タスクの表示 / 非表示を切り替えるオプションを追加する
 - 将来検討: WBS workbook について、表示専用列と Excel 再利用向けの機械利用列（hidden 列）の分離が必要か整理する
-- 低優先度: 週別または日別の `24h` 表記タイムチャートを追加するか検討する
-  - イメージは `4直3交代` のシフト表に近い表示とする
-  - まずは仕様検討から始め、対象データ、表示粒度、稼働日/非稼働日との関係、`WBS` 系出力との責務分離を整理する
+- SVG のガントチャートについて、前後関係を dependency connector として表示するか検討する
+- `Daily` 表示の日ごとの横幅を、もう少し狭くできるか検討する
+- `WBS SVG` について、今の既定である `近接ラベル` 表示だけを残し、左側にテキストを描画する `一覧ラベル` モードは将来的に廃止したい
 - WBS Markdown の `プロジェクト情報` / `サマリ` / `WBS ツリー` / `WBS テーブル` をどう出すか sample ベースで固める
 - `project summary markdown` のような、WBS 以外の Markdown 出力拡張を検討する
 - `phase summary markdown` のような scoped Markdown 出力を追加するか検討する
@@ -91,3 +55,10 @@
 - `WBS記述書` 用 `Task.ExtendedAttribute` の最小項目として `TaskPurpose / TaskDeliverable / TaskOutOfScope / TaskDoneDefinition / TaskOwner` を扱う
 - `WBS記述書 Markdown` では、長文補足を `Task.Notes` から出す
 - `WBS記述書 Markdown` の sample 出力を作成し、1 task 1 節構成で読みやすいか確認する
+
+## 補助
+
+- 最優先: サンプルデータを更新し、利用者の好みに合う題材・構造・見た目へ見直す
+- `local-data/` 配下のファイルを、参照用・検証用・生成物で整理する
+- `local-data/` に置くべきでない生成物や一時ファイルがないか見直す
+- 構造変更を再開するときは、区切りごとに `npm run build:full` を回し、`tests/mikuproject-cli.test.js` の実行時間も継続確認する
