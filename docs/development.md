@@ -13,6 +13,11 @@
 現時点では、ビルド基盤は Maven を使う。
 ただし、Maven 採用も Java 側独自の構造最適化を進めるためではなく、Java 1.8 前提の最小限の開発土台として扱う。
 
+Java CLI の正式配布成果物は、`mvn package` で生成される単一 jar とする。
+想定パスは `target/mikuproject.jar` とし、`java -jar` を正規実行経路として扱う。
+この成果物は downstream 連携を考慮し、fat jar 前提で維持する。
+配布パッケージとしては、`target/mikuproject-dist.zip` も生成し、利用側向け文書として `docs/runtime-java-cli.md` を同梱する。
+
 自動テストは JUnit を使う。
 Java 1.8 前提でも利用可能な JUnit 系の現行版を第一候補とし、原則として JUnit 5 Jupiter を優先する。
 
