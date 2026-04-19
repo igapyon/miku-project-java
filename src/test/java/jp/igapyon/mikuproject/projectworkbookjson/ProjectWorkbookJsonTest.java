@@ -168,6 +168,24 @@ public class ProjectWorkbookJsonTest {
         assertEquals(0, result.changes.size());
     }
 
+    @Test
+    public void roundTripsHierarchyFixtureThroughWorkbookJson() throws IOException {
+        ProjectWorkbookJson workbookJson = new ProjectWorkbookJson();
+        ProjectModel baseModel = new MsProjectXml().importFromXml(readVendorTestdata("hierarchy.xml"));
+
+        WorkbookJsonDocument document = workbookJson.exportProjectWorkbookJson(baseModel);
+        ProjectWorkbookJsonImport.ImportAsProjectModelResult imported =
+                workbookJson.importProjectWorkbookJsonAsProjectModel(toDocumentLike(document));
+
+        assertEquals("Hierarchy Project", imported.model.project.name);
+        assertEquals(3, imported.model.tasks.size());
+        assertEquals("Summary", imported.model.tasks.get(0).name);
+        assertEquals("1", imported.model.tasks.get(0).outlineNumber);
+        assertEquals("1.1", imported.model.tasks.get(1).outlineNumber);
+        assertEquals("1.2", imported.model.tasks.get(2).outlineNumber);
+        assertEquals("Second child task", imported.model.tasks.get(2).notes);
+    }
+
     private TaskModel findTask(ProjectModel model, String uid) {
         for (TaskModel task : model.tasks) {
             if (uid.equals(task.uid)) {

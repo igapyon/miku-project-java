@@ -169,6 +169,10 @@ public class MsProjectXml {
         return wbsSvg.exportMonthlyWbsCalendarSvgArchive(normalizeProjectModel(model));
     }
 
+    public MonthlyCalendarSvgArchive exportMonthlyWbsCalendarSvgArchive(ProjectModel model, NativeSvgOptions options) {
+        return wbsSvg.exportMonthlyWbsCalendarSvgArchive(normalizeProjectModel(model), options);
+    }
+
     public java.util.Map<String, Object> buildProjectDraftRequest(String name, String plannedStart, String goal, Integer teamCount,
             java.util.List<String> mustHavePhases, java.util.List<String> mustHaveMilestones) {
         return aiViews.buildProjectDraftRequest(name, plannedStart, goal, teamCount, mustHavePhases, mustHaveMilestones);

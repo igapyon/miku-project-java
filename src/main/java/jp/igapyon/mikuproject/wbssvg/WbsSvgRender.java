@@ -21,6 +21,7 @@ public class WbsSvgRender {
     private final WbsSvgScaffold scaffold;
     private final WbsSvgBars bars;
     private final WbsSvgLabels labels;
+    private final WbsSvgAxis axis;
 
     public WbsSvgRender(WbsDateband dateband) {
         this.dateband = dateband;
@@ -29,19 +30,22 @@ public class WbsSvgRender {
         this.scaffold = new WbsSvgScaffold();
         this.bars = new WbsSvgBars();
         this.labels = new WbsSvgLabels();
+        this.axis = new WbsSvgAxis();
     }
 
     public String exportNativeSvg(ProjectModel model, WbsSvg.NativeSvgOptions options) {
         List<TaskModel> tasks = exportableTasks(model);
+        WbsSvg.NativeSvgOptions actualOptions = options == null ? new WbsSvg.NativeSvgOptions() : options;
         StringBuilder builder = new StringBuilder();
         int height = 120 + tasks.size() * 28;
         scaffold.appendSvgOpen(builder, 1200, height);
         scaffold.appendDependencyDefs(builder);
         scaffold.appendProjectTitle(builder, escapeXml(safe(model.project.name, "Project")));
+        axis.appendDailyAxis(builder);
         int y = 60;
         for (TaskModel task : tasks) {
             WbsSvgTimeline.TaskPlacement placement = timeline.dailyPlacement(task);
-            String label = safe(task.name, task.uid);
+            String label = resolveLabel(task, actualOptions);
             bars.appendDailyBar(builder, placement, y);
             labels.appendTaskLabel(builder, placement, y, escapeXml(label));
             y += 28;
@@ -53,17 +57,19 @@ public class WbsSvgRender {
 
     public String exportWeeklyNativeSvg(ProjectModel model, WbsSvg.NativeSvgOptions options) {
         List<TaskModel> tasks = exportableTasks(model);
+        WbsSvg.NativeSvgOptions actualOptions = options == null ? new WbsSvg.NativeSvgOptions() : options;
         StringBuilder builder = new StringBuilder();
         int height = 120 + tasks.size() * 28;
         scaffold.appendSvgOpen(builder, 1000, height);
         scaffold.appendDependencyDefs(builder);
         scaffold.appendProjectTitle(builder, escapeXml(safe(model.project.name, "Project")));
         scaffold.appendWeeklySubtitle(builder);
+        axis.appendWeeklyAxis(builder);
         int y = 80;
         for (TaskModel task : tasks) {
             WbsSvgTimeline.TaskPlacement placement = timeline.weeklyPlacement(task);
             bars.appendWeeklyBar(builder, placement, y);
-            labels.appendTaskLabel(builder, placement, y, escapeXml(safe(task.name, task.uid)));
+            labels.appendTaskLabel(builder, placement, y, escapeXml(resolveLabel(task, actualOptions)));
             y += 28;
         }
         appendDependencyPaths(builder, tasks, 80, 28, false);
@@ -117,6 +123,20 @@ public class WbsSvgRender {
     public String defaultMonthKey(ProjectModel model) {
         String value = model != null && model.project != null ? safe(model.project.startDate, "2026-03-01") : "2026-03-01";
         return value.length() >= 7 ? value.substring(0, 7) : "2026-03";
+    }
+
+    public String resolveLabel(TaskModel task, WbsSvg.NativeSvgOptions options) {
+        if (task == null) {
+            return "";
+        }
+        String labelMode = options == null ? null : options.labelMode;
+        if ("uid".equalsIgnoreCase(safe(labelMode, ""))) {
+            return safe(task.uid, safe(task.name, "-"));
+        }
+        if ("wbs".equalsIgnoreCase(safe(labelMode, ""))) {
+            return safe(task.wbs, safe(task.outlineNumber, safe(task.name, "-")));
+        }
+        return safe(task.name, safe(task.uid, "-"));
     }
 
     public int countLines(String text) {

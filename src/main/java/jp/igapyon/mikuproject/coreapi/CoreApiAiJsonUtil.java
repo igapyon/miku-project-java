@@ -51,6 +51,88 @@ public class CoreApiAiJsonUtil {
         return new JsonParser(jsonText).parse();
     }
 
+    public String stringifyJson(Object value) {
+        StringBuilder builder = new StringBuilder();
+        appendJson(builder, value);
+        return builder.toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void appendJson(StringBuilder builder, Object value) {
+        if (value == null) {
+            builder.append("null");
+            return;
+        }
+        if (value instanceof String) {
+            appendJsonString(builder, (String) value);
+            return;
+        }
+        if (value instanceof Number || value instanceof Boolean) {
+            builder.append(String.valueOf(value));
+            return;
+        }
+        if (value instanceof Map<?, ?>) {
+            builder.append("{");
+            boolean first = true;
+            for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) value).entrySet()) {
+                if (!first) {
+                    builder.append(",");
+                }
+                first = false;
+                appendJsonString(builder, String.valueOf(entry.getKey()));
+                builder.append(":");
+                appendJson(builder, entry.getValue());
+            }
+            builder.append("}");
+            return;
+        }
+        if (value instanceof List<?>) {
+            builder.append("[");
+            boolean first = true;
+            for (Object item : (List<Object>) value) {
+                if (!first) {
+                    builder.append(",");
+                }
+                first = false;
+                appendJson(builder, item);
+            }
+            builder.append("]");
+            return;
+        }
+        appendJsonString(builder, String.valueOf(value));
+    }
+
+    private void appendJsonString(StringBuilder builder, String value) {
+        builder.append('"');
+        String text = value == null ? "" : value;
+        for (int index = 0; index < text.length(); index++) {
+            char ch = text.charAt(index);
+            if (ch == '"' || ch == '\\') {
+                builder.append('\\').append(ch);
+            } else if (ch == '\b') {
+                builder.append("\\b");
+            } else if (ch == '\f') {
+                builder.append("\\f");
+            } else if (ch == '\n') {
+                builder.append("\\n");
+            } else if (ch == '\r') {
+                builder.append("\\r");
+            } else if (ch == '\t') {
+                builder.append("\\t");
+            } else if (ch < 0x20) {
+                String hex = Integer.toHexString(ch);
+                builder.append("\\u");
+                for (int pad = hex.length(); pad < 4; pad++) {
+                    builder.append('0');
+                }
+                builder.append(hex);
+            } else {
+                builder.append(ch);
+            }
+        }
+        builder.append('"');
+    }
+
     private static class JsonParser {
         private final String text;
         private int index;

@@ -15,11 +15,13 @@ import jp.igapyon.mikuproject.excelio.ExcelIoUtil;
 import jp.igapyon.mikuproject.excelio.XlsxWorkbookCodec;
 import jp.igapyon.mikuproject.model.ProjectModel;
 import jp.igapyon.mikuproject.msprojectxml.MsProjectXml;
+import jp.igapyon.mikuproject.wbssvg.WbsSvg.NativeSvgOptions;
 import jp.igapyon.mikuproject.wbssvg.WbsSvg.MonthlyCalendarEntry;
 import jp.igapyon.mikuproject.wbssvg.WbsSvg.MonthlyCalendarSvgArchive;
 import jp.igapyon.mikuproject.wbsmarkdown.WbsMarkdown;
 import jp.igapyon.mikuproject.wbsmarkdown.WbsMarkdown.WbsMarkdownOptions;
 import jp.igapyon.mikuproject.wbsxlsx.WbsXlsx;
+import jp.igapyon.mikuproject.wbsxlsx.WbsXlsx.WbsExportOptions;
 
 public class CoreApiReport {
     private final MsProjectXml msProjectXml = new MsProjectXml();
@@ -28,17 +30,22 @@ public class CoreApiReport {
     private final XlsxWorkbookCodec xlsxWorkbookCodec = new XlsxWorkbookCodec();
 
     public List<ReportEntry> exportAllReportEntries(ProjectModel model) {
-        return exportAllReportEntries(model, null);
+        return exportAllReportEntries(model, null, null, null);
     }
 
     public List<ReportEntry> exportAllReportEntries(ProjectModel model, WbsMarkdownOptions options) {
+        return exportAllReportEntries(model, options, null, null);
+    }
+
+    public List<ReportEntry> exportAllReportEntries(ProjectModel model, WbsMarkdownOptions markdownOptions,
+            WbsExportOptions xlsxOptions, NativeSvgOptions svgOptions) {
         List<ReportEntry> entries = new ArrayList<ReportEntry>();
-        entries.add(new ReportEntry("wbs.md", ExcelIoUtil.encodeUtf8(wbsMarkdown.exportWbsMarkdown(model, options) + "\n")));
+        entries.add(new ReportEntry("wbs.md", ExcelIoUtil.encodeUtf8(wbsMarkdown.exportWbsMarkdown(model, markdownOptions) + "\n")));
         entries.add(new ReportEntry("mermaid.mmd", ExcelIoUtil.encodeUtf8(msProjectXml.exportMermaidGantt(model) + "\n")));
-        entries.add(new ReportEntry("wbs.xlsx", xlsxWorkbookCodec.exportWorkbook(wbsXlsx.exportWbsWorkbook(model))));
-        entries.add(new ReportEntry("daily.svg", ExcelIoUtil.encodeUtf8(msProjectXml.exportNativeSvg(model) + "\n")));
-        entries.add(new ReportEntry("weekly.svg", ExcelIoUtil.encodeUtf8(msProjectXml.exportWeeklyNativeSvg(model) + "\n")));
-        MonthlyCalendarSvgArchive monthlyArchive = msProjectXml.exportMonthlyWbsCalendarSvgArchive(model);
+        entries.add(new ReportEntry("wbs.xlsx", xlsxWorkbookCodec.exportWorkbook(wbsXlsx.exportWbsWorkbook(model, xlsxOptions))));
+        entries.add(new ReportEntry("daily.svg", ExcelIoUtil.encodeUtf8(msProjectXml.exportNativeSvg(model, svgOptions) + "\n")));
+        entries.add(new ReportEntry("weekly.svg", ExcelIoUtil.encodeUtf8(msProjectXml.exportWeeklyNativeSvg(model, svgOptions) + "\n")));
+        MonthlyCalendarSvgArchive monthlyArchive = msProjectXml.exportMonthlyWbsCalendarSvgArchive(model, svgOptions);
         for (MonthlyCalendarEntry entry : monthlyArchive.entries) {
             entries.add(new ReportEntry("monthly-calendar/" + entry.fileName, ExcelIoUtil.encodeUtf8(entry.svg)));
         }

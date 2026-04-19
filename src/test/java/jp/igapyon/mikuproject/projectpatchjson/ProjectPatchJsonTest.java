@@ -44,6 +44,19 @@ public class ProjectPatchJsonTest {
     }
 
     @Test
+    public void ignoresUnknownPatchOperationWithGenericWarning() throws IOException {
+        ProjectPatchJson patch = new ProjectPatchJson();
+        ProjectModel dependencyModel = new MsProjectXml().importFromXml(readVendorTestdata("dependency.xml"));
+
+        ProjectPatchJsonCore.ImportResult result = patch.importProjectPatchJson(
+                mapOf("operations", Arrays.asList(mapOf("op", "unknown_future_op", "uid", "x1"))),
+                dependencyModel);
+
+        assertEquals(0, result.changes.size());
+        assertTrue(joinWarnings(result).contains("未対応の op は無視します: operations[0].op = unknown_future_op"));
+    }
+
+    @Test
     public void rejectsInvalidPatchJsonOperationsWithoutMainUi() throws IOException {
         ProjectPatchJson patch = new ProjectPatchJson();
         ProjectModel dependencyModel = new MsProjectXml().importFromXml(readVendorTestdata("dependency.xml"));

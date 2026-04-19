@@ -86,6 +86,24 @@ public class CoreApiWorkbookTest {
         assertEquals(workbook.sheets.get(0).rows.get(0).cells.get(0).value, decoded.sheets.get(0).rows.get(0).cells.get(0).value);
     }
 
+    @Test
+    public void roundTripsHierarchyFixtureThroughWorkbookWrappers() throws IOException {
+        CoreApiWorkbook api = new CoreApiWorkbook();
+        ProjectModel baseModel = new MsProjectXml().importFromXml(readVendorTestdata("hierarchy.xml"));
+
+        WorkbookJsonDocument document = api.workbookJson.exportProjectWorkbookJson(baseModel);
+        ProjectModel workbookJsonModel = api.workbookJson.importProjectWorkbookJsonAsProjectModel(toDocumentLike(document)).model;
+        XlsxWorkbookLike workbook = api.xlsx.exportWorkbook(baseModel);
+        ProjectModel xlsxModel = api.xlsx.importAsProjectModel(workbook);
+
+        assertEquals("Hierarchy Project", workbookJsonModel.project.name);
+        assertEquals(3, workbookJsonModel.tasks.size());
+        assertEquals("1.2", workbookJsonModel.tasks.get(2).outlineNumber);
+        assertEquals("Hierarchy Project", xlsxModel.project.name);
+        assertEquals(3, xlsxModel.tasks.size());
+        assertEquals("1.2", xlsxModel.tasks.get(2).outlineNumber);
+    }
+
     private Map<String, Object> findProjectNameRow(WorkbookJsonDocument document) {
         for (Map<String, Object> row : document.sheets.get("Project")) {
             if ("Name".equals(row.get("Field"))) {

@@ -6,6 +6,11 @@ package jp.igapyon.mikuproject.wbsmarkdown;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import org.junit.jupiter.api.Test;
 
 import jp.igapyon.mikuproject.model.TaskModel;
@@ -93,6 +98,23 @@ public class WbsMarkdownTest {
         assertTrue(markdown.contains("　┗　1.2.1"));
         assertTrue(markdown.contains("　　┗　1.2.1.1"));
         assertTrue(markdown.contains("詳細: 説明責務と round-trip 観点を切り分ける"));
+    }
+
+    @Test
+    public void exportsHierarchyFixtureIntoReadableMarkdown() throws IOException {
+        MsProjectXml xml = new MsProjectXml();
+        String markdown = xml.exportWbsMarkdown(xml.importFromXml(readVendorTestdata("hierarchy.xml")));
+
+        assertTrue(markdown.contains("| プロジェクト名 | Hierarchy Project |"));
+        assertTrue(markdown.contains("Summary"));
+        assertTrue(markdown.contains("Child A"));
+        assertTrue(markdown.contains("Child B"));
+        assertTrue(markdown.contains("Second child task"));
+    }
+
+    private String readVendorTestdata(String fileName) throws IOException {
+        byte[] bytes = Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", fileName));
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 
     private TaskModel createDerivedTask(TaskModel baseTask, String uid, String id, String name, int outlineLevel,

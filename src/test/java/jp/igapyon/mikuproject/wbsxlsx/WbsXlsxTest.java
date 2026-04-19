@@ -8,6 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import jp.igapyon.mikuproject.excelio.XlsxWorkbookCodec;
 import jp.igapyon.mikuproject.model.ProjectModel;
 import jp.igapyon.mikuproject.msprojectxml.MsProjectSamples;
+import jp.igapyon.mikuproject.msprojectxml.MsProjectXml;
 import jp.igapyon.mikuproject.projectxlsx.XlsxWorkbookLike;
 
 public class WbsXlsxTest {
@@ -85,6 +90,20 @@ public class WbsXlsxTest {
         assertNotNull(imported.sheets.get(0).rows.get(headerRowIndex + 1).cells.get(5).value);
     }
 
+    @Test
+    public void exportsHierarchyFixtureIntoDedicatedWorkbook() throws IOException {
+        WbsXlsx wbsXlsx = new WbsXlsx();
+        ProjectModel model = new MsProjectXml().importFromXml(readVendorTestdata("hierarchy.xml"));
+
+        XlsxWorkbookLike workbook = wbsXlsx.exportWbsWorkbook(model);
+
+        assertEquals("WBS", workbook.sheets.get(0).name);
+        assertTrue(containsCellText(workbook, "Hierarchy Project"));
+        assertTrue(containsCellText(workbook, "Summary"));
+        assertTrue(containsCellText(workbook, "Child A"));
+        assertTrue(containsCellText(workbook, "Child B"));
+    }
+
     private int findRowIndexByCellValue(XlsxWorkbookLike workbook, String value) {
         for (int rowIndex = 0; rowIndex < workbook.sheets.get(0).rows.size(); rowIndex++) {
             Object cellValue = workbook.sheets.get(0).rows.get(rowIndex).cells.get(0).value;
@@ -93,5 +112,22 @@ public class WbsXlsxTest {
             }
         }
         return -1;
+    }
+
+    private boolean containsCellText(XlsxWorkbookLike workbook, String value) {
+        for (int rowIndex = 0; rowIndex < workbook.sheets.get(0).rows.size(); rowIndex++) {
+            for (int cellIndex = 0; cellIndex < workbook.sheets.get(0).rows.get(rowIndex).cells.size(); cellIndex++) {
+                Object cellValue = workbook.sheets.get(0).rows.get(rowIndex).cells.get(cellIndex).value;
+                if (cellValue != null && String.valueOf(cellValue).contains(value)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private String readVendorTestdata(String fileName) throws IOException {
+        byte[] bytes = Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", fileName));
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 }
