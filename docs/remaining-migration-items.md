@@ -104,19 +104,7 @@ STEP1 の流れを保ったまま次に進めやすいのは、次の領域で�
 ### WBS / report 出力系
 
 - `wbs-svg-axis.ts`
-- `wbs-svg-bars.ts`
-- `wbs-svg-calendar.ts`
-- `wbs-svg-labels.ts`
 - `wbs-svg-public.ts`
-- `wbs-svg-render.ts`
-- `wbs-svg-scaffold.ts`
-- `wbs-svg-timeline.ts`
-- `wbs-svg-viewport.ts`
-- `wbs-svg-zip.ts`
-- `wbs-xlsx-base.ts`
-- `wbs-xlsx-cells.ts`
-- `wbs-xlsx-sections.ts`
-- `wbs-xlsx-taskmeta.ts`
 ### 公開 API / 統合層
 
 ### Web UI / browser main 系

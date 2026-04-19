@@ -602,6 +602,65 @@
   - monthly calendar SVG archive export
   - `MsProjectXml` からの利用
 
+### `vendor/mikuproject/src/ts/wbs-svg-render.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbssvg.WbsSvgRender`
+- 責務:
+  - daily / weekly SVG 描画
+  - exportable task 抽出
+  - dependency path 描画
+  - `WbsSvgScaffold` / `WbsSvgTimeline` / `WbsSvgViewport` を束ねる render
+
+### `vendor/mikuproject/src/ts/wbs-svg-scaffold.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbssvg.WbsSvgScaffold`
+- 責務:
+  - SVG ルート、defs、title、weekly subtitle などの scaffold 出力
+
+### `vendor/mikuproject/src/ts/wbs-svg-timeline.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbssvg.WbsSvgTimeline`
+- 責務:
+  - daily / weekly の task placement 計算
+
+### `vendor/mikuproject/src/ts/wbs-svg-viewport.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbssvg.WbsSvgViewport`
+- 責務:
+  - daily / weekly の x 位置と幅の計算
+
+### `vendor/mikuproject/src/ts/wbs-svg-bars.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbssvg.WbsSvgBars`
+- 責務:
+  - daily / weekly の task bar 描画
+
+### `vendor/mikuproject/src/ts/wbs-svg-labels.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbssvg.WbsSvgLabels`
+- 責務:
+  - task label 描画
+
+### `vendor/mikuproject/src/ts/wbs-svg-calendar.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbssvg.WbsSvgCalendar`
+- 責務:
+  - monthly calendar SVG archive のエントリ構築
+
+### `vendor/mikuproject/src/ts/wbs-svg-zip.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbssvg.WbsSvgZip`
+- 責務:
+  - monthly calendar SVG archive の zip 化
+
 ### `vendor/mikuproject/src/ts/wbs-xlsx-layout.ts`
 
 - Java 側 class:
@@ -634,6 +693,38 @@
 - 責務:
   - project info / date band / task row / legend / summary を含む first cut workbook 生成
   - `projectxlsx.XlsxWorkbookLike` を使って report / excel-io と接続する
+
+### `vendor/mikuproject/src/ts/wbs-xlsx-base.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbsxlsx.WbsXlsxBase`
+- 責務:
+  - WBS xlsx export 共通の基礎 helper
+  - fixed column 数
+  - date / weekday / duration / predecessors / calendar label / timestamp 変換
+
+### `vendor/mikuproject/src/ts/wbs-xlsx-cells.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbsxlsx.WbsXlsxCells`
+- 責務:
+  - WBS xlsx export 用 cell / row 組み立て
+  - title / project info / summary / legend row
+  - date band / task / progress marker cell
+
+### `vendor/mikuproject/src/ts/wbs-xlsx-sections.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbsxlsx.WbsXlsxSections`
+- 責務:
+  - project info / date band / task / legend / summary の section 単位組み立て
+
+### `vendor/mikuproject/src/ts/wbs-xlsx-taskmeta.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbsxlsx.WbsXlsxTaskmeta`
+- 責務:
+  - task row 生成用の calendar / resource / assignment 補助情報収集
 
 ## testdata 対応
 
