@@ -81,19 +81,21 @@
 
 ### 進捗の目安
 
-- `MS Project XML STEP1`: およそ `95%` 前後
-- upstream 全体移植: およそ `83%` 前後
+- `MS Project XML STEP1`: およそ `98%` 前後
+- upstream 全体移植: およそ `98%` 前後
 
 これは厳密な工数比ではなく、upstream file 群と Java 側の現在実装範囲から見た概算である。
+Web UI / browser main 系を移植対象外として除いた場合、主要機能の Java 側対応は一通り揃っており、残りは主に仕上げと追随性向上である。
 
 ## 次候補
 
-STEP1 の流れを保ったまま次に進めやすいのは、次の領域である。
+現在の自然な続きは、次の領域である。
 
-- `wbs-xlsx-*` の細分化追随
-- `wbs-svg-*` の細分化追随
+- `MS Project XML` / workbook / report の fixture 比較追加
+- Java CLI entry の batch / option 整理
+- upstream 更新追随時の差分吸収準備
 
-これらは現在の `MS Project XML` / patch / workbook JSON / xlsx workbook object / core-api workbook / byte codec の土台を利用しやすい。
+これらは現在の移植本体を崩さずに、精度と追随性を上げやすい。
 
 ## 未着手一覧
 
@@ -102,10 +104,15 @@ STEP1 の流れを保ったまま次に進めやすいのは、次の領域で�
 ### AI JSON / patch 系
 
 ### WBS / report 出力系
-
-- `wbs-svg-axis.ts`
-- `wbs-svg-public.ts`
 ### 公開 API / 統合層
+
+- Java CLI entry の細かな automation command 整備
+  - 現状は validate / validate batch、主要 export、report zip / report directory / report directory batch、WBS xlsx、workbook JSON export / export batch / import / merge、workbook xlsx export / export batch / import / merge、project overview view export / export batch、phase detail view export / export batch、patch JSON、AI JSON spec / kind / draft request / view export / import、external import まで
+  - WBS markdown / xlsx / report directory には display range / progress / holiday option を渡せる
+  - daily / weekly SVG には label mode、monthly SVG zip には holiday / label option を渡せる
+  - report bundle / report directory にも holiday / label を含む SVG option と WBS option をまとめて渡せる
+  - 複数入力をまとめる command は validate / report directory / workbook JSON / workbook xlsx / project overview view / phase detail view まで
+  - そのほかの出力形式別の細かな option や batch command は未整理
 
 ### Web UI / browser main 系
 
@@ -145,11 +152,14 @@ STEP1 の流れを保ったまま次に進めやすいのは、次の領域で�
 
 現時点の自然な優先順は次のとおり。
 
-1. `wbs-xlsx-*` の細分化追随
-2. `wbs-svg-*` の細分化追随
-3. `MS Project XML` / workbook / report の細部寄せとテスト厚み追加
+1. `MS Project XML` / workbook / report の細部寄せとテスト厚み追加
+2. Java CLI entry の batch / option 整理
+3. upstream 更新追随時の差分吸収
 
 ## 補足
 
 - upstream 更新追随時は、この文書のカテゴリ単位ではなく、対応 file 単位で差分を見る
 - Java 側で着手した領域は、対応 class と test をセットで増やしていく
+- Java CLI には、upstream にはない Java 側独自の複数入力 `*-batch` command を追加している
+- 現時点の独自 batch command は `validate-xml-batch`, `export-report-dir-batch`, `export-workbook-json-batch`, `export-xlsx-batch`, `export-project-overview-view-batch`, `export-phase-detail-view-batch`
+- これらは移植本体そのものではなく、CLI 運用上の利便性向上を目的にした後付け拡張として扱う

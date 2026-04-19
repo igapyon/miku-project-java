@@ -160,6 +160,22 @@ public class MsProjectXmlTest {
     }
 
     @Test
+    public void roundTripsUpstreamHierarchyXmlFixture() throws IOException {
+        MsProjectXml xml = new MsProjectXml();
+        ProjectModel model = xml.importFromXml(readVendorTestdata("hierarchy.xml"));
+
+        String exportedXml = xml.exportToXml(model);
+        ProjectModel reparsed = xml.importFromXml(exportedXml);
+
+        assertEquals("Hierarchy Project", reparsed.project.name);
+        assertEquals(3, reparsed.tasks.size());
+        assertEquals("Summary", reparsed.tasks.get(0).name);
+        assertEquals("1.1", reparsed.tasks.get(1).outlineNumber);
+        assertEquals("1.2", reparsed.tasks.get(2).outlineNumber);
+        assertTrue(xml.validateProjectModel(reparsed).isEmpty());
+    }
+
+    @Test
     public void importsUpstreamDependencyXmlFixture() throws IOException {
         MsProjectXml xml = new MsProjectXml();
         String xmlText = readVendorTestdata("dependency.xml");
@@ -177,6 +193,23 @@ public class MsProjectXmlTest {
         assertEquals(1, model.assignments.size());
         assertEquals("2", model.assignments.get(0).taskUid);
         assertEquals("1", model.assignments.get(0).resourceUid);
+    }
+
+    @Test
+    public void roundTripsUpstreamDependencyXmlFixture() throws IOException {
+        MsProjectXml xml = new MsProjectXml();
+        ProjectModel model = xml.importFromXml(readVendorTestdata("dependency.xml"));
+
+        String exportedXml = xml.exportToXml(model);
+        ProjectModel reparsed = xml.importFromXml(exportedXml);
+
+        assertEquals("Dependency Project", reparsed.project.name);
+        assertEquals(2, reparsed.tasks.size());
+        assertEquals(1, reparsed.tasks.get(1).predecessors.size());
+        assertEquals("1", reparsed.tasks.get(1).predecessors.get(0).predecessorUid);
+        assertEquals(1, reparsed.resources.size());
+        assertEquals(1, reparsed.assignments.size());
+        assertFalse(hasError(xml.validateProjectModel(reparsed)));
     }
 
     @Test
@@ -1164,6 +1197,15 @@ public class MsProjectXmlTest {
                     && scope.equals(issue.scope)
                     && issue.message != null
                     && issue.message.contains(fragment)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasError(List<ValidationIssue> issues) {
+        for (ValidationIssue issue : issues) {
+            if ("error".equals(issue.level)) {
                 return true;
             }
         }

@@ -55,10 +55,12 @@ Java 版のテストは、Node.js upstream のテスト意図と fixture を追�
 - `vendor/mikuproject/testdata/hierarchy.xml`
   - Java 側:
     - `MsProjectXmlTest.importsUpstreamHierarchyXmlFixture`
+    - `MsProjectXmlTest.roundTripsUpstreamHierarchyXmlFixture`
 
 - `vendor/mikuproject/testdata/dependency.xml`
   - Java 側:
     - `MsProjectXmlTest.importsUpstreamDependencyXmlFixture`
+    - `MsProjectXmlTest.roundTripsUpstreamDependencyXmlFixture`
 
 ## Java 側テスト命名
 
@@ -167,6 +169,9 @@ Java 側テスト名は、次の基準で付ける。
 - `ProjectWorkbookJsonTest.keepsNonEditableTaskColumnsUnchangedThroughWorkbookJsonImport`
   - upstream の non-editable task column 保持に対応
 
+- `ProjectWorkbookJsonTest.roundTripsHierarchyFixtureThroughWorkbookJson`
+  - hierarchy fixture を workbook JSON export / import で往復できることを確認
+
 ## Java 側 Project XLSX test
 
 - `ProjectXlsxTest.convertsProjectModelIntoWorkbookSheets`
@@ -177,6 +182,9 @@ Java 側テスト名は、次の基準で付ける。
 
 - `ProjectXlsxTest.importsWorkbookAsProjectModel`
   - upstream の workbook からの `ProjectModel` 構築に対応
+
+- `ProjectXlsxTest.roundTripsHierarchyFixtureThroughWorkbook`
+  - hierarchy fixture を workbook export / import で往復できることを確認
 
 ## Java 側 Core API Workbook test
 
@@ -191,6 +199,9 @@ Java 側テスト名は、次の基準で付ける。
 
 - `CoreApiWorkbookTest.encodesAndDecodesWorkbookThroughUnifiedEntryPoint`
   - Java first cut の workbook byte codec 経由 encode/decode に対応
+
+- `CoreApiWorkbookTest.roundTripsHierarchyFixtureThroughWorkbookWrappers`
+  - hierarchy fixture を workbook JSON / xlsx wrapper 経由で往復できることを確認
 
 ## Java 側 Core API Import test
 
@@ -221,6 +232,9 @@ Java 側テスト名は、次の基準で付ける。
 - `CoreApiImportTest.rejectsMergeImportsWhenBaseModelIsMissing`
   - upstream の merge / patch import `baseModel` 必須制約に対応
 
+- `CoreApiImportTest.roundTripsHierarchyFixtureThroughUnifiedImportWrappers`
+  - hierarchy fixture を unified import wrapper の workbook_json / xlsx replace import で往復できることを確認
+
 ## Java 側 Core API Public test
 
 - `CoreApiPublicTest.exposesUnifiedPublicApiSurface`
@@ -229,6 +243,63 @@ Java 側テスト名は、次の基準で付ける。
 - `CoreApiPublicTest.exposesWorkingReportApiSurface`
   - Java first cut では `wbsMarkdown / mermaid / svg / all / wbsXlsx` を実動
   - report bundle に `wbs.xlsx` が含まれることを確認
+  - report bundle の entry 名と主要出力内容を確認
+
+- `CoreApiPublicTest.exposesWorkingReportApiSurfaceForDependencyFixture`
+  - dependency fixture でも report bundle の entry 名と主要出力内容を確認
+
+## Java 側 CLI test
+
+- `MikuprojectCliTest.printsUsageForHelp`
+  - Java CLI の help 表示に対応
+
+- `MikuprojectCliTest.validatesXmlAndExportsFormats`
+  - Java CLI から validate / Mermaid / Markdown / SVG export、zip 出力、report directory 出力を呼べることを確認
+
+- `MikuprojectCliTest.validatesXmlBatchAndExportsReportDirBatch`
+  - Java CLI から validate batch と report directory batch export を呼べることを確認
+
+- `MikuprojectCliTest.exportsWorkbookJsonBatch`
+  - Java CLI から workbook JSON batch export を呼べることを確認
+
+- `MikuprojectCliTest.exportsXlsxBatch`
+  - Java CLI から xlsx batch export を呼べることを確認
+
+- `MikuprojectCliTest.exportsProjectOverviewViewBatch`
+  - Java CLI から project overview view batch export を呼べることを確認
+
+- `MikuprojectCliTest.exportsPhaseDetailViewBatch`
+  - Java CLI から phase detail view batch export を呼べることを確認
+
+- `MikuprojectCliTest.appliesWbsOptionArgumentsToMarkdownAndReportDir`
+  - Java CLI から WBS markdown / report directory export に display range / progress / holiday / label option を渡せることを確認
+
+- `MikuprojectCliTest.appliesSvgOptionArgumentsToSvgExports`
+  - Java CLI から daily / weekly SVG の label mode と monthly SVG zip の holiday / label option を渡せることを確認
+
+- `MikuprojectCliTest.exportsWorkbookJsonAndAiViews`
+  - Java CLI から workbook JSON export、AI view export、project draft request export を呼べることを確認
+
+- `MikuprojectCliTest.importsWorkbookJsonAndAppliesPatchJson`
+  - Java CLI から workbook JSON validate / import / merge と patch JSON validate / apply を呼べることを確認
+
+- `MikuprojectCliTest.importsAiJsonAndExternalFormats`
+  - Java CLI から AI JSON import と workbook / patch / xlsx external import を呼べることを確認
+
+- `MikuprojectCliTest.exportsHierarchyAndDependencyFixturesThroughCli`
+  - Java CLI から hierarchy / dependency fixture の AI view / SVG / ms_project_xml external import を呼べることを確認
+
+- `MikuprojectCliTest.exportsAiJsonSpecAndDetectsAiJsonKind`
+  - Java CLI から AI JSON spec export と kind detect を呼べることを確認
+
+- `MikuprojectCliTest.exportsAndImportsXlsxWorkbookBytes`
+  - Java CLI から workbook xlsx export / import / merge を呼べることを確認
+
+- `MikuprojectCliTest.validatesAndExportsWbsXlsxWorkbookBytes`
+  - Java CLI から WBS xlsx export と xlsx validate を呼べることを確認
+
+- `MikuprojectCliTest.returnsUsageErrorForMissingArgument`
+  - Java CLI の引数不足時エラーに対応
 
 ## Java 側 Excel IO test
 
@@ -264,6 +335,9 @@ Java 側テスト名は、次の基準で付ける。
 - `WbsMarkdownTest.keepsDeepHierarchyReadable`
   - upstream の deep hierarchy 可読性確認に対応
 
+- `WbsMarkdownTest.exportsHierarchyFixtureIntoReadableMarkdown`
+  - hierarchy fixture を Markdown 出力へ落としたときの主要内容を確認
+
 ## Java 側 WBS SVG test
 
 - `WbsSvgTest.exportsDailyAndWeeklySvg`
@@ -275,6 +349,9 @@ Java 側テスト名は、次の基準で付ける。
 - `WbsSvgTest.exportsMonthlyCalendarArchive`
   - upstream の monthly calendar SVG archive export に対応
 
+- `WbsSvgTest.exportsDependencyFixtureIntoSvgOutputs`
+  - dependency fixture を daily / weekly SVG 出力へ落としたときの主要内容を確認
+
 ## Java 側 WBS XLSX test
 
 - `WbsXlsxTest.providesExcelStyleLayoutReferencesForWbsWorksheetTuning`
@@ -285,3 +362,6 @@ Java 側テスト名は、次の基準で付ける。
 
 - `WbsXlsxTest.exportsDedicatedWbsWorkbookAndCanEncodeIt`
   - upstream の WBS workbook export と xlsx encode 接続の first cut に対応
+
+- `WbsXlsxTest.exportsHierarchyFixtureIntoDedicatedWorkbook`
+  - hierarchy fixture を WBS workbook へ落としたときの主要内容を確認

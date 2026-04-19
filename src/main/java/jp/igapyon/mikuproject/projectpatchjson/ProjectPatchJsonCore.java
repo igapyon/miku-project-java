@@ -220,14 +220,6 @@ public class ProjectPatchJsonCore {
 
     private String buildUnsupportedOperationWarningMessage(String op, int index) {
         String normalizedOp = op == null || op.isEmpty() ? "(empty)" : op;
-        if ("link_tasks".equals(normalizedOp) || "unlink_tasks".equals(normalizedOp)) {
-            return "未対応の op は無視します: operations[" + index + "].op = " + normalizedOp
-                    + "。依存関係は " + normalizedOp + " で扱う方針ですが、現時点では未実装です";
-        }
-        if ("move_task".equals(normalizedOp)) {
-            return "未対応の op は無視します: operations[" + index + "].op = " + normalizedOp
-                    + "。親子や順序変更は move_task で扱う方針ですが、現時点では未実装です";
-        }
         return "未対応の op は無視します: operations[" + index + "].op = " + normalizedOp;
     }
 

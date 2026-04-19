@@ -12,8 +12,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -69,7 +71,47 @@ public class CoreApiPublicTest {
         assertEquals("WBS", workbook.sheets.get(0).name);
         assertTrue(workbookBytes.length > 0);
         assertEquals(6, bundle.entries.size());
+        assertEquals(Arrays.asList("wbs.md", "mermaid.mmd", "wbs.xlsx", "daily.svg", "weekly.svg", "monthly-calendar/2026-03.svg"),
+                entryNames(bundle));
+        assertTrue(containsEntry(bundle, "wbs.md", "# WBS テーブル"));
+        assertTrue(containsEntry(bundle, "mermaid.mmd", "gantt"));
+        assertTrue(containsEntry(bundle, "daily.svg", "<svg"));
+        assertTrue(containsEntry(bundle, "weekly.svg", "<svg"));
         assertTrue(bundle.zipBytes.length > 0);
+    }
+
+    @Test
+    public void exposesWorkingReportApiSurfaceForDependencyFixture() throws IOException {
+        CoreApi api = new CoreApi();
+        ProjectModel model = api.msProject.importFromXml(readVendorTestdata("dependency.xml"));
+
+        CoreApiReportAdapters.ReportBundle bundle = api.report.all.export(model);
+
+        assertEquals(Arrays.asList("wbs.md", "mermaid.mmd", "wbs.xlsx", "daily.svg", "weekly.svg", "monthly-calendar/2026-03.svg"),
+                entryNames(bundle));
+        assertTrue(containsEntry(bundle, "wbs.md", "Dependency Project"));
+        assertTrue(containsEntry(bundle, "mermaid.mmd", "Prepare"));
+        assertTrue(containsEntry(bundle, "mermaid.mmd", "Execute"));
+        assertTrue(containsEntry(bundle, "daily.svg", "Prepare"));
+        assertTrue(containsEntry(bundle, "weekly.svg", "weekly overview"));
+        assertTrue(bundle.zipBytes.length > 0);
+    }
+
+    private List<String> entryNames(CoreApiReportAdapters.ReportBundle bundle) {
+        List<String> names = new ArrayList<String>();
+        for (CoreApiReport.ReportEntry entry : bundle.entries) {
+            names.add(entry.name);
+        }
+        return names;
+    }
+
+    private boolean containsEntry(CoreApiReportAdapters.ReportBundle bundle, String expectedName, String expectedText) {
+        for (CoreApiReport.ReportEntry entry : bundle.entries) {
+            if (expectedName.equals(entry.name)) {
+                return new String(entry.data, StandardCharsets.UTF_8).contains(expectedText);
+            }
+        }
+        return false;
     }
 
     private Map<String, Object> findProjectNameRow(WorkbookJsonDocument document) {

@@ -101,7 +101,7 @@
 - 責務:
   - upstream sample 相当の `ProjectModel` 生成
   - sample XML 生成
-  - Java 側では `project_draft_view` import 層が未実装のため、sample 内容を `ProjectModel` へ直接組み立てる
+  - Java 側では sample 内容を `ProjectModel` へ直接組み立てる
 
 ### `vendor/mikuproject/src/ts/msproject-csv.ts`
 
@@ -330,7 +330,7 @@
 - 責務:
   - xlsx workbook API wrapper
   - `ProjectXlsx` への委譲
-  - `encode/decode` は `excel-io*` 未移植のため現時点では未対応
+  - workbook object の encode/decode
 
 ### `vendor/mikuproject/src/ts/core-api-workbook.ts`
 
@@ -434,7 +434,7 @@
   - `jp.igapyon.mikuproject.coreapi.CoreApiRegistry`
 - 責務:
   - import / msproject / workbook API の束ね直し
-  - Java 側では `report` を placeholder 付きで公開
+  - `report` を含む公開 API の束ね直し
 
 ### `vendor/mikuproject/src/ts/core-api-public.ts`
 
@@ -451,6 +451,26 @@
 - 責務:
   - Java 側の最終公開入口
   - `CoreApiPublic` の alias
+
+### Java CLI entry
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.cli.MikuprojectCli`
+- 責務:
+  - Java 版の最小 command-line entrypoint
+  - `MS Project XML` validate
+  - Mermaid / WBS Markdown / daily SVG / weekly SVG export
+  - monthly SVG archive zip / report bundle zip export
+  - WBS xlsx export
+  - workbook JSON export
+  - project overview / phase detail / task edit AI view export
+  - project draft request export
+  - workbook JSON validate / import / merge
+  - workbook xlsx export / import / merge
+  - patch JSON validate / apply
+  - AI JSON spec export / kind detect
+  - AI JSON import
+  - external import の最小 command-line 入口
 
 ### `vendor/mikuproject/src/ts/core-api-report.ts`
 
@@ -653,6 +673,21 @@
   - `jp.igapyon.mikuproject.wbssvg.WbsSvgCalendar`
 - 責務:
   - monthly calendar SVG archive のエントリ構築
+
+### `vendor/mikuproject/src/ts/wbs-svg-axis.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbssvg.WbsSvgAxis`
+- 責務:
+  - daily / weekly SVG の軸補助描画
+
+### `vendor/mikuproject/src/ts/wbs-svg-public.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.wbssvg.WbsSvgPublic`
+- 責務:
+  - WBS SVG export の public API
+  - `WbsSvgRender` / `WbsSvgCalendar` への facade
 
 ### `vendor/mikuproject/src/ts/wbs-svg-zip.ts`
 

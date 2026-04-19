@@ -39,3 +39,41 @@ The current migration scope does not include the Web UI.
 - Use `mvn test` as the primary test entrypoint.
 - Keep Java tests aligned with upstream test intent and upstream fixtures where possible.
 - Use upstream fixture files under `vendor/mikuproject/testdata` when they are useful as comparison material.
+
+## CLI
+
+The Java port now includes a minimal CLI entrypoint.
+
+- `validate-xml <input.xml>`
+- `validate-xml-batch <input.xml>...`
+- `export-mermaid <input.xml>`
+- `export-wbs-markdown <input.xml> [<beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv>]]]]]`
+- `export-daily-svg <input.xml> [<labelMode>]`
+- `export-weekly-svg <input.xml> [<labelMode>]`
+- `export-monthly-svg-zip <input.xml> <output.zip> [<holidayDatesCsv> [<labelMode>]]`
+- `export-report-bundle <input.xml> <output.zip> [<beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv> [<labelMode>]]]]]]`
+- `export-report-dir <input.xml> <output.dir> [<beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv> [<labelMode>]]]]]]`
+- `export-report-dir-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv> [<labelMode>]]]]]]`
+- `export-wbs-xlsx <input.xml> <output.xlsxbin> [<beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv>]]]]]`
+- `export-workbook-json <input.xml>`
+- `export-workbook-json-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]...`
+- `export-project-overview-view <input.xml>`
+- `export-project-overview-view-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]...`
+- `export-phase-detail-view <input.xml> [<phaseUid> [<mode> [<rootUid> [<maxDepth>]]]]`
+- `export-phase-detail-view-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <phaseUid> [<mode> [<rootUid> [<maxDepth>]]]]`
+- `export-task-edit-view <input.xml> <taskUid>`
+- `export-project-draft-request <name> <plannedStart> [<goal> [<teamCount> [<mustHavePhasesCsv> [<mustHaveMilestonesCsv>]]]]`
+- `validate-workbook-json <input.json>`
+- `import-workbook-json <input.json> <output.xml>`
+- `merge-workbook-json <base.xml> <input.json> <output.xml>`
+- `validate-patch-json <input.json>`
+- `apply-patch-json <base.xml> <patch.json> <output.xml>`
+- `export-ai-json-spec`
+- `detect-ai-json-kind <input.txt>`
+- `import-ai-json <input.txt> <output.xml> [<base.xml>]`
+- `import-external <format> <mode> <input> <output.xml> [<base.xml>]`
+- `export-xlsx <input.xml> <output.xlsxbin>`
+- `export-xlsx-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]...`
+- `validate-xlsx <input.xlsxbin>`
+- `import-xlsx <input.xlsxbin> <output.xml>`
+- `merge-xlsx <base.xml> <input.xlsxbin> <output.xml>`

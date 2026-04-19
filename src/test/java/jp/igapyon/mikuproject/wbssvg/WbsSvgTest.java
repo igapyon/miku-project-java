@@ -6,6 +6,11 @@ package jp.igapyon.mikuproject.wbssvg;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import org.junit.jupiter.api.Test;
 
 import jp.igapyon.mikuproject.model.PredecessorModel;
@@ -68,6 +73,27 @@ public class WbsSvgTest {
         assertTrue(archive.entries.get(0).fileName.endsWith(".svg"));
         assertTrue(archive.entries.get(0).svg.contains("<svg"));
         assertTrue(archive.zipBytes.length > 0);
+    }
+
+    @Test
+    public void exportsDependencyFixtureIntoSvgOutputs() throws IOException {
+        MsProjectXml xml = new MsProjectXml();
+        ProjectModel model = xml.importFromXml(readVendorTestdata("dependency.xml"));
+
+        String dailySvg = xml.exportNativeSvg(model);
+        String weeklySvg = xml.exportWeeklyNativeSvg(model);
+
+        assertTrue(dailySvg.contains("Dependency Project"));
+        assertTrue(dailySvg.contains("Prepare"));
+        assertTrue(dailySvg.contains("Execute"));
+        assertTrue(dailySvg.contains("class=\"dependencyPath\""));
+        assertTrue(weeklySvg.contains("weekly overview"));
+        assertTrue(weeklySvg.contains("Prepare"));
+    }
+
+    private String readVendorTestdata(String fileName) throws IOException {
+        byte[] bytes = Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", fileName));
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 
     private TaskModel task(String uid, String name, String start, String finish) {

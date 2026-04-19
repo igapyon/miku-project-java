@@ -245,6 +245,29 @@ public class CoreApiImportTest {
                 }).getMessage().contains("format=patch_json mode=patch"));
     }
 
+    @Test
+    public void roundTripsHierarchyFixtureThroughUnifiedImportWrappers() throws IOException {
+        CoreApiImport api = new CoreApiImport();
+        ProjectModel baseModel = api.msproject.msProject.importFromXml(readVendorTestdata("hierarchy.xml"));
+        WorkbookJsonDocument workbookJson = api.workbook.workbookJson.exportProjectWorkbookJson(baseModel);
+        XlsxWorkbookLike workbook = api.workbook.xlsx.exportWorkbook(baseModel);
+        byte[] xlsxBytes = api.workbook.xlsx.encodeWorkbook(workbook);
+
+        CoreApiImportResult workbookResult = api.importExternal(externalInput(
+                externalDocumentSource("workbook_json", toDocumentLike(workbookJson)), "replace", null));
+        CoreApiImportResult xlsxResult = api.importExternal(externalInput(
+                externalBytesSource("xlsx", xlsxBytes), "replace", null));
+
+        assertEquals("workbook_json", workbookResult.kind);
+        assertEquals("Hierarchy Project", workbookResult.model.project.name);
+        assertEquals(3, workbookResult.model.tasks.size());
+        assertEquals("1.2", workbookResult.model.tasks.get(2).outlineNumber);
+        assertEquals("xlsx", xlsxResult.kind);
+        assertEquals("Hierarchy Project", xlsxResult.model.project.name);
+        assertEquals(3, xlsxResult.model.tasks.size());
+        assertEquals("1.2", xlsxResult.model.tasks.get(2).outlineNumber);
+    }
+
     private CoreApiExternalImport.ExternalImportInput externalInput(CoreApiExternalImport.ExternalImportSource source, String mode,
             ProjectModel baseModel) {
         CoreApiExternalImport.ExternalImportInput input = new CoreApiExternalImport.ExternalImportInput();

@@ -9,10 +9,12 @@ import java.util.List;
 import jp.igapyon.mikuproject.model.ProjectModel;
 import jp.igapyon.mikuproject.msprojectxml.MsProjectXml;
 import jp.igapyon.mikuproject.projectxlsx.XlsxWorkbookLike;
+import jp.igapyon.mikuproject.wbssvg.WbsSvg.NativeSvgOptions;
 import jp.igapyon.mikuproject.wbssvg.WbsSvg.MonthlyCalendarSvgArchive;
 import jp.igapyon.mikuproject.wbsmarkdown.WbsMarkdown;
 import jp.igapyon.mikuproject.wbsmarkdown.WbsMarkdown.WbsMarkdownOptions;
 import jp.igapyon.mikuproject.wbsxlsx.WbsXlsx;
+import jp.igapyon.mikuproject.wbsxlsx.WbsXlsx.WbsExportOptions;
 
 public class CoreApiReportAdapters {
     private final CoreApiReport coreApiReport = new CoreApiReport();
@@ -34,11 +36,16 @@ public class CoreApiReportAdapters {
 
     public class AllApi {
         public ReportBundle export(ProjectModel model) {
-            return export(model, null);
+            return export(model, null, null, null);
         }
 
         public ReportBundle export(ProjectModel model, WbsMarkdownOptions options) {
-            List<CoreApiReport.ReportEntry> entries = coreApiReport.exportAllReportEntries(model, options);
+            return export(model, options, null, null);
+        }
+
+        public ReportBundle export(ProjectModel model, WbsMarkdownOptions markdownOptions, WbsExportOptions xlsxOptions,
+                NativeSvgOptions svgOptions) {
+            List<CoreApiReport.ReportEntry> entries = coreApiReport.exportAllReportEntries(model, markdownOptions, xlsxOptions, svgOptions);
             ReportBundle bundle = new ReportBundle();
             bundle.entries.addAll(entries);
             bundle.zipBytes = coreApiReport.packZipEntries(entries);
@@ -48,25 +55,45 @@ public class CoreApiReportAdapters {
 
     public class WbsXlsxApi {
         public XlsxWorkbookLike exportWorkbook(ProjectModel model) {
-            return wbsXlsx.exportWbsWorkbook(model);
+            return exportWorkbook(model, null);
+        }
+
+        public XlsxWorkbookLike exportWorkbook(ProjectModel model, WbsExportOptions options) {
+            return wbsXlsx.exportWbsWorkbook(model, options);
         }
 
         public byte[] exportBytes(ProjectModel model) {
-            return workbookXlsx.encodeWorkbook(wbsXlsx.exportWbsWorkbook(model));
+            return exportBytes(model, null);
+        }
+
+        public byte[] exportBytes(ProjectModel model, WbsExportOptions options) {
+            return workbookXlsx.encodeWorkbook(wbsXlsx.exportWbsWorkbook(model, options));
         }
     }
 
     public class SvgApi {
         public String exportDaily(ProjectModel model) {
-            return msProjectXml.exportNativeSvg(model);
+            return exportDaily(model, null);
+        }
+
+        public String exportDaily(ProjectModel model, NativeSvgOptions options) {
+            return msProjectXml.exportNativeSvg(model, options);
         }
 
         public String exportWeekly(ProjectModel model) {
-            return msProjectXml.exportWeeklyNativeSvg(model);
+            return exportWeekly(model, null);
+        }
+
+        public String exportWeekly(ProjectModel model, NativeSvgOptions options) {
+            return msProjectXml.exportWeeklyNativeSvg(model, options);
         }
 
         public MonthlyCalendarSvgArchive exportMonthlyCalendar(ProjectModel model) {
-            return msProjectXml.exportMonthlyWbsCalendarSvgArchive(model);
+            return exportMonthlyCalendar(model, null);
+        }
+
+        public MonthlyCalendarSvgArchive exportMonthlyCalendar(ProjectModel model, NativeSvgOptions options) {
+            return msProjectXml.exportMonthlyWbsCalendarSvgArchive(model, options);
         }
     }
 

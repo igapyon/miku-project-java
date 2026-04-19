@@ -90,6 +90,22 @@ public class ProjectXlsxTest {
         assertEquals(sample.assignments.size(), imported.assignments.size());
     }
 
+    @Test
+    public void roundTripsHierarchyFixtureThroughWorkbook() throws IOException {
+        ProjectXlsx projectXlsx = new ProjectXlsx();
+        ProjectModel model = new MsProjectXml().importFromXml(readVendorTestdata("hierarchy.xml"));
+
+        XlsxWorkbookLike workbook = projectXlsx.exportProjectWorkbook(model);
+        ProjectModel imported = projectXlsx.importProjectWorkbookAsProjectModel(workbook);
+
+        assertEquals("Hierarchy Project", imported.project.name);
+        assertEquals(3, imported.tasks.size());
+        assertEquals("Summary", imported.tasks.get(0).name);
+        assertEquals("1", imported.tasks.get(0).outlineNumber);
+        assertEquals("1.1", imported.tasks.get(1).outlineNumber);
+        assertEquals("1.2", imported.tasks.get(2).outlineNumber);
+    }
+
     private String readVendorTestdata(String fileName) throws IOException {
         byte[] bytes = Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", fileName));
         return new String(bytes, StandardCharsets.UTF_8);

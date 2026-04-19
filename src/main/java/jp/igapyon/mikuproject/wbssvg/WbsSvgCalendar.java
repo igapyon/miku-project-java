@@ -26,7 +26,19 @@ public class WbsSvgCalendar {
     }
 
     public WbsSvg.MonthlyCalendarSvgArchive exportMonthlyWbsCalendarSvgArchive(ProjectModel model) {
+        return exportMonthlyWbsCalendarSvgArchive(model, null);
+    }
+
+    public WbsSvg.MonthlyCalendarSvgArchive exportMonthlyWbsCalendarSvgArchive(ProjectModel model, WbsSvg.NativeSvgOptions options) {
+        WbsSvg.NativeSvgOptions actualOptions = options == null ? new WbsSvg.NativeSvgOptions() : options;
         Set<String> holidaySet = new LinkedHashSet<String>(dateband.collectWbsHolidayDates(model));
+        if (actualOptions.holidayDates != null) {
+            for (String holiday : actualOptions.holidayDates) {
+                if (holiday != null && holiday.length() >= 10) {
+                    holidaySet.add(holiday.substring(0, 10));
+                }
+            }
+        }
         Map<String, StringBuilder> monthBuffers = new LinkedHashMap<String, StringBuilder>();
         for (TaskModel task : render.exportableTasks(model)) {
             List<String> band = dateband.buildDateBand(task.start, task.finish);
@@ -40,9 +52,10 @@ public class WbsSvgCalendar {
                     buffer = new StringBuilder();
                     monthBuffers.put(monthKey, buffer);
                 }
-                if (buffer.indexOf(task.name) < 0) {
+                String label = render.resolveLabel(task, actualOptions);
+                if (buffer.indexOf(label) < 0) {
                     buffer.append("<text x=\"24\" y=\"").append(60 + render.countLines(buffer.toString()) * 20).append("\">")
-                            .append(render.escapeXml(task.name)).append("</text>");
+                            .append(render.escapeXml(label)).append("</text>");
                 }
             }
         }

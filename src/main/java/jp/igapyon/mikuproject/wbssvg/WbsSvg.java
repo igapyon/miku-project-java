@@ -5,26 +5,18 @@
 package jp.igapyon.mikuproject.wbssvg;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import jp.igapyon.mikuproject.model.ProjectModel;
-import jp.igapyon.mikuproject.model.TaskModel;
-import jp.igapyon.mikuproject.wbsdateband.WbsDateband;
 
 public class WbsSvg {
-    private final WbsDateband dateband = new WbsDateband();
-    private final WbsSvgRender render = new WbsSvgRender(dateband);
-    private final WbsSvgZip zip = new WbsSvgZip();
-    private final WbsSvgCalendar calendar = new WbsSvgCalendar(dateband, render, zip);
+    private final WbsSvgPublic publicApi = new WbsSvgPublic();
 
     public String exportNativeSvg(ProjectModel model) {
         return exportNativeSvg(model, null);
     }
 
     public String exportNativeSvg(ProjectModel model, NativeSvgOptions options) {
-        NativeSvgOptions actualOptions = options == null ? new NativeSvgOptions() : options;
-        return render.exportNativeSvg(model, actualOptions);
+        return publicApi.exportNativeSvg(model, options);
     }
 
     public String exportWeeklyNativeSvg(ProjectModel model) {
@@ -32,16 +24,19 @@ public class WbsSvg {
     }
 
     public String exportWeeklyNativeSvg(ProjectModel model, NativeSvgOptions options) {
-        NativeSvgOptions actualOptions = options == null ? new NativeSvgOptions() : options;
-        return render.exportWeeklyNativeSvg(model, actualOptions);
+        return publicApi.exportWeeklyNativeSvg(model, options);
     }
 
     public MonthlyCalendarSvgArchive exportMonthlyWbsCalendarSvgArchive(ProjectModel model) {
-        return calendar.exportMonthlyWbsCalendarSvgArchive(model);
+        return exportMonthlyWbsCalendarSvgArchive(model, null);
+    }
+
+    public MonthlyCalendarSvgArchive exportMonthlyWbsCalendarSvgArchive(ProjectModel model, NativeSvgOptions options) {
+        return publicApi.exportMonthlyWbsCalendarSvgArchive(model, options);
     }
 
     public List<String> collectWbsHolidayDates(ProjectModel model) {
-        return dateband.collectWbsHolidayDates(model);
+        return publicApi.collectWbsHolidayDates(model);
     }
 
     public static class NativeSvgOptions {
