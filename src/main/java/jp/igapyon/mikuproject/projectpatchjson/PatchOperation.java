@@ -4,7 +4,9 @@
  */
 package jp.igapyon.mikuproject.projectpatchjson;
 
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class PatchOperation {
     public String op;
@@ -40,4 +42,5 @@ public class PatchOperation {
     public String standardRate;
     public String overtimeRate;
     public Double costPerUse;
+    public Set<String> sourceKeys = new LinkedHashSet<String>();
 }

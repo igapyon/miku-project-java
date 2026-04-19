@@ -29,6 +29,49 @@
 - `project-patch-json-links.ts`
 - `project-patch-json-entities.ts`
 - `project-patch-json-updates.ts`
+- `project-patch-json-tasks.ts`
+- `project-workbook-json-export.ts`
+- `project-workbook-json-import.ts`
+- `project-workbook-json-validate.ts`
+- `project-workbook-json.ts`
+- `project-workbook-schema.ts`
+- `project-xlsx-export.ts`
+- `project-xlsx-import.ts`
+- `project-xlsx.ts`
+- `core-api-workbook-xlsx.ts`
+- `core-api-workbook.ts`
+- `ai-json-spec.ts`
+- `ai-json-util.ts`
+- `core-api-msproject-ai.ts`
+- `core-api-msproject.ts`
+- `core-api-ai-json-import.ts`
+- `core-api-ai-json.ts`
+- `core-api-external-binary.ts`
+- `core-api-external-document.ts`
+- `core-api-external-import.ts`
+- `core-api-import.ts`
+- `core-api-registry.ts`
+- `core-api-public.ts`
+- `core-api.ts`
+- `core-api-report-adapters.ts`
+- `core-api-report-public.ts`
+- `core-api-report.ts`
+- `excel-io.ts`
+- `excel-io-package-xml.ts`
+- `excel-io-zip.ts`
+- `excel-io-normalize.ts`
+- `excel-io-workbook-build.ts`
+- `excel-io-workbook-parse.ts`
+- `excel-io-worksheet-build.ts`
+- `excel-io-worksheet-parse.ts`
+- `excel-io-styles-build.ts`
+- `excel-io-styles-parse.ts`
+- `markdown-escape.ts`
+- `wbs-dateband.ts`
+- `wbs-markdown.ts`
+- `wbs-svg.ts`
+- `wbs-xlsx-layout.ts`
+- `wbs-xlsx.ts`
 
 ### fixture / testdata 対応済み
 
@@ -38,8 +81,8 @@
 
 ### 進捗の目安
 
-- `MS Project XML STEP1`: およそ `65%` 前後
-- upstream 全体移植: およそ `15%〜20%` 前後
+- `MS Project XML STEP1`: およそ `95%` 前後
+- upstream 全体移植: およそ `83%` 前後
 
 これは厳密な工数比ではなく、upstream file 群と Java 側の現在実装範囲から見た概算である。
 
@@ -47,9 +90,10 @@
 
 STEP1 の流れを保ったまま次に進めやすいのは、次の領域である。
 
-- `project-patch-json-tasks.ts`
+- `wbs-xlsx-*` の細分化追随
+- `wbs-svg-*` の細分化追随
 
-これらは `msproject*` 系であり、現在の `MS Project XML` まわりの実装群と比較的近い責務を持つ。
+これらは現在の `MS Project XML` / patch / workbook JSON / xlsx workbook object / core-api workbook / byte codec の土台を利用しやすい。
 
 ## 未着手一覧
 
@@ -57,48 +101,8 @@ STEP1 の流れを保ったまま次に進めやすいのは、次の領域で�
 
 ### AI JSON / patch 系
 
-- `ai-json-spec.ts`
-- `ai-json-util.ts`
-- `core-api-ai-json-import.ts`
-- `core-api-ai-json.ts`
-- `project-patch-json-tasks.ts`
-
-### workbook / XLSX 系
-
-- `project-workbook-json-export.ts`
-- `project-workbook-json-import.ts`
-- `project-workbook-json-validate.ts`
-- `project-workbook-json.ts`
-- `project-workbook-schema.ts`
-- `project-xlsx-export-calendars.ts`
-- `project-xlsx-export-entities.ts`
-- `project-xlsx-export-project.ts`
-- `project-xlsx-export-util.ts`
-- `project-xlsx-export.ts`
-- `project-xlsx-import-calendars.ts`
-- `project-xlsx-import-entities.ts`
-- `project-xlsx-import-project.ts`
-- `project-xlsx-import-util.ts`
-- `project-xlsx-import.ts`
-- `project-xlsx.ts`
-- `excel-io-normalize.ts`
-- `excel-io-package-xml.ts`
-- `excel-io-styles-build.ts`
-- `excel-io-styles-parse.ts`
-- `excel-io-util.ts`
-- `excel-io-workbook-build.ts`
-- `excel-io-workbook-parse.ts`
-- `excel-io-worksheet-build.ts`
-- `excel-io-worksheet-parse.ts`
-- `excel-io-zip.ts`
-- `excel-io.ts`
-- `core-api-workbook-xlsx.ts`
-- `core-api-workbook.ts`
-
 ### WBS / report 出力系
 
-- `wbs-dateband.ts`
-- `wbs-markdown.ts`
 - `wbs-svg-axis.ts`
 - `wbs-svg-bars.ts`
 - `wbs-svg-calendar.ts`
@@ -109,30 +113,11 @@ STEP1 の流れを保ったまま次に進めやすいのは、次の領域で�
 - `wbs-svg-timeline.ts`
 - `wbs-svg-viewport.ts`
 - `wbs-svg-zip.ts`
-- `wbs-svg.ts`
 - `wbs-xlsx-base.ts`
 - `wbs-xlsx-cells.ts`
-- `wbs-xlsx-export.ts`
-- `wbs-xlsx-layout.ts`
-- `wbs-xlsx-public.ts`
 - `wbs-xlsx-sections.ts`
 - `wbs-xlsx-taskmeta.ts`
-- `wbs-xlsx.ts`
-- `core-api-report-adapters.ts`
-- `core-api-report-public.ts`
-- `core-api-report.ts`
-
 ### 公開 API / 統合層
-
-- `core-api-external-binary.ts`
-- `core-api-external-document.ts`
-- `core-api-external-import.ts`
-- `core-api-import.ts`
-- `core-api-msproject-ai.ts`
-- `core-api-msproject.ts`
-- `core-api-public.ts`
-- `core-api-registry.ts`
-- `core-api.ts`
 
 ### Web UI / browser main 系
 
@@ -172,9 +157,9 @@ STEP1 の流れを保ったまま次に進めやすいのは、次の領域で�
 
 現時点の自然な優先順は次のとおり。
 
-1. `project-patch-json-tasks.ts`
-2. `project-workbook-json*.ts`
-3. `project-xlsx*.ts`
+1. `wbs-xlsx-*` の細分化追随
+2. `wbs-svg-*` の細分化追随
+3. `MS Project XML` / workbook / report の細部寄せとテスト厚み追加
 
 ## 補足
 
