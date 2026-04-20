@@ -22,8 +22,12 @@ import java.util.zip.ZipInputStream;
 
 import org.junit.jupiter.api.Test;
 
+import jp.igapyon.mikuproject.coreapi.CoreApiWorkbookXlsx;
 import jp.igapyon.mikuproject.msprojectxml.MsProjectSamples;
 import jp.igapyon.mikuproject.projectworkbookjson.WorkbookJsonDocument;
+import jp.igapyon.mikuproject.projectxlsx.XlsxRowLike;
+import jp.igapyon.mikuproject.projectxlsx.XlsxSheetLike;
+import jp.igapyon.mikuproject.projectxlsx.XlsxWorkbookLike;
 
 public class MikuprojectCliTest {
     @Test
@@ -366,6 +370,37 @@ public class MikuprojectCliTest {
             assertTrue(text(patchOut).contains("changes="));
             assertTrue(Files.readAllBytes(importedXmlFile).length > 0);
             assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("Workbook Imported Project"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<Type>2</Type>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<Priority>500</Priority>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<ConstraintType>4</ConstraintType>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<ConstraintDate>2026-03-17T09:00:00</ConstraintDate>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<Deadline>2026-03-18T18:00:00</Deadline>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<Type>1</Type>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<Initials>MU</Initials>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<StandardRate>1200/h</StandardRate>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<OvertimeRate>1800/h</OvertimeRate>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<CostPerUse>500.0</CostPerUse>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<Work>PT8H0M0S</Work>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<ActualWork>PT4H0M0S</ActualWork>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<RemainingWork>PT4H0M0S</RemainingWork>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<Cost>1000.0</Cost>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<ActualCost>500.0</ActualCost>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<RemainingCost>500.0</RemainingCost>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<PercentWorkComplete>50</PercentWorkComplete>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<WorkGroup>0</WorkGroup>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<StandardRateFormat>2</StandardRateFormat>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<OvertimeRateFormat>2</OvertimeRateFormat>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<StartVariance>PT0H30M0S</StartVariance>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<FinishVariance>PT1H0M0S</FinishVariance>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<Delay>PT0H15M0S</Delay>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<Milestone>1</Milestone>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<WorkContour>1</WorkContour>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<ActualWork>PT4H0M0S</ActualWork>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<RemainingWork>PT4H0M0S</RemainingWork>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<ActualCost>300.0</ActualCost>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<RemainingCost>200.0</RemainingCost>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<OvertimeWork>PT1H0M0S</OvertimeWork>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<ActualOvertimeWork>PT0H30M0S</ActualOvertimeWork>"));
             assertTrue(Files.readString(patchedXmlFile, StandardCharsets.UTF_8).contains("Patched Project"));
         } finally {
             Files.deleteIfExists(baseXmlFile);
@@ -417,6 +452,26 @@ public class MikuprojectCliTest {
             assertTrue(text(xlsxOut).contains("kind=xlsx"));
             assertTrue(Files.readString(aiOutputXmlFile, StandardCharsets.UTF_8).contains("AI JSON Imported Project"));
             assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("Workbook Imported Project"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<Type>2</Type>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<Priority>500</Priority>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<ConstraintType>4</ConstraintType>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<ConstraintDate>2026-03-17T09:00:00</ConstraintDate>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<Deadline>2026-03-18T18:00:00</Deadline>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<Type>1</Type>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<Initials>MU</Initials>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<StandardRate>1200/h</StandardRate>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<Work>PT8H0M0S</Work>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<Cost>1000.0</Cost>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<PercentWorkComplete>50</PercentWorkComplete>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<WorkGroup>0</WorkGroup>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<StandardRateFormat>2</StandardRateFormat>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<OvertimeRateFormat>2</OvertimeRateFormat>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<StartVariance>PT0H30M0S</StartVariance>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<FinishVariance>PT1H0M0S</FinishVariance>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<Delay>PT0H15M0S</Delay>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<Milestone>1</Milestone>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<WorkContour>1</WorkContour>"));
+            assertTrue(Files.readString(externalWorkbookXmlFile, StandardCharsets.UTF_8).contains("<ActualCost>300.0</ActualCost>"));
             assertTrue(Files.readString(externalPatchXmlFile, StandardCharsets.UTF_8).contains("Patched Project"));
             assertTrue(Files.readString(externalXlsxXmlFile, StandardCharsets.UTF_8).contains("mikuproject開発"));
         } finally {
@@ -509,6 +564,7 @@ public class MikuprojectCliTest {
 
             assertEquals(0, cli.run(new String[] { "export-xlsx", baseXmlFile.toString(), workbookBytesFile.toString() }, stream(exportOut),
                     stream(new ByteArrayOutputStream())));
+            writeExtendedWorkbookValues(workbookBytesFile);
             assertEquals(0, cli.run(new String[] { "import-xlsx", workbookBytesFile.toString(), importedXmlFile.toString() }, stream(importOut),
                     stream(new ByteArrayOutputStream())));
             assertEquals(0, cli.run(new String[] { "merge-xlsx", baseXmlFile.toString(), workbookBytesFile.toString(), mergedXmlFile.toString() },
@@ -520,6 +576,37 @@ public class MikuprojectCliTest {
             assertTrue(Files.size(workbookBytesFile) > 0);
             assertTrue(Files.readString(importedXmlFile, StandardCharsets.UTF_8).contains("mikuproject開発"));
             assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("mikuproject開発"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<Type>2</Type>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<Priority>500</Priority>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<ConstraintType>4</ConstraintType>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<ConstraintDate>2026-03-17T09:00:00</ConstraintDate>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<Deadline>2026-03-18T18:00:00</Deadline>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<Type>1</Type>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<Initials>MU</Initials>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<StandardRate>1200/h</StandardRate>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<OvertimeRate>1800/h</OvertimeRate>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<CostPerUse>500.0</CostPerUse>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<Work>PT8H0M0S</Work>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<ActualWork>PT4H0M0S</ActualWork>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<RemainingWork>PT4H0M0S</RemainingWork>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<Cost>1000.0</Cost>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<ActualCost>500.0</ActualCost>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<RemainingCost>500.0</RemainingCost>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<PercentWorkComplete>50</PercentWorkComplete>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<WorkGroup>0</WorkGroup>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<StandardRateFormat>2</StandardRateFormat>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<OvertimeRateFormat>2</OvertimeRateFormat>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<StartVariance>PT0H30M0S</StartVariance>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<FinishVariance>PT1H0M0S</FinishVariance>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<Delay>PT0H15M0S</Delay>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<Milestone>1</Milestone>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<WorkContour>1</WorkContour>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<ActualWork>PT4H0M0S</ActualWork>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<RemainingWork>PT4H0M0S</RemainingWork>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<ActualCost>300.0</ActualCost>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<RemainingCost>200.0</RemainingCost>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<OvertimeWork>PT1H0M0S</OvertimeWork>"));
+            assertTrue(Files.readString(mergedXmlFile, StandardCharsets.UTF_8).contains("<ActualOvertimeWork>PT0H30M0S</ActualOvertimeWork>"));
         } finally {
             Files.deleteIfExists(baseXmlFile);
             Files.deleteIfExists(workbookBytesFile);
@@ -580,8 +667,8 @@ public class MikuprojectCliTest {
         projectRows.add(nameRow);
         List<Map<String, Object>> taskRows = document.ensureSheet("Tasks");
         Map<String, Object> taskRow = new LinkedHashMap<String, Object>();
-        taskRow.put("UID", "1");
-        taskRow.put("ID", "1");
+        taskRow.put("UID", "draft-120");
+        taskRow.put("ID", "3");
         taskRow.put("Name", "Imported Task");
         taskRow.put("OutlineLevel", Integer.valueOf(1));
         taskRow.put("OutlineNumber", "1");
@@ -589,8 +676,117 @@ public class MikuprojectCliTest {
         taskRow.put("Start", "2026-03-16");
         taskRow.put("Finish", "2026-03-17");
         taskRow.put("Duration", "P2D");
+        taskRow.put("Type", Integer.valueOf(2));
+        taskRow.put("Priority", Integer.valueOf(500));
+        taskRow.put("ConstraintType", Integer.valueOf(4));
+        taskRow.put("ConstraintDate", "2026-03-17 09:00:00");
+        taskRow.put("Deadline", "2026-03-18 18:00:00");
         taskRows.add(taskRow);
+        List<Map<String, Object>> resourceRows = document.ensureSheet("Resources");
+        Map<String, Object> resourceRow = new LinkedHashMap<String, Object>();
+        resourceRow.put("UID", "res-1");
+        resourceRow.put("ID", "1");
+        resourceRow.put("Name", "Mikuku");
+        resourceRow.put("Type", Integer.valueOf(1));
+        resourceRow.put("Initials", "MU");
+        resourceRow.put("StandardRate", "1200/h");
+        resourceRow.put("OvertimeRate", "1800/h");
+        resourceRow.put("CostPerUse", Double.valueOf(500));
+        resourceRow.put("Work", "PT8H0M0S");
+        resourceRow.put("ActualWork", "PT4H0M0S");
+        resourceRow.put("RemainingWork", "PT4H0M0S");
+        resourceRow.put("Cost", Double.valueOf(1000));
+        resourceRow.put("ActualCost", Double.valueOf(500));
+        resourceRow.put("RemainingCost", Double.valueOf(500));
+        resourceRow.put("PercentWorkComplete", Integer.valueOf(50));
+        resourceRow.put("WorkGroup", Integer.valueOf(0));
+        resourceRow.put("StandardRateFormat", Integer.valueOf(2));
+        resourceRow.put("OvertimeRateFormat", Integer.valueOf(2));
+        resourceRows.add(resourceRow);
+        List<Map<String, Object>> assignmentRows = document.ensureSheet("Assignments");
+        Map<String, Object> assignmentRow = new LinkedHashMap<String, Object>();
+        assignmentRow.put("UID", "asg-1");
+        assignmentRow.put("TaskUID", "draft-120");
+        assignmentRow.put("ResourceUID", "res-1");
+        assignmentRow.put("Start", "2026-03-16 09:00:00");
+        assignmentRow.put("Finish", "2026-03-16 18:00:00");
+        assignmentRow.put("StartVariance", "PT0H30M0S");
+        assignmentRow.put("FinishVariance", "PT1H0M0S");
+        assignmentRow.put("Delay", "PT0H15M0S");
+        assignmentRow.put("Milestone", "○");
+        assignmentRow.put("WorkContour", Integer.valueOf(1));
+        assignmentRow.put("Cost", Double.valueOf(1000));
+        assignmentRow.put("ActualWork", "PT4H0M0S");
+        assignmentRow.put("RemainingWork", "PT4H0M0S");
+        assignmentRow.put("ActualCost", Double.valueOf(300));
+        assignmentRow.put("RemainingCost", Double.valueOf(200));
+        assignmentRow.put("OvertimeWork", "PT1H0M0S");
+        assignmentRow.put("ActualOvertimeWork", "PT0H30M0S");
+        assignmentRows.add(assignmentRow);
         return toJson(document).getBytes(StandardCharsets.UTF_8);
+    }
+
+    private void writeExtendedWorkbookValues(Path workbookBytesFile) throws IOException {
+        CoreApiWorkbookXlsx workbookApi = new CoreApiWorkbookXlsx();
+        XlsxWorkbookLike workbook = workbookApi.decodeWorkbook(Files.readAllBytes(workbookBytesFile));
+        XlsxRowLike taskRow = findRowByUid(findSheet(workbook, "Tasks"), "draft-110");
+        XlsxRowLike resourceRow = findRowByUid(findSheet(workbook, "Resources"), "res-1");
+        XlsxRowLike assignmentRow = findRowByUid(findSheet(workbook, "Assignments"), "asg-1");
+
+        taskRow.cells.get(14).value = "2";
+        taskRow.cells.get(15).value = "500";
+        taskRow.cells.get(17).value = "4";
+        taskRow.cells.get(18).value = "2026-03-17 09:00:00";
+        taskRow.cells.get(19).value = "2026-03-18 18:00:00";
+        resourceRow.cells.get(3).value = "1";
+        resourceRow.cells.get(4).value = "MU";
+        resourceRow.cells.get(8).value = "1200/h";
+        resourceRow.cells.get(9).value = "1800/h";
+        resourceRow.cells.get(10).value = "500";
+        resourceRow.cells.get(11).value = "PT8H0M0S";
+        resourceRow.cells.get(12).value = "PT4H0M0S";
+        resourceRow.cells.get(13).value = "PT4H0M0S";
+        resourceRow.cells.get(14).value = "1000";
+        resourceRow.cells.get(15).value = "500";
+        resourceRow.cells.get(16).value = "500";
+        resourceRow.cells.get(17).value = "50";
+        resourceRow.cells.get(18).value = "0";
+        resourceRow.cells.get(19).value = "2";
+        resourceRow.cells.get(20).value = "2";
+        assignmentRow.cells.get(5).value = "2026-03-16 09:00:00";
+        assignmentRow.cells.get(6).value = "2026-03-16 18:00:00";
+        assignmentRow.cells.get(7).value = "PT0H30M0S";
+        assignmentRow.cells.get(8).value = "PT1H0M0S";
+        assignmentRow.cells.get(9).value = "PT0H15M0S";
+        assignmentRow.cells.get(10).value = "○";
+        assignmentRow.cells.get(11).value = "1";
+        assignmentRow.cells.get(14).value = "1000";
+        assignmentRow.cells.get(15).value = "PT4H0M0S";
+        assignmentRow.cells.get(16).value = "PT4H0M0S";
+        assignmentRow.cells.get(17).value = "300";
+        assignmentRow.cells.get(18).value = "200";
+        assignmentRow.cells.get(19).value = "PT1H0M0S";
+        assignmentRow.cells.get(20).value = "PT0H30M0S";
+        Files.write(workbookBytesFile, workbookApi.encodeWorkbook(workbook));
+    }
+
+    private XlsxSheetLike findSheet(XlsxWorkbookLike workbook, String name) {
+        for (XlsxSheetLike sheet : workbook.sheets) {
+            if (name.equals(sheet.name)) {
+                return sheet;
+            }
+        }
+        return null;
+    }
+
+    private XlsxRowLike findRowByUid(XlsxSheetLike sheet, String uid) {
+        for (int index = 3; index < sheet.rows.size(); index += 1) {
+            XlsxRowLike row = sheet.rows.get(index);
+            if (uid.equals(String.valueOf(row.cells.get(0).value))) {
+                return row;
+            }
+        }
+        return null;
     }
 
     private byte[] patchJsonText() {

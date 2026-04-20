@@ -9,8 +9,11 @@ This repository is a Java 1.8 based port of `mikuproject`.
 The Java port does not try to redesign the upstream project into a Java-first architecture at the initial stage.
 The primary goal is to preserve the upstream Node.js structure, naming, and intent closely enough that upstream changes remain traceable.
 
-The long-term goal is to port the full Node.js feature set, including browser/Web UI related behavior, into the Java workspace in stages.
-STEP1 is treated as an initial slice, not as the final functional boundary.
+The Java port targets the CLI-oriented feature set that can run in the Java runtime.
+Browser/Web UI related behavior is kept out of scope for this repository.
+
+In other words, the port is intended to be a straight conversion first.
+Java-specific redesign should be treated as a later step, after the corresponding upstream behavior has been carried over and remains traceable.
 
 Current STEP1 scope is focused on:
 
@@ -18,6 +21,23 @@ Current STEP1 scope is focused on:
 - `ProjectModel` based internal normalization
 - validation around `Project / Tasks / Resources / Assignments / Calendars`
 - upstream-aware automated tests using JUnit Jupiter
+
+Current status should be read in the following 2 buckets:
+
+- implemented: Java-side classes and behavior already exist
+- not yet started: target scope is known, but migration work has not begun
+
+Current status is tracked in 2 streams:
+
+- `core`: `MS Project XML`, `ProjectModel`, workbook, patch / AI JSON, CSV / Mermaid, validation
+- `CLI / report`: CLI entrypoints, batch commands, runtime packaging, WBS Markdown / SVG / XLSX and report bundle style outputs
+
+Current progress should be read as:
+
+- `core`: roughly `98%` in the current STEP1 target, based on implemented upstream file coverage
+- `CLI / report`: major commands and report outputs exist, but option / batch整理 and progress measurement still need follow-up
+
+This repository keeps `README.md` and `docs/remaining-migration-items.md` aligned on these scope and progress assumptions.
 
 ## Upstream Policy
 

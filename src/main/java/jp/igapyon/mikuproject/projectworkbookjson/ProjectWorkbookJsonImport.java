@@ -108,8 +108,17 @@ public class ProjectWorkbookJsonImport {
                     task.summary, booleanValue(row.get("Summary")), task.summary);
             task.critical = applyNullableBooleanChange(changes, "tasks", task.uid, defaultLabel(task.name, task.uid), "Critical",
                     task.critical, booleanValue(row.get("Critical")));
+            task.type = applyIntegerChange(changes, "tasks", task.uid, defaultLabel(task.name, task.uid), "Type", task.type,
+                    integerValue(row.get("Type")));
+            task.priority = applyIntegerChange(changes, "tasks", task.uid, defaultLabel(task.name, task.uid), "Priority",
+                    task.priority, integerValue(row.get("Priority")));
             task.calendarUID = applyStringChange(changes, "tasks", task.uid, defaultLabel(task.name, task.uid), "CalendarUID",
                     task.calendarUID, stringValue(row.get("CalendarUID")), task.calendarUID);
+            task.constraintType = applyIntegerChange(changes, "tasks", task.uid, defaultLabel(task.name, task.uid), "ConstraintType",
+                    task.constraintType, integerValue(row.get("ConstraintType")));
+            task.constraintDate = applyTaskDateChange(changes, task, "ConstraintDate", task.constraintDate, row.get("ConstraintDate"),
+                    "start");
+            task.deadline = applyTaskDateChange(changes, task, "Deadline", task.deadline, row.get("Deadline"), "finish");
             task.predecessors = parsePredecessors(row.get("Predecessors"), task.predecessors);
             task.notes = applyStringChange(changes, "tasks", task.uid, defaultLabel(task.name, task.uid), "Notes", task.notes,
                     stringValue(row.get("Notes")), task.notes);
@@ -124,12 +133,42 @@ public class ProjectWorkbookJsonImport {
             }
             resource.name = applyStringChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid), "Name",
                     resource.name, stringValue(row.get("Name")), resource.name);
+            resource.type = applyIntegerChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid), "Type",
+                    resource.type, integerValue(row.get("Type")));
+            resource.initials = applyStringChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid),
+                    "Initials", resource.initials, stringValue(row.get("Initials")), resource.initials);
             resource.group = applyStringChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid), "Group",
                     resource.group, stringValue(row.get("Group")), resource.group);
             resource.maxUnits = applyDoubleChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid),
                     "MaxUnits", resource.maxUnits, doubleValue(row.get("MaxUnits")));
             resource.calendarUID = applyStringChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid),
                     "CalendarUID", resource.calendarUID, stringValue(row.get("CalendarUID")), resource.calendarUID);
+            resource.standardRate = applyStringChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid),
+                    "StandardRate", resource.standardRate, stringValue(row.get("StandardRate")), resource.standardRate);
+            resource.overtimeRate = applyStringChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid),
+                    "OvertimeRate", resource.overtimeRate, stringValue(row.get("OvertimeRate")), resource.overtimeRate);
+            resource.costPerUse = applyDoubleChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid),
+                    "CostPerUse", resource.costPerUse, doubleValue(row.get("CostPerUse")));
+            resource.work = applyStringChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid), "Work",
+                    resource.work, stringValue(row.get("Work")), resource.work);
+            resource.actualWork = applyStringChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid),
+                    "ActualWork", resource.actualWork, stringValue(row.get("ActualWork")), resource.actualWork);
+            resource.remainingWork = applyStringChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid),
+                    "RemainingWork", resource.remainingWork, stringValue(row.get("RemainingWork")), resource.remainingWork);
+            resource.cost = applyDoubleChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid), "Cost",
+                    resource.cost, doubleValue(row.get("Cost")));
+            resource.actualCost = applyDoubleChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid),
+                    "ActualCost", resource.actualCost, doubleValue(row.get("ActualCost")));
+            resource.remainingCost = applyDoubleChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid),
+                    "RemainingCost", resource.remainingCost, doubleValue(row.get("RemainingCost")));
+            resource.percentWorkComplete = applyIntegerChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid),
+                    "PercentWorkComplete", resource.percentWorkComplete, integerValue(row.get("PercentWorkComplete")));
+            resource.workGroup = applyIntegerChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid),
+                    "WorkGroup", resource.workGroup, integerValue(row.get("WorkGroup")));
+            resource.standardRateFormat = applyIntegerChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid),
+                    "StandardRateFormat", resource.standardRateFormat, integerValue(row.get("StandardRateFormat")));
+            resource.overtimeRateFormat = applyIntegerChange(changes, "resources", resource.uid, defaultLabel(resource.name, resource.uid),
+                    "OvertimeRateFormat", resource.overtimeRateFormat, integerValue(row.get("OvertimeRateFormat")));
         }
     }
 
@@ -139,10 +178,37 @@ public class ProjectWorkbookJsonImport {
             if (assignment == null) {
                 continue;
             }
+            assignment.start = applyAssignmentDateChange(changes, assignment, "Start", assignment.start, row.get("Start"), "start");
+            assignment.finish = applyAssignmentDateChange(changes, assignment, "Finish", assignment.finish, row.get("Finish"), "finish");
+            assignment.startVariance = applyStringChange(changes, "assignments", assignment.uid, assignment.uid, "StartVariance",
+                    assignment.startVariance, stringValue(row.get("StartVariance")), assignment.startVariance);
+            assignment.finishVariance = applyStringChange(changes, "assignments", assignment.uid, assignment.uid, "FinishVariance",
+                    assignment.finishVariance, stringValue(row.get("FinishVariance")), assignment.finishVariance);
+            assignment.delay = applyStringChange(changes, "assignments", assignment.uid, assignment.uid, "Delay", assignment.delay,
+                    stringValue(row.get("Delay")), assignment.delay);
+            assignment.milestone = applyNullableBooleanChange(changes, "assignments", assignment.uid, assignment.uid, "Milestone",
+                    assignment.milestone, booleanValue(row.get("Milestone")));
+            assignment.workContour = applyIntegerChange(changes, "assignments", assignment.uid, assignment.uid, "WorkContour",
+                    assignment.workContour, integerValue(row.get("WorkContour")));
             assignment.units = applyDoubleChange(changes, "assignments", assignment.uid, assignment.uid, "Units", assignment.units,
                     doubleValue(row.get("Units")));
             assignment.work = applyStringChange(changes, "assignments", assignment.uid, assignment.uid, "Work", assignment.work,
                     stringValue(row.get("Work")), assignment.work);
+            assignment.cost = applyDoubleChange(changes, "assignments", assignment.uid, assignment.uid, "Cost", assignment.cost,
+                    doubleValue(row.get("Cost")));
+            assignment.actualWork = applyStringChange(changes, "assignments", assignment.uid, assignment.uid, "ActualWork",
+                    assignment.actualWork, stringValue(row.get("ActualWork")), assignment.actualWork);
+            assignment.remainingWork = applyStringChange(changes, "assignments", assignment.uid, assignment.uid, "RemainingWork",
+                    assignment.remainingWork, stringValue(row.get("RemainingWork")), assignment.remainingWork);
+            assignment.actualCost = applyDoubleChange(changes, "assignments", assignment.uid, assignment.uid, "ActualCost",
+                    assignment.actualCost, doubleValue(row.get("ActualCost")));
+            assignment.remainingCost = applyDoubleChange(changes, "assignments", assignment.uid, assignment.uid, "RemainingCost",
+                    assignment.remainingCost, doubleValue(row.get("RemainingCost")));
+            assignment.overtimeWork = applyStringChange(changes, "assignments", assignment.uid, assignment.uid, "OvertimeWork",
+                    assignment.overtimeWork, stringValue(row.get("OvertimeWork")), assignment.overtimeWork);
+            assignment.actualOvertimeWork = applyStringChange(changes, "assignments", assignment.uid, assignment.uid,
+                    "ActualOvertimeWork", assignment.actualOvertimeWork, stringValue(row.get("ActualOvertimeWork")),
+                    assignment.actualOvertimeWork);
             assignment.percentWorkComplete = applyIntegerChange(changes, "assignments", assignment.uid, assignment.uid,
                     "PercentWorkComplete", assignment.percentWorkComplete, integerValue(row.get("PercentWorkComplete")));
         }
@@ -219,7 +285,12 @@ public class ProjectWorkbookJsonImport {
             Boolean summary = booleanValue(row.get("Summary"));
             task.summary = summary != null ? summary.booleanValue() : false;
             task.critical = booleanValue(row.get("Critical"));
+            task.type = integerValue(row.get("Type"));
+            task.priority = integerValue(row.get("Priority"));
             task.calendarUID = stringValue(row.get("CalendarUID"));
+            task.constraintType = integerValue(row.get("ConstraintType"));
+            task.constraintDate = normalizeDateTime(row.get("ConstraintDate"), "start");
+            task.deadline = normalizeDateTime(row.get("Deadline"), "finish");
             task.predecessors = parsePredecessors(row.get("Predecessors"), new ArrayList<PredecessorModel>());
             task.notes = stringValue(row.get("Notes"));
             model.tasks.add(task);
@@ -243,6 +314,13 @@ public class ProjectWorkbookJsonImport {
             resource.work = stringValue(row.get("Work"));
             resource.actualWork = stringValue(row.get("ActualWork"));
             resource.remainingWork = stringValue(row.get("RemainingWork"));
+            resource.cost = doubleValue(row.get("Cost"));
+            resource.actualCost = doubleValue(row.get("ActualCost"));
+            resource.remainingCost = doubleValue(row.get("RemainingCost"));
+            resource.percentWorkComplete = integerValue(row.get("PercentWorkComplete"));
+            resource.workGroup = integerValue(row.get("WorkGroup"));
+            resource.standardRateFormat = integerValue(row.get("StandardRateFormat"));
+            resource.overtimeRateFormat = integerValue(row.get("OvertimeRateFormat"));
             model.resources.add(resource);
         }
     }
@@ -255,10 +333,20 @@ public class ProjectWorkbookJsonImport {
             assignment.resourceUid = stringValue(row.get("ResourceUID"));
             assignment.start = normalizeDateTime(row.get("Start"), "start");
             assignment.finish = normalizeDateTime(row.get("Finish"), "finish");
+            assignment.startVariance = stringValue(row.get("StartVariance"));
+            assignment.finishVariance = stringValue(row.get("FinishVariance"));
+            assignment.delay = stringValue(row.get("Delay"));
+            assignment.milestone = booleanValue(row.get("Milestone"));
+            assignment.workContour = integerValue(row.get("WorkContour"));
             assignment.units = doubleValue(row.get("Units"));
             assignment.work = stringValue(row.get("Work"));
+            assignment.cost = doubleValue(row.get("Cost"));
             assignment.actualWork = stringValue(row.get("ActualWork"));
             assignment.remainingWork = stringValue(row.get("RemainingWork"));
+            assignment.actualCost = doubleValue(row.get("ActualCost"));
+            assignment.remainingCost = doubleValue(row.get("RemainingCost"));
+            assignment.overtimeWork = stringValue(row.get("OvertimeWork"));
+            assignment.actualOvertimeWork = stringValue(row.get("ActualOvertimeWork"));
             assignment.percentWorkComplete = integerValue(row.get("PercentWorkComplete"));
             model.assignments.add(assignment);
         }
@@ -324,6 +412,16 @@ public class ProjectWorkbookJsonImport {
         String normalized = normalizeDateTime(rawValue, kind);
         if (normalized != null && !equalsText(before, normalized)) {
             changes.add(change("tasks", task.uid, defaultLabel(task.name, task.uid), field, before, normalized));
+            return normalized;
+        }
+        return before;
+    }
+
+    private String applyAssignmentDateChange(List<ImportChange> changes, jp.igapyon.mikuproject.model.AssignmentModel assignment,
+            String field, String before, Object rawValue, String kind) {
+        String normalized = normalizeDateTime(rawValue, kind);
+        if (normalized != null && !equalsText(before, normalized)) {
+            changes.add(change("assignments", assignment.uid, assignment.uid, field, before, normalized));
             return normalized;
         }
         return before;

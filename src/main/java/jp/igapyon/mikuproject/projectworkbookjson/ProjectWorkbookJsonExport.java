@@ -56,7 +56,12 @@ public class ProjectWorkbookJsonExport {
             row.put("Milestone", formatBooleanSymbol(task.milestone));
             row.put("Summary", formatBooleanSymbol(task.summary));
             row.put("Critical", task.critical == null ? null : formatBooleanSymbol(task.critical.booleanValue()));
+            row.put("Type", task.type);
+            row.put("Priority", task.priority);
             row.put("CalendarUID", task.calendarUID);
+            row.put("ConstraintType", task.constraintType);
+            row.put("ConstraintDate", task.constraintDate);
+            row.put("Deadline", task.deadline);
             row.put("Predecessors", formatPredecessors(task));
             row.put("Notes", task.notes);
             document.ensureSheet("Tasks").add(row);
@@ -80,6 +85,13 @@ public class ProjectWorkbookJsonExport {
             row.put("Work", resource.work);
             row.put("ActualWork", resource.actualWork);
             row.put("RemainingWork", resource.remainingWork);
+            row.put("Cost", resource.cost);
+            row.put("ActualCost", resource.actualCost);
+            row.put("RemainingCost", resource.remainingCost);
+            row.put("PercentWorkComplete", resource.percentWorkComplete);
+            row.put("WorkGroup", resource.workGroup);
+            row.put("StandardRateFormat", resource.standardRateFormat);
+            row.put("OvertimeRateFormat", resource.overtimeRateFormat);
             document.ensureSheet("Resources").add(row);
         }
     }
@@ -94,10 +106,20 @@ public class ProjectWorkbookJsonExport {
             row.put("ResourceName", resolveResourceName(model, assignment.resourceUid));
             row.put("Start", assignment.start);
             row.put("Finish", assignment.finish);
+            row.put("StartVariance", assignment.startVariance);
+            row.put("FinishVariance", assignment.finishVariance);
+            row.put("Delay", assignment.delay);
+            row.put("Milestone", assignment.milestone == null ? null : formatBooleanSymbol(assignment.milestone.booleanValue()));
+            row.put("WorkContour", assignment.workContour);
             row.put("Units", assignment.units);
             row.put("Work", assignment.work);
+            row.put("Cost", assignment.cost);
             row.put("ActualWork", assignment.actualWork);
             row.put("RemainingWork", assignment.remainingWork);
+            row.put("ActualCost", assignment.actualCost);
+            row.put("RemainingCost", assignment.remainingCost);
+            row.put("OvertimeWork", assignment.overtimeWork);
+            row.put("ActualOvertimeWork", assignment.actualOvertimeWork);
             row.put("PercentWorkComplete", assignment.percentWorkComplete);
             document.ensureSheet("Assignments").add(row);
         }

@@ -66,7 +66,49 @@ CLI は `java -jar mikuproject.jar <command> ...` の形で実行する。
 
 詳細な command 一覧は `README.md` を参照する。
 
+## 最小 entrypoint から全機能 entrypoint への段取り
+
+Java CLI は、`validate-xml` と主要 export だけを持つ最小 entrypoint から開始したが、現在は workbook / patch / AI JSON / xlsx / batch command まで含む実用的な entrypoint へ広がっている。
+
+今後の整理は、次の 4 段階で進める。
+
+### 1. core 公開面の薄い公開入口として揃える
+
+- CLI は `coreapi` の薄い入口に徹する
+- format 判定、option 解釈、入出力 path 処理以外の意味解釈は core へ残す
+- command の追加より先に、既存 command がどの core API へ対応するかを保守できる状態に保つ
+
+### 2. 単発 command を全主要入出力へ揃える
+
+- validate / export / import / merge / apply の主要導線を、Java 版対象範囲で一通り揃える
+- 現在の CLI はこの段階を概ね満たしている
+- 対象は `MS Project XML`, workbook JSON, workbook xlsx, patch JSON, AI JSON, external import, report 出力群とする
+
+### 3. option と batch command を整理する
+
+- 複数 command で重複する option 群は、`WbsMarkdownOptions`, `WbsExportOptions`, `NativeSvgOptions` の単位で揃える
+- `*-batch` command は upstream straight conversion そのものではなく、Java 側運用拡張として分けて扱う
+- help 表示、`README.md`、test を同じ単位で更新し、entrypoint の見え方を崩さない
+
+### 4. full entrypoint として保守可能に固定する
+
+- 追加済み command 群を `README.md`, `docs/remaining-migration-items.md`, `docs/upstream-test-mapping.md`, CLI test で追跡可能にする
+- upstream 追随時は `core API の差分` と `Java CLI 独自拡張` を分けて確認する
+- 新しい command を足すより、既存 command の option / diagnostics / test を揃えることを優先する
+
+## 現在位置
+
+Java CLI は、上の 4 段階のうち次の位置にある。
+
+- `1. core 公開面の薄い公開入口として揃える`: 対応済み
+- `2. 単発 command を全主要入出力へ揃える`: 対応済み
+- `3. option と batch command を整理する`: 継続中
+- `4. full entrypoint として保守可能に固定する`: 継続中
+
+したがって、次の自然な作業は `新 command の追加` より `既存 command 群の整理と保守可能性の固定` である。
+
 ## 補足
 
 - この文書でいう正式成果物は、Java CLI の runtime 配布物を指す
-- Web UI / browser main 系は Java 版の移植対象外であり、この成果物定義にも含めない
+- Web UI / browser main 系は、この文書で扱う Java CLI runtime 配布物には含めない
+- Java 版の対象は CLI runtime であり、Web UI / browser main 系は移植対象外とする

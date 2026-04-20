@@ -268,6 +268,23 @@ public class CoreApiImportTest {
         assertEquals("1.2", xlsxResult.model.tasks.get(2).outlineNumber);
     }
 
+    @Test
+    public void importsUpstreamWorkbookJsonFixtureThroughUnifiedImportWrapper() throws IOException {
+        CoreApiImport api = new CoreApiImport();
+        ProjectModel baseModel = api.msproject.msProject.importFromXml(readVendorTestdata("hierarchy.xml"));
+        Object workbookJsonDocument = new CoreApiAiJsonUtil().parseJsonText(readVendorTestdata("workbook-import-sample.json"));
+
+        CoreApiImportResult mergeResult = api.importExternal(externalInput(
+                externalDocumentSource("workbook_json", workbookJsonDocument), "merge", baseModel));
+
+        assertEquals("workbook_json", mergeResult.kind);
+        assertEquals("merge", mergeResult.mode);
+        assertEquals("初期実装 Imported From JSON File", mergeResult.model.tasks.get(2).name);
+        assertEquals(Integer.valueOf(55), mergeResult.model.tasks.get(2).percentComplete);
+        assertEquals("Child A", mergeResult.model.tasks.get(1).name);
+        assertTrue(mergeResult.changes.size() > 0);
+    }
+
     private CoreApiExternalImport.ExternalImportInput externalInput(CoreApiExternalImport.ExternalImportSource source, String mode,
             ProjectModel baseModel) {
         CoreApiExternalImport.ExternalImportInput input = new CoreApiExternalImport.ExternalImportInput();

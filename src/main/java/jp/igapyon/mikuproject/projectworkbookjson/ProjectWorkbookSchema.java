@@ -16,12 +16,16 @@ public class ProjectWorkbookSchema {
             "FinishDate", "CurrentDate", "StatusDate", "CalendarUID", "MinutesPerDay", "MinutesPerWeek", "DaysPerMonth",
             "ScheduleFromStart" };
     public static final String[] TASK_HEADERS = { "UID", "ID", "Name", "OutlineLevel", "OutlineNumber", "WBS", "Start",
-            "Finish", "Duration", "PercentComplete", "PercentWorkComplete", "Milestone", "Summary", "Critical",
-            "CalendarUID", "Predecessors", "Notes" };
+            "Finish", "Duration", "PercentComplete", "PercentWorkComplete", "Milestone", "Summary", "Critical", "Type",
+            "Priority", "CalendarUID", "ConstraintType", "ConstraintDate", "Deadline", "Predecessors", "Notes" };
     public static final String[] RESOURCE_HEADERS = { "UID", "ID", "Name", "Type", "Initials", "Group", "MaxUnits",
-            "CalendarUID", "StandardRate", "OvertimeRate", "CostPerUse", "Work", "ActualWork", "RemainingWork" };
+            "CalendarUID", "StandardRate", "OvertimeRate", "CostPerUse", "Work", "ActualWork", "RemainingWork", "Cost",
+            "ActualCost", "RemainingCost", "PercentWorkComplete", "WorkGroup", "StandardRateFormat",
+            "OvertimeRateFormat" };
     public static final String[] ASSIGNMENT_HEADERS = { "UID", "TaskUID", "TaskName", "ResourceUID", "ResourceName", "Start",
-            "Finish", "Units", "Work", "ActualWork", "RemainingWork", "PercentWorkComplete" };
+            "Finish", "StartVariance", "FinishVariance", "Delay", "Milestone", "WorkContour", "Units", "Work", "Cost",
+            "ActualWork", "RemainingWork", "ActualCost", "RemainingCost", "OvertimeWork", "ActualOvertimeWork",
+            "PercentWorkComplete" };
     public static final String[] CALENDAR_HEADERS = { "UID", "Name", "IsBaseCalendar", "BaseCalendarUID", "WeekDays",
             "Exceptions", "WorkWeeks" };
     public static final String[] NON_WORKING_DAYS_HEADERS = { "CalendarUID", "Index", "CalendarName", "Name", "Date",
