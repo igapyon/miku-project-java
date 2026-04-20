@@ -1,0 +1,58 @@
+/*
+ * Copyright 2026 Toshiki Iga
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package jp.igapyon.mikuproject.model;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ProjectInfo {
+    public String name;
+    public String title;
+    public String author;
+    public String company;
+    public String creationDate;
+    public String lastSaved;
+    public Integer saveVersion;
+    public String startDate;
+    public String finishDate;
+    public boolean scheduleFromStart;
+    public String currentDate;
+    public String defaultStartTime;
+    public String defaultFinishTime;
+    public Integer minutesPerDay;
+    public Integer minutesPerWeek;
+    public Integer daysPerMonth;
+    public String statusDate;
+    public Integer weekStartDay;
+    public Integer workFormat;
+    public Integer durationFormat;
+    public String currencyCode;
+    public Integer currencyDigits;
+    public String currencySymbol;
+    public Integer currencySymbolPosition;
+    public String fyStartDate;
+    public Boolean fiscalYearStart;
+    public Integer criticalSlackLimit;
+    public Integer defaultTaskType;
+    public Integer defaultFixedCostAccrual;
+    public String defaultStandardRate;
+    public String defaultOvertimeRate;
+    public Integer defaultTaskEVMethod;
+    public Integer newTaskStartDate;
+    public Boolean newTasksAreManual;
+    public Boolean newTasksEffortDriven;
+    public Boolean newTasksEstimated;
+    public Boolean actualsInSync;
+    public Boolean editableActualCosts;
+    public Boolean honorConstraints;
+    public Boolean insertedProjectsLikeSummary;
+    public Boolean multipleCriticalPaths;
+    public Boolean taskUpdatesResource;
+    public Boolean updateManuallyScheduledTasksWhenEditingLinks;
+    public String calendarUID;
+    public List<OutlineCodeModel> outlineCodes = new ArrayList<OutlineCodeModel>();
+    public List<WbsMaskModel> wbsMasks = new ArrayList<WbsMaskModel>();
+    public List<ProjectExtendedAttributeModel> extendedAttributes = new ArrayList<ProjectExtendedAttributeModel>();
+}
