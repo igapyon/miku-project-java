@@ -52,6 +52,32 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.3.1</version>
+        <executions>
+          <execution>
+            <id>copy-ai-json-spec-resource</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <encoding>${project.build.sourceEncoding}</encoding>
+              <outputDirectory>${project.build.outputDirectory}/jp/igapyon/mikuproject/coreapi</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}/vendor/mikuproject/docs</directory>
+                  <includes>
+                    <include>mikuproject-ai-json-spec.md</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <version>3.4.1</version>
         <configuration>

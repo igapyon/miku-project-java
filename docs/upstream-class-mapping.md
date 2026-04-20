@@ -749,7 +749,8 @@ follow-up:
 - 責務:
   - `mikuproject-ai-json-spec` の安定取得
   - version 抽出
-  - Java 側では `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` を参照
+  - Java 側では実行時に classpath / JAR 内リソースとして内包された `mikuproject-ai-json-spec.md` を参照
+  - 元 Markdown は Maven の `process-resources` で `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` から `target/classes/jp/igapyon/mikuproject/coreapi/` へコピーする
 
 ### `vendor/mikuproject/src/ts/core-api-msproject-ai.ts`
 
@@ -1019,6 +1020,7 @@ follow-up:
   - `jp.igapyon.mikuproject.wbssvg.WbsSvgRender`
 - 責務:
   - daily / weekly SVG 描画
+  - timeline 基準日の解決
   - exportable task 抽出
   - dependency path 描画
   - `WbsSvgScaffold` / `WbsSvgTimeline` / `WbsSvgViewport` を束ねる render

@@ -5,6 +5,7 @@
 package jp.igapyon.mikuproject.wbssvg;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ public class WbsSvgRender {
 
     public String exportNativeSvg(ProjectModel model, WbsSvg.NativeSvgOptions options) {
         List<TaskModel> tasks = exportableTasks(model);
+        viewport.setBaseDate(resolveTimelineBaseDate(model, tasks));
         WbsSvg.NativeSvgOptions actualOptions = options == null ? new WbsSvg.NativeSvgOptions() : options;
         StringBuilder builder = new StringBuilder();
         int height = 120 + tasks.size() * 28;
@@ -57,6 +59,7 @@ public class WbsSvgRender {
 
     public String exportWeeklyNativeSvg(ProjectModel model, WbsSvg.NativeSvgOptions options) {
         List<TaskModel> tasks = exportableTasks(model);
+        viewport.setBaseDate(resolveTimelineBaseDate(model, tasks));
         WbsSvg.NativeSvgOptions actualOptions = options == null ? new WbsSvg.NativeSvgOptions() : options;
         StringBuilder builder = new StringBuilder();
         int height = 120 + tasks.size() * 28;
@@ -123,6 +126,22 @@ public class WbsSvgRender {
     public String defaultMonthKey(ProjectModel model) {
         String value = model != null && model.project != null ? safe(model.project.startDate, "2026-03-01") : "2026-03-01";
         return value.length() >= 7 ? value.substring(0, 7) : "2026-03";
+    }
+
+    public Date resolveTimelineBaseDate(ProjectModel model, List<TaskModel> tasks) {
+        Date earliest = null;
+        if (tasks != null) {
+            for (TaskModel task : tasks) {
+                Date start = task == null ? null : dateband.parseDateOnly(task.start);
+                if (start != null && (earliest == null || start.before(earliest))) {
+                    earliest = start;
+                }
+            }
+        }
+        if (earliest != null) {
+            return earliest;
+        }
+        return model != null && model.project != null ? dateband.parseDateOnly(model.project.startDate) : null;
     }
 
     public String resolveLabel(TaskModel task, WbsSvg.NativeSvgOptions options) {

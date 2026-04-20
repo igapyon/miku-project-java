@@ -174,3 +174,8 @@ Supported commands:
 - `import-xlsx-batch <outputRoot.dir> <input.xlsxbin> <name> [<input.xlsxbin> <name>]...`
 - `merge-xlsx <base.xml> <input.xlsxbin> <output.xml>`
 - `merge-xlsx-batch <base.xml> <outputRoot.dir> <input.xlsxbin> <name> [<input.xlsxbin> <name>]...`
+
+Notes:
+
+- `export-ai-json-spec` returns the Markdown spec embedded in the built classpath / JAR. Runtime execution does not read `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` by relative path.
+- `export-daily-svg` and report directory daily SVG output place the timeline origin at the earliest task start date in the model, so projects outside the historical sample month still render inside the SVG viewBox. If every task has the same zero-duration date, the output is valid but all bars will naturally stack on the same day.

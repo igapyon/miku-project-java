@@ -115,6 +115,8 @@
   - WBS markdown / xlsx / report directory には display range / progress / holiday option を渡せる
   - daily / weekly SVG には label mode、monthly SVG zip には holiday / label option を渡せる
   - report bundle / report directory にも holiday / label を含む SVG option と WBS option をまとめて渡せる
+  - `export-ai-json-spec` は実行時に JAR / classpath 内リソースを読み、`vendor/...` 相対パスには依存しない
+  - daily / weekly SVG は task の最初の開始日を timeline 基準日にし、固定サンプル日付への依存を避ける
   - 複数入力をまとめる command は Java 側独自の運用拡張として扱い、現時点では追加を優先しない
   - help / `README.md` / CLI test では、主要 command 一覧、help alias、未知 command / 引数不足 / `*-batch` pair 数不整合 / unsupported calendar mode の入口契約を固定済み
   - hierarchy / dependency fixture に対する AI view / report bundle / report directory / scoped phase detail の主要出力も CLI test で固定済み

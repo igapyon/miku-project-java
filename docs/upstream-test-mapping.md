@@ -374,6 +374,9 @@ Java 側テスト名は、次の基準で付ける。
 - `MikuprojectCliTest.exportsAiJsonSpecAndDetectsAiJsonKind`
   - Java CLI から AI JSON spec export と kind detect / kind detect batch を呼べることを確認
 
+- `MikuprojectCliTest.exportsAiJsonSpecFromClasspathWhenWorkingDirectoryHasNoVendor`
+  - `export-ai-json-spec` が repo 外の working directory でも classpath 内リソースから Markdown を返すことを確認
+
 - `MikuprojectCliTest.exportsAndImportsXlsxWorkbookBytes`
   - Java CLI から workbook xlsx export / import / import batch / merge / merge batch を呼べることを確認
 
@@ -448,6 +451,9 @@ Java 側テスト名は、次の基準で付ける。
 
 - `WbsSvgTest.rendersDependencyConnectorsInDailyAndWeeklySvg`
   - upstream の dependency connector 描画に対応
+
+- `WbsSvgTest.keepsDailySvgTasksInsideViewBoxForLateZeroDurationTasks`
+  - daily SVG の timeline 基準日が固定サンプル日付に依存せず、遅い日付かつ zero duration の task でも viewBox 内に描画されることを確認
 
 - `WbsSvgTest.exportsMonthlyCalendarArchive`
   - upstream の monthly calendar SVG archive export に対応
