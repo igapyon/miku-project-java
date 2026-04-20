@@ -13,6 +13,7 @@ import org.w3c.dom.NodeList;
 
 import jp.igapyon.mikuproject.projectxlsx.XlsxCellLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxColumnLike;
+import jp.igapyon.mikuproject.projectxlsx.XlsxDataValidationLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxRowLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxSheetLike;
 
@@ -51,6 +52,10 @@ public class ExcelIoWorksheetParse {
                 row.cells.add(parseCell(cellElement, styleBook, xmlSupport));
                 currentColumn++;
             }
+            while (currentColumn < sheet.columns.size()) {
+                row.cells.add(new XlsxCellLike());
+                currentColumn++;
+            }
             sheet.rows.add(row);
         }
 
@@ -59,7 +64,32 @@ public class ExcelIoWorksheetParse {
             Element merge = (Element) mergeNodes.item(index);
             sheet.mergedRanges.add(merge.getAttribute("ref"));
         }
+        NodeList validationNodes = document.getElementsByTagNameNS("http://schemas.openxmlformats.org/spreadsheetml/2006/main",
+                "dataValidation");
+        for (int index = 0; index < validationNodes.getLength(); index++) {
+            Element validationElement = (Element) validationNodes.item(index);
+            XlsxDataValidationLike validation = new XlsxDataValidationLike();
+            validation.type = validationElement.getAttribute("type");
+            validation.sqref = validationElement.getAttribute("sqref");
+            validation.allowBlank = "1".equals(validationElement.getAttribute("allowBlank")) ? Boolean.TRUE : null;
+            Element formula1 = xmlSupport.findDirectChild(validationElement, "formula1");
+            validation.formula1 = formula1 == null ? "" : formula1.getTextContent();
+            sheet.dataValidations.add(validation);
+        }
+        padRowsToSheetWidth(sheet);
         return sheet;
+    }
+
+    private void padRowsToSheetWidth(XlsxSheetLike sheet) {
+        int maxCells = sheet.columns.size();
+        for (XlsxRowLike row : sheet.rows) {
+            maxCells = Math.max(maxCells, row.cells.size());
+        }
+        for (XlsxRowLike row : sheet.rows) {
+            while (row.cells.size() < maxCells) {
+                row.cells.add(new XlsxCellLike());
+            }
+        }
     }
 
     private XlsxCellLike parseCell(Element cellElement, List<ExcelIoStylesBuild.StyleDescriptor> styleBook,

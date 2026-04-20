@@ -4,37 +4,20 @@
  */
 package jp.igapyon.mikuproject.wbssvg;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import jp.igapyon.mikuproject.excelio.ExcelIoUtil;
+import jp.igapyon.mikuproject.excelio.ExcelIoZip;
 
 public class WbsSvgZip {
+    private final ExcelIoZip zip = new ExcelIoZip();
+
     public byte[] packMonthlyEntries(List<WbsSvg.MonthlyCalendarEntry> entries) {
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        ZipOutputStream zip = null;
-        try {
-            zip = new ZipOutputStream(buffer);
-            for (WbsSvg.MonthlyCalendarEntry entry : entries) {
-                zip.putNextEntry(new ZipEntry("monthly-calendar/" + entry.fileName));
-                zip.write(ExcelIoUtil.encodeUtf8(entry.svg));
-                zip.closeEntry();
-            }
-            zip.finish();
-            return buffer.toByteArray();
-        } catch (IOException ex) {
-            throw new IllegalStateException("monthly calendar zip の生成に失敗しました", ex);
-        } finally {
-            if (zip != null) {
-                try {
-                    zip.close();
-                } catch (IOException ex) {
-                    // ignore
-                }
-            }
+        List<ExcelIoZip.ZipEntryData> zipEntries = new ArrayList<ExcelIoZip.ZipEntryData>();
+        for (WbsSvg.MonthlyCalendarEntry entry : entries) {
+            zipEntries.add(new ExcelIoZip.ZipEntryData("monthly-calendar/" + entry.fileName, ExcelIoUtil.encodeUtf8(entry.svg)));
         }
+        return zip.packZip(zipEntries, ExcelIoZip.FIXED_2025_01_01_MOD_TIME, ExcelIoZip.FIXED_2025_01_01_MOD_DATE);
     }
 }

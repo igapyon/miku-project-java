@@ -34,7 +34,8 @@ public class WbsXlsxBase {
 
     public void appendColumns(XlsxSheetLike sheet, int displayDays) {
         double[] fixedWidths = new double[] {
-                6.43d, 6.43d, 9.29d, 8.57d, 6.43d, 42d, 12.14d, 12.14d, 9.29d, 28d, 12d, 18d, 12d, 12d, 12d, 15d, 12d, 20d, 18d, 4.5d
+                6.43d, 6.43d, 9.29d, 8.57d, 6.43d, 42d, 12.14d, 12.14d, 9.29d, 28d, 14d, 18d, 12d, 12d, 12d, 12.14d, 12d,
+                20d, 18d, 3d
         };
         for (int index = 0; index < fixedWidths.length; index++) {
             XlsxColumnLike column = new XlsxColumnLike();
@@ -46,7 +47,7 @@ public class WbsXlsxBase {
         }
         for (int index = 0; index < displayDays; index++) {
             XlsxColumnLike column = new XlsxColumnLike();
-            column.width = Double.valueOf(4.5d);
+            column.width = Double.valueOf(6d);
             sheet.columns.add(column);
         }
     }
@@ -146,11 +147,22 @@ public class WbsXlsxBase {
             return "-";
         }
         String name = calendarNameByUid.get(calendarUid);
-        return name == null || name.isEmpty() ? calendarUid : calendarUid + " " + name;
+        return name == null || name.isEmpty() ? calendarUid : calendarUid + " " + truncate(name, 9);
     }
 
     public String safe(String value, String fallback) {
         return value == null || value.isEmpty() ? fallback : value;
+    }
+
+    public String truncate(String value, int maxLength) {
+        String normalized = value == null ? "" : value.trim();
+        if (normalized.isEmpty()) {
+            return "";
+        }
+        if (normalized.length() <= maxLength) {
+            return normalized;
+        }
+        return normalized.substring(0, Math.max(1, maxLength - 3)) + "...";
     }
 
     public String formatTimestamp() {

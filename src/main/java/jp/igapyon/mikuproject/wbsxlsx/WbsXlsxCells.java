@@ -23,12 +23,16 @@ public class WbsXlsxCells {
     }
 
     public XlsxRowLike titleRow(String title) {
+        return titleRow(title, 5);
+    }
+
+    public XlsxRowLike titleRow(String title, int cellCount) {
         XlsxRowLike row = new XlsxRowLike();
         row.height = Integer.valueOf(24);
-        for (int index = 0; index < fixedColumnCount; index++) {
-            row.cells.add(blankCell());
+        for (int index = 0; index < cellCount; index++) {
+            row.cells.add(filledBlankCell("#EEF4FA"));
         }
-        row.cells.set(0, styledCell(title, "left", "center", Boolean.TRUE, Integer.valueOf(14), "#E1EDF8", "thin"));
+        row.cells.set(0, styledCell(title, "left", null, Boolean.TRUE, Integer.valueOf(14), "#E1EDF8", "thin"));
         return row;
     }
 
@@ -37,8 +41,13 @@ public class WbsXlsxCells {
         for (int index = 0; index < fixedColumnCount; index++) {
             row.cells.add(blankCell());
         }
-        row.cells.set(0, styledCell(label, "right", null, Boolean.TRUE, null, null, "thin"));
-        row.cells.set(2, styledCell(value, "left", null, null, null, null, "thin"));
+        row.height = Integer.valueOf(22);
+        String fill = ("プロジェクト名".equals(label) || "カレンダ".equals(label)) ? "#E8F4F1" : "#FDF1E4";
+        row.cells.set(0, styledCell(label, "right", null, Boolean.TRUE, null, fill, "thin"));
+        row.cells.set(1, styledCell("", null, null, null, null, fill, "thin"));
+        row.cells.set(2, styledCell(value, isNumeric(value) ? "center" : "left", null, Boolean.TRUE, null, fill, "thin"));
+        row.cells.set(3, styledCell("", null, null, null, null, fill, "thin"));
+        row.cells.set(4, styledCell("", null, null, null, null, fill, "thin"));
         if (extraValue != null) {
             row.cells.set(9, styledCell(extraValue, "left", null, null, null, null, null));
         }
@@ -50,8 +59,11 @@ public class WbsXlsxCells {
         for (int index = 0; index < fixedColumnCount; index++) {
             row.cells.add(blankCell());
         }
-        row.cells.set(0, styledCell(label, "right", null, Boolean.TRUE, null, null, "thin"));
-        row.cells.set(1, styledCell(value, "center", null, Boolean.TRUE, null, null, "thin"));
+        row.height = Integer.valueOf(22);
+        String fill = isCountSummaryLabel(label) ? "#E8F4F1" : "#FDF1E4";
+        row.cells.set(0, styledCell(label, "right", null, Boolean.TRUE, null, fill, "thin"));
+        row.cells.set(1, styledCell(value, isNumeric(value) ? "center" : "left", null, Boolean.TRUE, null, fill, "thin"));
+        row.cells.set(2, styledCell("", null, null, null, null, fill, "thin"));
         return row;
     }
 
@@ -60,7 +72,10 @@ public class WbsXlsxCells {
         for (int index = 0; index < fixedColumnCount; index++) {
             row.cells.add(blankCell());
         }
-        row.cells.set(0, styledCell(value, "left", null, Boolean.TRUE, null, fillColor, "thin"));
+        row.height = Integer.valueOf(24);
+        row.cells.set(0, styledCell(value, "center", null, Boolean.TRUE, null, fillColor, "thin"));
+        row.cells.set(1, styledCell("", null, null, null, null, fillColor, "thin"));
+        row.cells.set(2, styledCell("", null, null, null, null, fillColor, "thin"));
         return row;
     }
 
@@ -74,19 +89,20 @@ public class WbsXlsxCells {
     }
 
     public XlsxCellLike headerCell(String value) {
-        return styledCell(value, "center", "center", Boolean.TRUE, null, "#D9EAF7", "thin");
+        return styledCell(value, "center", "center", Boolean.TRUE, null, headerFill(value), "thin");
     }
 
     public XlsxCellLike dateBandCell(String value, String day, String currentDate, Set<String> holidaySet, Set<Integer> nonWorkingDayTypes) {
-        String fill = holidaySet.contains(day) ? "#FFE6A7"
-                : dateband.isWeeklyNonWorkingDay(day, nonWorkingDayTypes) ? "#EEF3F8"
-                        : base.isCurrentDay(day, currentDate) ? "#D9EAF7" : "#FFFFFF";
+        String fill = base.isCurrentDay(day, currentDate) ? "#FFE6A7"
+                : holidaySet.contains(day) ? "#FCE4EC"
+                        : dateband.isWeeklyNonWorkingDay(day, nonWorkingDayTypes) ? "#EEF3F8" : "#D9EAF7";
         return styledCell(value, "center", "center", null, null, fill, "thin");
     }
 
     public XlsxCellLike weekdayCell(String value, String day, String currentDate, Set<String> holidaySet, Set<Integer> nonWorkingDayTypes) {
-        String fill = (holidaySet.contains(day) || dateband.isWeeklyNonWorkingDay(day, nonWorkingDayTypes)) ? "#EEF3F8"
-                : base.isCurrentDay(day, currentDate) ? "#D9EAF7" : "#FFFFFF";
+        String fill = holidaySet.contains(day) ? "#FCE4EC"
+                : dateband.isWeeklyNonWorkingDay(day, nonWorkingDayTypes) ? "#EEF3F8"
+                        : base.isCurrentDay(day, currentDate) ? "#FFE6A7" : "#D9EAF7";
         return styledCell(value, "center", "center", Boolean.TRUE, null, fill, "thin");
     }
 
@@ -96,55 +112,73 @@ public class WbsXlsxCells {
     }
 
     public XlsxCellLike nameCell(TaskModel task) {
-        String prefix = task.summary ? "> " : task.milestone ? "  * " : "  - ";
+        String prefix = task.summary ? "> " : task.milestone ? "* " : "- ";
         return styledCell(prefix + base.safe(task.name, "-"), "left", "center", Boolean.valueOf(task.summary), null, taskFill(task), "thin");
     }
 
     public XlsxCellLike detailCell(String notes, TaskModel task) {
-        return styledCell(notes == null || notes.isEmpty() ? "-" : notes.replace("\n", "\n"), "left", "top", null, null,
+        return styledCell(notes == null || notes.trim().isEmpty() ? "-" : notes.trim(), "left", "center", null, null,
                 notes == null || notes.isEmpty() ? "#F5F7FA" : taskFill(task), "thin");
     }
 
     public XlsxCellLike taskCell(String value, TaskModel task, String align) {
-        return styledCell(value == null || value.isEmpty() ? "-" : value, align, "center", null, null, taskFill(task), "thin");
+        if (value == null || value.isEmpty()) {
+            return blankCell();
+        }
+        return styledCell(value, align, "center", Boolean.valueOf(task.summary || task.milestone), null, taskFillForAlign(task, align), "thin");
     }
 
     public XlsxCellLike progressCell(Integer percent, TaskModel task) {
         int safePercent = percent == null ? 0 : Math.max(0, Math.min(100, percent.intValue()));
-        int filled = safePercent / 10;
+        int filled = Math.round(safePercent / 10.0f);
         StringBuilder bar = new StringBuilder();
         for (int index = 0; index < 10; index++) {
-            bar.append(index < filled ? '#' : '.');
+            bar.append(index < filled ? '#' : '-');
         }
-        return styledCell(safePercent + "%\n[" + bar + "]", "center", "center", Boolean.TRUE, null, taskFill(task), "thin");
+        String value = String.format(java.util.Locale.ROOT, "%3d%%\n[%s]", Integer.valueOf(safePercent), bar.toString());
+        return styledCell(value, "center", "center", Boolean.valueOf(task.summary || task.milestone), null,
+                task.summary ? "#EEF7E8" : task.milestone ? "#FFF4E0" : "#FCF8FB", "thin");
     }
 
     public XlsxCellLike progressWorkCell(Integer percent, TaskModel task) {
         if (percent == null) {
-            return styledCell("", "center", "center", null, null, taskFill(task), "thin");
+            return styledCell("", "center", "center", null, null, task.summary ? "#EEF7E8" : task.milestone ? "#FFF4E0" : "#FCF8FB", "thin");
         }
-        return styledCell(percent + "%", "center", "center", null, null, taskFill(task), "thin");
+        return progressCell(percent, task);
     }
 
     public XlsxCellLike flagCell(Boolean enabled, String marker, TaskModel task) {
-        return styledCell(Boolean.TRUE.equals(enabled) ? marker : "-", "center", "center", null, null,
-                Boolean.TRUE.equals(enabled) ? taskFill(task) : "#F5F7FA", "thin");
+        return styledCell(Boolean.TRUE.equals(enabled) ? marker : "", "center", "center", Boolean.valueOf(Boolean.TRUE.equals(enabled)), null,
+                task.summary ? "#EEF7E8" : task.milestone ? "#FFF4E0" : null, "thin");
     }
 
-    public XlsxCellLike progressMarker(TaskModel task) {
-        String value = task.summary ? "━" : task.milestone ? "◆" : "■";
-        String fill = task.summary ? "#8EB9EA" : task.milestone ? "#8EB9EA" : "#D9EAF7";
+    public XlsxCellLike progressMarker(TaskModel task, boolean complete, String day, String currentDate) {
+        String value = task.summary ? "━" : task.milestone ? "◆" : complete ? "■" : "□";
+        String fill = complete ? (base.isCurrentDay(day, currentDate) ? "#6F9FD8" : "#8EB9EA")
+                : (base.isCurrentDay(day, currentDate) ? "#C9DFF8" : "#D9EFFF");
         return styledCell(value, "center", "center", Boolean.TRUE, null, fill, "thin");
     }
 
-    public XlsxCellLike blankBandCell(String day, Set<String> holidaySet, Set<Integer> nonWorkingDayTypes) {
-        String fill = holidaySet.contains(day) ? "#FFE6A7"
-                : dateband.isWeeklyNonWorkingDay(day, nonWorkingDayTypes) ? "#EEF3F8" : "#FFFFFF";
+    public XlsxCellLike blankBandCell(String day, String currentDate, Set<String> holidaySet, Set<Integer> nonWorkingDayTypes) {
+        String fill = base.isCurrentDay(day, currentDate) ? "#FFE6A7"
+                : holidaySet.contains(day) ? "#FCE4EC"
+                        : dateband.isWeeklyNonWorkingDay(day, nonWorkingDayTypes) ? "#EEF3F8" : null;
         return styledCell("", "center", "center", null, null, fill, "thin");
     }
 
     public XlsxCellLike blankCell() {
         return new XlsxCellLike();
+    }
+
+    public XlsxCellLike dividerCell() {
+        return styledCell("", "center", "center", null, null, "#D9E2EA", "thin");
+    }
+
+    public XlsxCellLike styledReferenceCell(String value, TaskModel task, String align) {
+        boolean placeholder = value == null || value.isEmpty() || "-".equals(value);
+        String display = placeholder ? "-" : value;
+        String fill = placeholder ? "#F5F7FA" : task.summary ? "#EEF7E8" : task.milestone ? "#FFF4E0" : "#F8FBFB";
+        return styledCell(display, placeholder ? "center" : align, "center", Boolean.valueOf(task.summary || task.milestone), null, fill, "thin");
     }
 
     private XlsxCellLike styledCell(String value, String horizontalAlign, String verticalAlign, Boolean bold, Integer fontSize,
@@ -162,6 +196,61 @@ public class WbsXlsxCells {
     }
 
     private String taskFill(TaskModel task) {
-        return task.summary ? "#EEF7E8" : task.milestone ? "#FFF4E0" : null;
+        return task.summary ? "#EEF7E8" : task.milestone ? "#FFF4E0" : "#FBFCFE";
+    }
+
+    private String taskFillForAlign(TaskModel task, String align) {
+        if (task.summary) {
+            return "#EEF7E8";
+        }
+        if (task.milestone) {
+            return "#FFF4E0";
+        }
+        if ("left".equals(align)) {
+            return "#FBFCFE";
+        }
+        if ("center".equals(align)) {
+            return "#FCFAF7";
+        }
+        return null;
+    }
+
+    private XlsxCellLike filledBlankCell(String fillColor) {
+        return styledCell("", null, null, null, null, fillColor, null);
+    }
+
+    private String headerFill(String label) {
+        if ("UID".equals(label) || "ID".equals(label)) {
+            return "#E1EDF8";
+        }
+        if ("WBS".equals(label) || "種別".equals(label) || "階層".equals(label) || "名称".equals(label)) {
+            return "#E6F0DF";
+        }
+        if ("開始".equals(label) || "終了".equals(label) || "期間".equals(label)) {
+            return "#FDE7D3";
+        }
+        if ("進捗".equals(label) || "作業進捗".equals(label) || "マイル".equals(label) || "サマリ".equals(label) || "クリティカル".equals(label)) {
+            return "#FBE4EC";
+        }
+        if ("担当".equals(label) || "カレンダ".equals(label) || "リソース".equals(label) || "先行".equals(label)) {
+            return "#E2F1EF";
+        }
+        return "#D9EAF7";
+    }
+
+    private boolean isNumeric(String value) {
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
+        for (int index = 0; index < value.length(); index++) {
+            if (!Character.isDigit(value.charAt(index))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isCountSummaryLabel(String label) {
+        return "タスク".equals(label) || "リソース".equals(label) || "割当".equals(label) || "カレンダ".equals(label);
     }
 }

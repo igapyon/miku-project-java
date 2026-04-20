@@ -4,6 +4,7 @@
  */
 package jp.igapyon.mikuproject.projectpatchjson;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -11,6 +12,7 @@ import jp.igapyon.mikuproject.model.AssignmentModel;
 import jp.igapyon.mikuproject.model.CalendarModel;
 import jp.igapyon.mikuproject.model.ProjectModel;
 import jp.igapyon.mikuproject.model.ResourceModel;
+import jp.igapyon.mikuproject.model.TaskModel;
 
 public class ProjectPatchJsonEntities {
     private final ProjectPatchJsonUtil util = new ProjectPatchJsonUtil();
@@ -210,15 +212,21 @@ public class ProjectPatchJsonEntities {
             warnings.add(warning("delete_resource の uid が既存 resource を指していません: " + uid, "resources", uid, uid));
             return;
         }
+        List<String> assignmentUids = new ArrayList<String>();
         for (AssignmentModel assignment : model.assignments) {
             if (uid.equals(assignment.resourceUid)) {
-                warnings.add(warning("delete_resource first cut では assignment がある resource は削除できません", "resources", uid,
-                        resource.name));
-                return;
+                assignmentUids.add(assignment.uid);
             }
         }
+        if (!assignmentUids.isEmpty()) {
+            warnings.add(warning("delete_resource first cut では assignment がある resource は削除できません: " + uid
+                    + " (assignments=" + join(assignmentUids) + ")", "resources", uid,
+                    resource.name == null || resource.name.isEmpty() ? resource.uid : resource.name));
+            return;
+        }
         model.resources.remove(resource);
-        changes.add(change("resources", uid, resource.name, "deleted", resource.name, "(deleted)"));
+        changes.add(change("resources", uid, resource.name == null || resource.name.isEmpty() ? resource.uid : resource.name,
+                "name", resource.name == null || resource.name.isEmpty() ? resource.uid : resource.name, "(deleted)"));
     }
 
     public void applyDeleteCalendarOperation(PatchOperation operation, ProjectModel model, List<ImportChange> changes,
@@ -233,20 +241,46 @@ public class ProjectPatchJsonEntities {
             warnings.add(warning("delete_calendar の uid が既存 calendar を指していません: " + uid, "calendars", uid, uid));
             return;
         }
+        List<String> blockers = new ArrayList<String>();
         if (uid.equals(model.project.calendarUID)) {
-            warnings.add(warning("delete_calendar first cut では参照が残っている calendar は削除できません", "calendars", uid,
-                    calendar.name));
-            return;
+            blockers.add("project=1");
         }
-        for (ResourceModel resource : model.resources) {
-            if (uid.equals(resource.calendarUID)) {
-                warnings.add(warning("delete_calendar first cut では参照が残っている calendar は削除できません", "calendars", uid,
-                        calendar.name));
-                return;
+        List<String> taskRefs = new ArrayList<String>();
+        for (TaskModel task : model.tasks) {
+            if (uid.equals(task.calendarUID)) {
+                taskRefs.add(task.uid);
             }
         }
+        if (!taskRefs.isEmpty()) {
+            blockers.add("tasks=" + join(taskRefs));
+        }
+        List<String> resourceRefs = new ArrayList<String>();
+        for (ResourceModel resource : model.resources) {
+            if (uid.equals(resource.calendarUID)) {
+                resourceRefs.add(resource.uid);
+            }
+        }
+        if (!resourceRefs.isEmpty()) {
+            blockers.add("resources=" + join(resourceRefs));
+        }
+        List<String> baseCalendarRefs = new ArrayList<String>();
+        for (CalendarModel item : model.calendars) {
+            if (!uid.equals(item.uid) && uid.equals(item.baseCalendarUID)) {
+                baseCalendarRefs.add(item.uid);
+            }
+        }
+        if (!baseCalendarRefs.isEmpty()) {
+            blockers.add("baseRefs=" + join(baseCalendarRefs));
+        }
+        if (!blockers.isEmpty()) {
+            warnings.add(warning("delete_calendar first cut では参照が残っている calendar は削除できません: " + uid
+                    + " (" + joinSemicolon(blockers) + ")", "calendars", uid,
+                    calendar.name == null || calendar.name.isEmpty() ? calendar.uid : calendar.name));
+            return;
+        }
         model.calendars.remove(calendar);
-        changes.add(change("calendars", uid, calendar.name, "deleted", calendar.name, "(deleted)"));
+        changes.add(change("calendars", uid, calendar.name == null || calendar.name.isEmpty() ? calendar.uid : calendar.name,
+                "name", calendar.name == null || calendar.name.isEmpty() ? calendar.uid : calendar.name, "(deleted)"));
     }
 
     private jp.igapyon.mikuproject.model.TaskModel findTask(ProjectModel model, String uid) {
@@ -315,6 +349,28 @@ public class ProjectPatchJsonEntities {
 
     private String safe(String value) {
         return value == null ? "" : value;
+    }
+
+    private String join(List<String> values) {
+        StringBuilder builder = new StringBuilder();
+        for (int index = 0; index < values.size(); index++) {
+            if (index > 0) {
+                builder.append(", ");
+            }
+            builder.append(values.get(index));
+        }
+        return builder.toString();
+    }
+
+    private String joinSemicolon(List<String> values) {
+        StringBuilder builder = new StringBuilder();
+        for (int index = 0; index < values.size(); index++) {
+            if (index > 0) {
+                builder.append("; ");
+            }
+            builder.append(values.get(index));
+        }
+        return builder.toString();
     }
 
     private String fieldNameToKey(String fieldName) {

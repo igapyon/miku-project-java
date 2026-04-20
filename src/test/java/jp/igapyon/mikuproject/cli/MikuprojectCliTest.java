@@ -395,9 +395,9 @@ public class MikuprojectCliTest {
 
             assertTrue(text(batchOut).contains("minimal.zip"));
             assertTrue(text(batchOut).contains("dependency.zip"));
-            assertTrue(zipText(outputRoot.resolve("minimal.zip")).contains("holidays 2"));
+            assertTrue(zipText(outputRoot.resolve("minimal.zip")).contains("#fce7ef"));
             String dependencyZipText = zipText(outputRoot.resolve("dependency.zip"));
-            assertTrue(dependencyZipText.contains("holidays 2"));
+            assertTrue(dependencyZipText.contains("#fce7ef"));
             assertTrue(dependencyZipText.contains(">1</text>"));
         } finally {
             Files.deleteIfExists(minimalXmlFile);
@@ -619,7 +619,7 @@ public class MikuprojectCliTest {
             assertTrue(text(dailyOut).contains(">1</text>"));
             assertTrue(text(weeklyOut).contains(">2</text>"));
             assertTrue(text(monthlyOut).contains("entries"));
-            assertTrue(zipText(monthlyZipFile).contains("holidays 2"));
+            assertTrue(zipText(monthlyZipFile).contains("#fce7ef"));
             assertTrue(zipText(monthlyZipFile).contains(">1</text>"));
         } finally {
             Files.deleteIfExists(dependencyXmlFile);

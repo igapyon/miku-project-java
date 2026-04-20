@@ -4,14 +4,11 @@
  */
 package jp.igapyon.mikuproject.coreapi;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import jp.igapyon.mikuproject.excelio.ExcelIoUtil;
+import jp.igapyon.mikuproject.excelio.ExcelIoZip;
 import jp.igapyon.mikuproject.excelio.XlsxWorkbookCodec;
 import jp.igapyon.mikuproject.model.ProjectModel;
 import jp.igapyon.mikuproject.msprojectxml.MsProjectXml;
@@ -28,6 +25,7 @@ public class CoreApiReport {
     private final WbsMarkdown wbsMarkdown = new WbsMarkdown();
     private final WbsXlsx wbsXlsx = new WbsXlsx();
     private final XlsxWorkbookCodec xlsxWorkbookCodec = new XlsxWorkbookCodec();
+    private final ExcelIoZip zip = new ExcelIoZip();
 
     public List<ReportEntry> exportAllReportEntries(ProjectModel model) {
         return exportAllReportEntries(model, null, null, null);
@@ -53,28 +51,11 @@ public class CoreApiReport {
     }
 
     public byte[] packZipEntries(List<ReportEntry> entries) {
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        ZipOutputStream zip = null;
-        try {
-            zip = new ZipOutputStream(buffer);
-            for (ReportEntry entry : entries) {
-                zip.putNextEntry(new ZipEntry(entry.name));
-                zip.write(entry.data);
-                zip.closeEntry();
-            }
-            zip.finish();
-            return buffer.toByteArray();
-        } catch (IOException ex) {
-            throw new IllegalStateException("report zip の生成に失敗しました", ex);
-        } finally {
-            if (zip != null) {
-                try {
-                    zip.close();
-                } catch (IOException ex) {
-                    // ignore
-                }
-            }
+        List<ExcelIoZip.ZipEntryData> zipEntries = new ArrayList<ExcelIoZip.ZipEntryData>();
+        for (ReportEntry entry : entries) {
+            zipEntries.add(new ExcelIoZip.ZipEntryData(entry.name, entry.data));
         }
+        return zip.packZip(zipEntries, ExcelIoZip.FIXED_2025_01_01_MOD_TIME, ExcelIoZip.FIXED_2025_01_01_MOD_DATE);
     }
 
     public static class ReportEntry {
