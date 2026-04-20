@@ -38,9 +38,9 @@ public class CoreApiReport {
     public List<ReportEntry> exportAllReportEntries(ProjectModel model, WbsMarkdownOptions markdownOptions,
             WbsExportOptions xlsxOptions, NativeSvgOptions svgOptions) {
         List<ReportEntry> entries = new ArrayList<ReportEntry>();
+        entries.add(new ReportEntry("wbs.xlsx", xlsxWorkbookCodec.exportWorkbook(wbsXlsx.exportWbsWorkbook(model, xlsxOptions))));
         entries.add(new ReportEntry("wbs.md", ExcelIoUtil.encodeUtf8(wbsMarkdown.exportWbsMarkdown(model, markdownOptions) + "\n")));
         entries.add(new ReportEntry("mermaid.mmd", ExcelIoUtil.encodeUtf8(msProjectXml.exportMermaidGantt(model) + "\n")));
-        entries.add(new ReportEntry("wbs.xlsx", xlsxWorkbookCodec.exportWorkbook(wbsXlsx.exportWbsWorkbook(model, xlsxOptions))));
         entries.add(new ReportEntry("daily.svg", ExcelIoUtil.encodeUtf8(msProjectXml.exportNativeSvg(model, svgOptions) + "\n")));
         entries.add(new ReportEntry("weekly.svg", ExcelIoUtil.encodeUtf8(msProjectXml.exportWeeklyNativeSvg(model, svgOptions) + "\n")));
         MonthlyCalendarSvgArchive monthlyArchive = msProjectXml.exportMonthlyWbsCalendarSvgArchive(model, svgOptions);

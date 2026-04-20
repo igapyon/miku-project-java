@@ -14,6 +14,7 @@ import org.w3c.dom.NodeList;
 import jp.igapyon.mikuproject.projectxlsx.XlsxCellLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxColumnLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxDataValidationLike;
+import jp.igapyon.mikuproject.projectxlsx.XlsxFreezePaneLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxRowLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxSheetLike;
 
@@ -23,6 +24,7 @@ public class ExcelIoWorksheetParse {
         Document document = xmlSupport.parseXmlDocument(xmlText);
         XlsxSheetLike sheet = new XlsxSheetLike();
         sheet.name = name;
+        sheet.freezePane = parseFreezePane(document);
 
         NodeList colNodes = document.getElementsByTagNameNS("http://schemas.openxmlformats.org/spreadsheetml/2006/main", "col");
         for (int index = 0; index < colNodes.getLength(); index++) {
@@ -107,12 +109,18 @@ public class ExcelIoWorksheetParse {
             }
         }
         Element valueElement = xmlSupport.findDirectChild(cellElement, "v");
+        Element formulaElement = xmlSupport.findDirectChild(cellElement, "f");
         Element inlineString = xmlSupport.findDirectChild(cellElement, "is");
+        if (formulaElement != null) {
+            cell.formula = formulaElement.getTextContent();
+        }
         if ("b".equals(type) && valueElement != null) {
             cell.value = Boolean.valueOf("1".equals(valueElement.getTextContent()));
         } else if ("inlineStr".equals(type) && inlineString != null) {
             Element text = xmlSupport.findDirectChild(inlineString, "t");
             cell.value = text == null ? "" : text.getTextContent();
+        } else if ("str".equals(type) && valueElement != null) {
+            cell.value = valueElement.getTextContent();
         } else if (valueElement != null) {
             String raw = valueElement.getTextContent();
             try {
@@ -127,6 +135,26 @@ public class ExcelIoWorksheetParse {
             }
         }
         return cell;
+    }
+
+    private XlsxFreezePaneLike parseFreezePane(Document document) {
+        NodeList paneNodes = document.getElementsByTagNameNS("http://schemas.openxmlformats.org/spreadsheetml/2006/main", "pane");
+        if (paneNodes.getLength() == 0) {
+            return null;
+        }
+        Element pane = (Element) paneNodes.item(0);
+        if (!"frozen".equals(pane.getAttribute("state"))) {
+            return null;
+        }
+        XlsxFreezePaneLike freezePane = new XlsxFreezePaneLike();
+        String rowSplit = pane.getAttribute("ySplit");
+        String colSplit = pane.getAttribute("xSplit");
+        freezePane.rowSplit = rowSplit == null || rowSplit.isEmpty() ? null : Integer.valueOf((int) Double.parseDouble(rowSplit));
+        freezePane.colSplit = colSplit == null || colSplit.isEmpty() ? null : Integer.valueOf((int) Double.parseDouble(colSplit));
+        if (freezePane.rowSplit == null && freezePane.colSplit == null) {
+            return null;
+        }
+        return freezePane;
     }
 
     private int decodeColumnIndex(String reference) {

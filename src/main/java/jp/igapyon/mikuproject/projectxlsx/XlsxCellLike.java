@@ -6,6 +6,7 @@ package jp.igapyon.mikuproject.projectxlsx;
 
 public class XlsxCellLike {
     public Object value;
+    public String formula;
     public String numberFormat;
     public String horizontalAlign;
     public String verticalAlign;

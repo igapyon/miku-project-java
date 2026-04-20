@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 import jp.igapyon.mikuproject.projectxlsx.XlsxCellLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxColumnLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxDataValidationLike;
+import jp.igapyon.mikuproject.projectxlsx.XlsxFreezePaneLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxRowLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxSheetLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxWorkbookLike;
@@ -117,6 +118,7 @@ public class ExcelIoNormalize {
                 normalizeDataValidation(dataValidation);
             }
         }
+        normalizeFreezePane(sheet.freezePane);
         if (sheet.rows != null) {
             for (XlsxRowLike row : sheet.rows) {
                 if (row == null) {
@@ -131,6 +133,23 @@ public class ExcelIoNormalize {
                     }
                 }
             }
+        }
+    }
+
+    private void normalizeFreezePane(XlsxFreezePaneLike freezePane) {
+        if (freezePane == null) {
+            return;
+        }
+        if (freezePane.rowSplit != null && freezePane.rowSplit.intValue() < 0) {
+            throw new IllegalArgumentException("Freeze pane rowSplit must be zero or positive");
+        }
+        if (freezePane.colSplit != null && freezePane.colSplit.intValue() < 0) {
+            throw new IllegalArgumentException("Freeze pane colSplit must be zero or positive");
+        }
+        if ((freezePane.rowSplit == null || freezePane.rowSplit.intValue() == 0)
+                && (freezePane.colSplit == null || freezePane.colSplit.intValue() == 0)) {
+            freezePane.rowSplit = null;
+            freezePane.colSplit = null;
         }
     }
 
@@ -172,6 +191,9 @@ public class ExcelIoNormalize {
         }
         if (cell.value != null && !(cell.value instanceof String) && !(cell.value instanceof Number) && !(cell.value instanceof Boolean)) {
             throw new IllegalArgumentException("Cell value must be string, number, or boolean");
+        }
+        if (cell.formula != null && cell.formula.isEmpty()) {
+            cell.formula = null;
         }
         if (cell.fontSize != null && cell.fontSize.intValue() <= 0) {
             throw new IllegalArgumentException("Cell fontSize must be a finite positive number");

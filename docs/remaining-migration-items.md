@@ -283,9 +283,11 @@ Java 版は、次の 3 系統で段階的に進める。
 3. report API を、upstream と対応づけて揃える
    - `WBS Markdown` / `SVG` / `WBS XLSX` / report bundle / report directory について、hierarchy / dependency fixture の主要出力比較を Java test で固定済み
    - option についても、`WBS Markdown` / `SVG` / `WBS XLSX` の direct API test と CLI test の両方で display / progress / holiday / label の反映を固定済み
+   - `dependency.xml` の opt-in Node parity では report directory の `wbs.md` / `mermaid.mmd` / `daily.svg` / `weekly.svg` / `monthly-calendar/*.svg` / `wbs.xlsx` が byte-level 一致することを確認済み
+   - 同じ opt-in Node parity で report bundle ZIP と monthly SVG ZIP も byte-level 一致することを確認済み
    - 現時点では report 周りの主要 regression は unit / core API / CLI の 3 層でまとまって通る状態にある
    - 直近のまとまった確認では `WbsMarkdownTest`, `WbsSvgTest`, `WbsXlsxTest`, `CoreApiPublicTest`, `MikuprojectCliTest` をまとめて通しており、report の主要導線はこの単位で回帰確認できる
-   - 残る論点は、出力表現の細部差分をどこまで upstream へ寄せるか、各 report の option 契約と比較粒度をどこまで細かく保守するか、という精度面の詰めである
+   - 残る論点は、各 report の option 契約と比較粒度をどこまで細かく保守するか、という精度面の詰めである
 
 ## 継承する仕様と保留する仕様
 

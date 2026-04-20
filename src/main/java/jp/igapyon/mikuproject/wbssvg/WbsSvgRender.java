@@ -90,26 +90,107 @@ public class WbsSvgRender {
             viewport.setBaseDate(resolveTimelineBaseDate(model, tasks));
         }
         StringBuilder builder = new StringBuilder();
-        int chartOriginX = 120;
-        int chartOriginY = 118;
         int chartWidth = Math.max(1, weeklyBand.size()) * WEEKLY_WEEK_WIDTH;
-        int height = chartOriginY + 38 + tasks.size() * 38;
-        int width = Math.max(1000, chartOriginX + chartWidth + 420);
+        int chartOriginXBase = 0;
+        List<WeeklyLabelPlacement> labelPlacements = weeklyLabelPlacements(tasks, weeklyBand, chartOriginXBase, chartWidth);
+        WeeklyViewport weeklyViewport = computeWeeklyViewport(labelPlacements, chartOriginXBase, chartWidth);
+        int chartOriginX = weeklyViewport.chartOriginX;
+        int chartOriginY = 118;
+        int height = 22 + 96 + tasks.size() * 38 + 28;
+        int width = weeklyViewport.svgWidth;
         scaffold.appendWeeklyScaffold(builder, width, height, chartOriginX, chartWidth, 22,
                 escapeXml(safe(model.project.name, "Project")), escapeXml(dateOnly(model.project.startDate)),
                 escapeXml(dateOnly(model.project.finishDate)));
-        axis.appendWeeklyAxis(builder, weeklyBand, chartOriginX, chartOriginY, height, WEEKLY_WEEK_WIDTH,
+        axis.appendWeeklyAxis(builder, weeklyBand, chartOriginX, 106, height, WEEKLY_WEEK_WIDTH,
                 model.project.currentDate);
-        int y = chartOriginY + 38;
-        for (TaskModel task : tasks) {
-            WbsSvgTimeline.TaskPlacement placement = timeline.weeklyPlacement(task);
+        appendWeeklyDependencyPaths(builder, tasks, weeklyBand, chartOriginX, chartOriginY, 38);
+        for (int index = 0; index < tasks.size(); index++) {
+            TaskModel task = tasks.get(index);
+            WbsSvgTimeline.TaskPlacement placement = weeklyPlacement(task, weeklyBand, chartOriginX, labelPlacements.get(index), weeklyViewport.shiftX);
+            int y = chartOriginY + index * 38 + 24;
             bars.appendWeeklyBar(builder, task, placement, y);
             labels.appendTaskLabel(builder, task, placement, y, escapeXml(resolveLabel(task, actualOptions)));
-            y += 38;
         }
-        appendDependencyPaths(builder, tasks, chartOriginY + 38, 38, false);
         scaffold.appendSvgClose(builder);
         return builder.toString();
+    }
+
+    private WbsSvgTimeline.TaskPlacement weeklyPlacement(TaskModel task, List<WbsSvgAxis.WeeklyBand> weeklyBand,
+            int chartOriginX, WeeklyLabelPlacement labelPlacement, int shiftX) {
+        int startIndex = Math.max(0, axis.indexOfWeek(weeklyBand, task.start));
+        int endIndex = task.milestone ? startIndex : Math.max(startIndex, axis.indexOfWeek(weeklyBand, task.finish));
+        WbsSvgTimeline.TaskPlacement placement = new WbsSvgTimeline.TaskPlacement();
+        placement.startX = chartOriginX + startIndex * WEEKLY_WEEK_WIDTH;
+        placement.width = Math.max(1, endIndex - startIndex + 1) * WEEKLY_WEEK_WIDTH;
+        placement.anchor = labelPlacement.anchor;
+        placement.labelX = labelPlacement.x + shiftX;
+        return placement;
+    }
+
+    private List<WeeklyLabelPlacement> weeklyLabelPlacements(List<TaskModel> tasks, List<WbsSvgAxis.WeeklyBand> weeklyBand,
+            int chartOriginX, int chartWidth) {
+        List<WeeklyLabelPlacement> result = new ArrayList<WeeklyLabelPlacement>();
+        for (TaskModel task : tasks) {
+            int startIndex = axis.indexOfWeek(weeklyBand, task.start);
+            int endIndex = task.milestone ? startIndex : axis.indexOfWeek(weeklyBand, task.finish);
+            String label = safe(task.name, "-");
+            int textWidth = estimateLabelWidth(label, task.summary);
+            WeeklyLabelPlacement placement = new WeeklyLabelPlacement();
+            placement.width = textWidth;
+            if (startIndex < 0 || endIndex < 0) {
+                placement.x = chartOriginX + 10;
+                placement.anchor = "start";
+                result.add(placement);
+                continue;
+            }
+            int shapeStartX = chartOriginX + startIndex * WEEKLY_WEEK_WIDTH + 4;
+            int shapeEndX = chartOriginX + endIndex * WEEKLY_WEEK_WIDTH + WEEKLY_WEEK_WIDTH - 4;
+            int chartMidX = chartOriginX + chartWidth / 2;
+            int leftRoom = Math.max(0, shapeStartX - 16 - chartOriginX);
+            int rightRoom = Math.max(0, chartOriginX + chartWidth - (shapeEndX + 16));
+            int preferredRoom = Math.min(textWidth, WEEKLY_WEEK_WIDTH * 4);
+            if ((shapeStartX + shapeEndX) / 2 >= chartMidX) {
+                if (leftRoom < textWidth && rightRoom >= textWidth) {
+                    placement.anchor = "start";
+                    placement.x = shapeEndX + 16;
+                } else {
+                    placement.anchor = "end";
+                    placement.x = shapeStartX - 16;
+                }
+            } else if (rightRoom >= preferredRoom) {
+                placement.anchor = "start";
+                placement.x = shapeEndX + 16;
+            } else if (leftRoom >= preferredRoom) {
+                placement.anchor = "end";
+                placement.x = shapeStartX - 16;
+            } else if (rightRoom > leftRoom) {
+                placement.anchor = "start";
+                placement.x = shapeEndX + 16;
+            } else {
+                placement.anchor = "end";
+                placement.x = shapeStartX - 16;
+            }
+            result.add(placement);
+        }
+        return result;
+    }
+
+    private WeeklyViewport computeWeeklyViewport(List<WeeklyLabelPlacement> labelPlacements, int chartOriginXBase, int chartWidth) {
+        int minX = chartOriginXBase;
+        int maxX = chartOriginXBase + chartWidth;
+        for (WeeklyLabelPlacement placement : labelPlacements) {
+            int placementMinX = "start".equals(placement.anchor) ? placement.x : placement.x - placement.width;
+            int placementMaxX = "start".equals(placement.anchor) ? placement.x + placement.width : placement.x;
+            minX = Math.min(minX, placementMinX);
+            maxX = Math.max(maxX, placementMaxX);
+        }
+        int contentMinX = Math.min(chartOriginXBase, minX);
+        int contentMaxX = Math.max(chartOriginXBase + chartWidth, maxX);
+        WeeklyViewport viewport = new WeeklyViewport();
+        viewport.shiftX = 16 - contentMinX;
+        viewport.chartOriginX = chartOriginXBase + viewport.shiftX;
+        viewport.svgWidth = contentMaxX - contentMinX + 32;
+        return viewport;
     }
 
     public List<TaskModel> exportableTasks(ProjectModel model) {
@@ -175,6 +256,43 @@ public class WbsSvgRender {
         }
     }
 
+    private void appendWeeklyDependencyPaths(StringBuilder builder, List<TaskModel> tasks, List<WbsSvgAxis.WeeklyBand> weeklyBand,
+            int chartOriginX, int chartOriginY, int rowHeight) {
+        Map<String, Integer> rowIndexByUid = new LinkedHashMap<String, Integer>();
+        for (int index = 0; index < tasks.size(); index++) {
+            rowIndexByUid.put(tasks.get(index).uid, Integer.valueOf(index));
+        }
+        for (TaskModel task : tasks) {
+            if (task.predecessors == null) {
+                continue;
+            }
+            Integer toRowIndex = rowIndexByUid.get(task.uid);
+            if (toRowIndex == null) {
+                continue;
+            }
+            for (PredecessorModel predecessor : task.predecessors) {
+                Integer fromRowIndex = predecessor == null ? null : rowIndexByUid.get(predecessor.predecessorUid);
+                if (fromRowIndex == null) {
+                    continue;
+                }
+                TaskModel fromTask = tasks.get(fromRowIndex.intValue());
+                int fromEndIndex = Math.max(0, axis.indexOfWeek(weeklyBand, fromTask.milestone ? fromTask.start : fromTask.finish));
+                int toStartIndex = Math.max(0, axis.indexOfWeek(weeklyBand, task.start));
+                int fromX = chartOriginX + fromEndIndex * WEEKLY_WEEK_WIDTH + WEEKLY_WEEK_WIDTH - 4;
+                int fromY = chartOriginY + fromRowIndex.intValue() * rowHeight + rowHeight / 2;
+                int toX = chartOriginX + toStartIndex * WEEKLY_WEEK_WIDTH + WEEKLY_WEEK_WIDTH - 4;
+                int toY = fromY;
+                builder.append("<path class=\"dependencyPath\" d=\"M ")
+                        .append(fromX).append(" ").append(fromY).append(" L ")
+                        .append(toX).append(" ").append(toY)
+                        .append("\" marker-end=\"url(#dependencyArrow)\" data-from-uid=\"")
+                        .append(escapeXml(predecessor.predecessorUid)).append("\" data-to-uid=\"")
+                        .append(escapeXml(task.uid)).append("\" data-link-type=\"")
+                        .append(predecessor.type == null ? "FS" : describeLinkType(predecessor.type.intValue())).append("\"/>");
+            }
+        }
+    }
+
     private String describeLinkType(int type) {
         if (type == 0) {
             return "FF";
@@ -221,6 +339,50 @@ public class WbsSvgRender {
             return safe(task.wbs, safe(task.outlineNumber, safe(task.name, "-")));
         }
         return safe(task.name, safe(task.uid, "-"));
+    }
+
+    private int estimateLabelWidth(String label, boolean phase) {
+        String text = label == null || label.trim().isEmpty() ? "-" : label.trim();
+        int width = 0;
+        for (int offset = 0; offset < text.length();) {
+            int codePoint = text.codePointAt(offset);
+            offset += Character.charCount(codePoint);
+            if (Character.isWhitespace(codePoint)) {
+                width += 4;
+            } else if (isWideLabelCodePoint(codePoint)) {
+                width += phase ? 13 : 12;
+            } else if (codePoint >= 'A' && codePoint <= 'Z') {
+                width += 8;
+            } else if ((codePoint >= 'a' && codePoint <= 'z') || (codePoint >= '0' && codePoint <= '9')) {
+                width += 7;
+            } else if (codePoint >= 0x21 && codePoint <= 0x7e) {
+                width += 6;
+            } else {
+                width += phase ? 12 : 11;
+            }
+        }
+        return Math.max(48, width);
+    }
+
+    private boolean isWideLabelCodePoint(int codePoint) {
+        return (codePoint >= 0x3040 && codePoint <= 0x30ff)
+                || (codePoint >= 0x3400 && codePoint <= 0x4dbf)
+                || (codePoint >= 0x4e00 && codePoint <= 0x9fff)
+                || (codePoint >= 0xf900 && codePoint <= 0xfaff)
+                || (codePoint >= 0xff01 && codePoint <= 0xff60)
+                || (codePoint >= 0xffe0 && codePoint <= 0xffee);
+    }
+
+    private static class WeeklyLabelPlacement {
+        int x;
+        String anchor;
+        int width;
+    }
+
+    private static class WeeklyViewport {
+        int shiftX;
+        int chartOriginX;
+        int svgWidth;
     }
 
     public int countLines(String text) {

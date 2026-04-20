@@ -72,11 +72,11 @@ public class WbsXlsxSections {
             Set<Integer> nonWorkingDayTypes, Boolean useBusinessDaysForProgressBand, WbsXlsxTaskmeta.Taskmeta taskmeta) {
         for (TaskModel task : model.tasks) {
             XlsxRowLike row = new XlsxRowLike();
-            row.cells.add(cells.taskCell(task.uid, task, "center"));
-            row.cells.add(cells.taskCell(task.id, task, "center"));
-            row.cells.add(cells.taskCell(base.safe(base.safe(task.wbs, task.outlineNumber), "-"), task, "center"));
+            row.cells.add(cells.identifierCell(task, task.uid));
+            row.cells.add(cells.identifierCell(task, task.id));
+            row.cells.add(cells.identifierCell(task, base.safe(task.wbs, task.outlineNumber)));
             row.cells.add(cells.kindCell(task));
-            row.cells.add(cells.taskCell(task.outlineLevel == null ? "-" : String.valueOf(task.outlineLevel), task, "center"));
+            row.cells.add(cells.identifierCell(task, task.outlineLevel == null ? "" : String.valueOf(task.outlineLevel)));
             row.height = Integer.valueOf(34);
             row.cells.add(cells.taskCell(formatTaskLabel(task), task, "left"));
             row.cells.add(cells.taskCell(base.formatDate(task.start), task, "center"));
@@ -91,8 +91,8 @@ public class WbsXlsxSections {
             List<String> resourceNames = taskmeta.resourceNamesByTaskUid.get(task.uid);
             row.cells.add(referenceCell(task, base.truncate(base.first(resourceNames), 14), "center"));
             row.cells.add(referenceCell(task, base.formatCalendarLabel(base.safe(task.calendarUID, model.project.calendarUID), taskmeta.calendarNameByUid), "center"));
-            row.cells.add(referenceCell(task, base.truncate(base.join(resourceNames, ", "), 18), "left"));
-            row.cells.add(referenceCell(task, base.truncate(formatPredecessorNames(task, taskmeta), 18), "left"));
+            row.cells.add(referenceCell(task, base.truncate(base.join(resourceNames, ", "), 18), "center"));
+            row.cells.add(referenceCell(task, base.truncate(formatPredecessorNames(task, taskmeta), 18), "center"));
             row.cells.add(cells.dividerCell());
             List<String> taskBand = dateband.buildDateBand(base.formatDate(task.start), base.formatDate(task.finish));
             Set<String> taskBandSet = new LinkedHashSet<String>(taskBand);
@@ -122,7 +122,7 @@ public class WbsXlsxSections {
         sheet.rows.add(cells.singleValueRow("■:進捗済みタスク", "#8EB9EA"));
         sheet.rows.add(cells.singleValueRow("□:予定タスク", "#D9EFFF"));
         sheet.rows.add(cells.singleValueRow("◆:マイルストーン", "#FFF4E0"));
-        sheet.rows.add(cells.singleValueRow("Mil:マイルストーン", "#FFF4E0"));
+        sheet.rows.add(cells.singleValueRow("Mil:マイルストーン", "#FBE4EC"));
         sheet.rows.add(cells.singleValueRow("Sum:サマリ", "#F7EAF0"));
         sheet.rows.add(cells.singleValueRow("Crit:クリティカル", "#F3E1E9"));
         sheet.rows.add(cells.singleValueRow("-:未設定", "#F5F7FA"));
@@ -157,7 +157,14 @@ public class WbsXlsxSections {
     }
 
     private String formatTaskLabel(TaskModel task) {
-        return base.safe(task.name, "-");
+        String prefix = task.summary ? "> " : task.milestone ? "* " : "- ";
+        int indentCount = task.outlineLevel == null ? 0 : Math.max(0, task.outlineLevel.intValue() - 1);
+        StringBuilder label = new StringBuilder();
+        for (int index = 0; index < indentCount; index++) {
+            label.append("  ");
+        }
+        label.append(prefix).append(base.safe(task.name, "-"));
+        return label.toString();
     }
 
     private String formatPredecessorNames(TaskModel task, WbsXlsxTaskmeta.Taskmeta taskmeta) {

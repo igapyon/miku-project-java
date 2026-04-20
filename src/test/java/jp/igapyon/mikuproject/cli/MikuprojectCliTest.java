@@ -109,7 +109,7 @@ public class MikuprojectCliTest {
             assertTrue(text(mermaidOut).contains("gantt"));
             assertTrue(text(markdownOut).contains("mikuproject開発"));
             assertTrue(text(dailySvgOut).contains("<svg"));
-            assertTrue(text(weeklySvgOut).contains("weekly timeline"));
+            assertTrue(text(weeklySvgOut).contains("weekly overview"));
             assertTrue(text(monthlyZipOut).contains("entries"));
             assertTrue(text(bundleZipOut).contains("entries"));
             assertTrue(text(reportDirOut).contains("entries"));
@@ -366,7 +366,7 @@ public class MikuprojectCliTest {
 
             assertTrue(text(batchOut).contains("minimal.svg"));
             assertTrue(text(batchOut).contains("dependency.svg"));
-            assertTrue(Files.readString(outputRoot.resolve("minimal.svg"), StandardCharsets.UTF_8).contains("weekly timeline"));
+            assertTrue(Files.readString(outputRoot.resolve("minimal.svg"), StandardCharsets.UTF_8).contains("weekly overview"));
             String dependencySvg = Files.readString(outputRoot.resolve("dependency.svg"), StandardCharsets.UTF_8);
             assertTrue(dependencySvg.contains(">2</text>"));
             assertTrue(dependencySvg.contains("weekly overview"));

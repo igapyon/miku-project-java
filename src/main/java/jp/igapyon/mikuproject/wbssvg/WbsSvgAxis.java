@@ -55,8 +55,6 @@ public class WbsSvgAxis {
 
     public void appendWeeklyAxis(StringBuilder builder, List<WeeklyBand> weeklyBand, int chartOriginX, int chartOriginY,
             int svgHeight, int weekWidth, String today) {
-        builder.append("<text class=\"axisTitle\" x=\"").append(chartOriginX).append("\" y=\"")
-                .append(chartOriginY - 40).append("\" font-size=\"12\" fill=\"#666\">weekly timeline</text>");
         String currentMonth = null;
         int monthStartIndex = 0;
         for (int index = 0; index <= weeklyBand.size(); index++) {
@@ -73,30 +71,30 @@ public class WbsSvgAxis {
                         .append(currentMonth).append("</text>");
                 builder.append("<line class=\"monthBoundary\" x1=\"").append(x).append("\" y1=\"")
                         .append(chartOriginY - 12).append("\" x2=\"").append(x).append("\" y2=\"")
-                        .append(svgHeight - 20).append("\"/>");
+                        .append(svgHeight - 28).append("\" />");
                 currentMonth = month;
                 monthStartIndex = index;
             }
         }
         int endX = chartOriginX + weeklyBand.size() * weekWidth;
         builder.append("<line class=\"monthBoundary\" x1=\"").append(endX).append("\" y1=\"").append(chartOriginY - 12)
-                .append("\" x2=\"").append(endX).append("\" y2=\"").append(svgHeight - 20).append("\"/>");
+                .append("\" x2=\"").append(endX).append("\" y2=\"").append(svgHeight - 28).append("\" />");
 
         for (int index = 0; index < weeklyBand.size(); index++) {
             WeeklyBand week = weeklyBand.get(index);
             int x = chartOriginX + index * weekWidth;
             builder.append("<line class=\"grid\" x1=\"").append(x).append("\" y1=\"").append(chartOriginY - 12)
-                    .append("\" x2=\"").append(x).append("\" y2=\"").append(svgHeight - 20).append("\"/>");
+                    .append("\" x2=\"").append(x).append("\" y2=\"").append(svgHeight - 28).append("\" />");
             builder.append("<text class=\"weekAxis\" x=\"").append(x + weekWidth / 2).append("\" y=\"")
-                    .append(chartOriginY + 4).append("\" text-anchor=\"middle\">")
+                    .append(chartOriginY + 2).append("\" text-anchor=\"middle\">")
                     .append(formatDailyLabel(week.startDay)).append("</text>");
         }
         int todayIndex = indexOfWeek(weeklyBand, today);
         if (todayIndex >= 0) {
             int todayX = chartOriginX + todayIndex * weekWidth + weekWidth / 2;
             builder.append("<line class=\"today\" x1=\"").append(todayX).append("\" y1=\"").append(chartOriginY - 12)
-                    .append("\" x2=\"").append(todayX).append("\" y2=\"").append(svgHeight - 20)
-                    .append("\"/>");
+                    .append("\" x2=\"").append(todayX).append("\" y2=\"").append(svgHeight - 28)
+                    .append("\" />");
         }
     }
 
