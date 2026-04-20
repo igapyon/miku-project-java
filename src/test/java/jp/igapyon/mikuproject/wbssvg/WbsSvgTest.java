@@ -14,6 +14,7 @@ import java.nio.file.Paths;
 
 import org.junit.jupiter.api.Test;
 
+import jp.igapyon.mikuproject.excelio.ExcelIoZip;
 import jp.igapyon.mikuproject.model.PredecessorModel;
 import jp.igapyon.mikuproject.model.ProjectModel;
 import jp.igapyon.mikuproject.model.TaskModel;
@@ -31,8 +32,11 @@ public class WbsSvgTest {
 
         assertTrue(dailySvg.contains("<svg"));
         assertTrue(dailySvg.contains("mikuproject開発"));
+        assertTrue(dailySvg.contains("class=\"grid\""));
+        assertTrue(dailySvg.contains(">3/16</text>"));
         assertTrue(weeklySvg.contains("<svg"));
         assertTrue(weeklySvg.contains("weekly overview"));
+        assertTrue(weeklySvg.contains("class=\"monthAxis\""));
     }
 
     @Test
@@ -76,7 +80,7 @@ public class WbsSvgTest {
 
         String dailySvg = xml.exportNativeSvg(model);
 
-        assertTrue(dailySvg.contains("<rect x=\"120\""));
+        assertTrue(dailySvg.contains("<rect x=\"6\""));
         assertFalse(dailySvg.contains("x=\"1520\""));
     }
 
@@ -90,7 +94,11 @@ public class WbsSvgTest {
         assertTrue(archive.entries.size() > 0);
         assertTrue(archive.entries.get(0).fileName.endsWith(".svg"));
         assertTrue(archive.entries.get(0).svg.contains("<svg"));
+        assertTrue(archive.entries.get(0).svg.contains("class=\"weekday\""));
+        assertTrue(archive.entries.get(0).svg.contains("class=\"cellBorder\""));
         assertTrue(archive.zipBytes.length > 0);
+        assertTrue(readUnsignedShortLE(archive.zipBytes, 10) == ExcelIoZip.FIXED_2025_01_01_MOD_TIME);
+        assertTrue(readUnsignedShortLE(archive.zipBytes, 12) == ExcelIoZip.FIXED_2025_01_01_MOD_DATE);
     }
 
     @Test
@@ -142,7 +150,7 @@ public class WbsSvgTest {
         assertTrue(dailySvg.contains(">2</text>"));
         assertTrue(weeklySvg.contains(">1</text>"));
         assertTrue(weeklySvg.contains(">2</text>"));
-        assertTrue(archive.entries.get(0).svg.contains("holidays 2"));
+        assertTrue(archive.entries.get(0).svg.contains("#fce7ef"));
         assertTrue(archive.entries.get(0).svg.contains(">1</text>"));
     }
 
@@ -164,5 +172,9 @@ public class WbsSvgTest {
         task.duration = "PT16H0M0S";
         task.percentComplete = Integer.valueOf(0);
         return task;
+    }
+
+    private int readUnsignedShortLE(byte[] bytes, int offset) {
+        return (bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8);
     }
 }

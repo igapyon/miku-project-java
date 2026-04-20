@@ -23,6 +23,66 @@
 - [ ] mikuproject-java 側で zero duration task が大量に来たときの warning 方針を検討する
   - workbook JSON / AI JSON / XML import のどこで警告するかを決める
   - 現時点では実装せず、report SVG の見た目不良を生む入力品質観点として保留する
+- [ ] Node 版に比べて Java 版の straight conversion が薄い箇所を解消する
+  - 優先度 A: `excelio` / `XlsxWorkbookCodec`
+    - [x] `exportWorkbook(...)` が実 Excel OOXML zip ではなく独自 `mikuproject_xlsx_workbook_v1` 形式を返している問題を修正し、主要導線を OOXML ZIP へ切り替える
+    - `exportWorkbookArchive(...)` / `importWorkbookArchive(...)` はあるが、report / CLI / Core API の主要導線から使われていない
+    - [x] upstream の `dataValidations` と style descriptor の主要部を Java 側の OOXML build / parse に反映する
+    - `formula`, `freezePane` はまだ Java 側 model / OOXML build / parse に十分反映されていない
+  - 優先度 A: `projectxlsx`
+    - `ProjectXlsxExport*` が upstream の列幅、merged range、data validation、editable cell styling、boolean option sheet、sheet theme を大きく省略している
+    - import 側も upstream の workbook validation / editable cell 前提とズレがないか、fixture round-trip だけでなく sheet 構造で確認する
+  - 優先度 A: `wbsxlsx`
+    - [x] WBS workbook の主要導線が独自 workbook bytes を出しており、`wbs.xlsx` というファイル名と実体が合っていない問題を修正する
+    - [x] upstream 相当の row height、hidden columns、style、date band cell、progress band、summary / legend へ寄せる
+    - `freeze` と byte-level の worksheet XML serialization / package XML までは未一致
+  - 優先度 B: `wbssvg`
+    - 日付軸 / 月次カレンダー / style / bar 形状は修正を進めたが、label placement、viewport trim、dependency connector routing はまだ TypeScript 版より薄い
+    - daily / weekly / monthly について、見た目の目視だけでなく class / shape / path 構造比較テストを追加する
+  - 優先度 B: `projectpatchjson`
+    - `first cut` 制限自体は upstream 由来だが、Java 側の warning 詳細や参照 blocker が薄くなりやすい
+    - `delete_task`, `delete_resource`, `delete_calendar`, `delete_assignment` の warning / changes を upstream と構造比較する
+  - 優先度 C: docs / follow-up log
+    - `docs/upstream-followup-log.md` の「大きな差分は見当たらない」という過去記録を、今回見つかった薄い箇所で更新する
+    - `docs/remaining-migration-items.md` の CLI/report 完了率表現を、XLSX / SVG の再点検が終わるまで保守的に戻す
+- [ ] 同一入力に対する Node 版 / Java 版の全出力 byte-level parity 方針を決め、比較テストへ分解する
+  - 方針: straight conversion の検証軸として、CLI / Core API が返す「出力という出力」は原則 Node 版 upstream とバイト一致を目標に置く
+  - 対象 A: report 派生出力の `wbs.md`, `mermaid.mmd`, `daily.svg`, `weekly.svg`, `monthly-calendar/*.svg`, `wbs.xlsx`, report bundle ZIP, report directory
+  - 対象 B: workbook / project 交換出力の workbook JSON, project overview view JSON, phase detail view JSON, task edit view JSON, project draft request JSON, exported XML, project XLSX
+  - 対象 C: validation / detection / import / merge 系の stdout text / JSON diagnostics / generated XML / generated workbook bytes
+  - 前提: `svg`, `md`, `mmd`, JSON, XML のような plain text 生成物は、同じ model / options / key order / 改行規約 / UTF-8 encoding でバイト一致を目標にできる
+  - 前提: `.xlsx` / report bundle / monthly SVG ZIP も、entry 順、entry 名、entry bytes、ZIP local header / central directory / CRC32 / 圧縮方式 / timestamp を upstream と揃えればバイト一致を目標にできる
+  - upstream 確認: `main-util.ts` の report bundle ZIP と `wbs-svg.ts` / `wbs-svg-zip.ts` の monthly SVG ZIP は DOS timestamp を `2025-01-01 00:00:00` 相当に固定している
+  - upstream 確認: `excel-io-zip.ts` の OOXML workbook ZIP は手書き ZIP だが mod time / mod date は `0` を書いており、report/monthly ZIP の `2025-01-01` 固定とは異なる
+  - [x] Java 側の `ExcelIoZip.packZip`, `CoreApiReport.packZipEntries`, `WbsSvgZip.packMonthlyEntries` を deterministic stored ZIP writer に寄せ、report / monthly ZIP は `2025-01-01 00:00:00`、OOXML workbook ZIP は mod fields `0` を使う
+  - 段階 1: `md` / `mmd` / standalone SVG / JSON view / XML など単体 text 出力を fixture ごとに Node 版出力とバイト比較する
+  - 段階 2: ZIP を展開した entry-level parity として、report bundle / monthly SVG ZIP / `.xlsx` の entry 名、entry 順、entry bytes を比較する
+  - [x] 段階 3 の前提として Java 側に upstream と同じ stored ZIP writer を移植する
+  - [x] `.xlsx` の主要導線を独自 `mikuproject_xlsx_workbook_v1` 出力から OOXML ZIP 出力へ切り替える
+  - [x] `styles.xml` を固定 2 スタイルから upstream 相当の動的 style book 生成へ寄せる
+  - [x] `wbs.xlsx` の worksheet model を upstream 相当の project info / task rows / legend / summary / progress band へ寄せる
+  - [ ] `.xlsx` の worksheet XML / styles XML / workbook XML の byte-level parity を entry 単位で確認する
+    - 現状: `dependency.xml` の opt-in Node parity は `wbs.md` まで一致し、`wbs.xlsx` で停止する
+    - 残差分: worksheet XML の空白 / `xml:space` / empty cell serialization、package XML の entry 順と整形、timestamp 行、`formula` / `freezePane`
+  - parity が難しい場合の例外は、差分理由を固定値、entry 順、JSON key order、XML serialization、数値丸め、locale / timezone、CLI diagnostics のどれかへ分類し、正規化比較へ逃げる箇所を TODO ではなく明示的な仕様として記録する
+- [ ] report 生成物全体の品質を再点検する
+  - SVG の日付軸 / 月次カレンダーが簡略実装へ退化していたため、同じ report 系の XLSX / ZIP / directory export も信用しすぎない
+  - SVG は既存 TypeScript 版に寄せ、title 位置、style class、bar / milestone / phase の形状、dependency connector、weekly meta、monthly calendar の見た目を構造比較する
+  - `export-report-dir`, `export-report-bundle`, `export-monthly-svg-zip`, `export-wbs-xlsx` を同一 fixture で出力し、entry 名、0 バイト有無、主要シート / 主要セル / SVG 構造を確認する
+  - `wbs.xlsx` と standalone `export-wbs-xlsx` の内容が同等か確認する
+  - report bundle zip と report dir の entry 構成が同等か確認する
+  - monthly calendar はプロジェクト期間に含まれる月がすべて出ること、各 SVG が空でないこと、zip 内 path が `monthly-calendar/YYYY-MM.svg` になることを確認する
+  - dependency / hierarchy / 実利用サンプルの 3 系統で fixture を分け、サンプルだけで通る状態を避ける
+  - upstream TypeScript 版との目視または構造比較が必要な項目を `docs/upstream-followup-log.md` へ記録する
+- [ ] XLSX / OOXML 系の簡略実装を upstream 相当へ戻す
+  - [x] `CoreApiReport` の `wbs.xlsx` entry と `export-wbs-xlsx` が `XlsxWorkbookCodec.exportWorkbook(...)` の独自 `mikuproject_xlsx_workbook_v1` 形式を出しており、実 Excel workbook zip ではない問題を修正する
+  - [x] `XlsxWorkbookCodec.exportWorkbookArchive(...)` / `importWorkbookArchive(...)` を report / CLI の主要導線から使う
+  - `XlsxSheetLike` に upstream の `freezePane` がなく、`XlsxCellLike` に upstream の `formula` がない
+  - [x] `ExcelIoWorksheetBuild` が `dataValidations` を OOXML へ出していない問題を修正する
+  - `ExcelIoWorksheetBuild` が `freezePane` を OOXML へ出していない
+  - [x] `ExcelIoStylesBuild` が実際の `fillColor` / alignment / number format / wrap / border の組み合わせを十分に反映せず、ほぼ固定 style へ潰している問題を修正する
+  - `ProjectXlsxExport*` が upstream の列幅、merged range、data validation、editable cell styling、boolean option sheet などを大きく省略している
+  - テストは byte size / decode だけでなく、zip entry、worksheet XML、styles XML、data validation、freeze pane、主要セル style を確認する
 
 ### 今週
 

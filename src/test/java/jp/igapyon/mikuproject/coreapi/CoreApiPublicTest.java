@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import jp.igapyon.mikuproject.excelio.ExcelIoZip;
 import jp.igapyon.mikuproject.excelio.XlsxWorkbookCodec;
 import jp.igapyon.mikuproject.model.ProjectModel;
 import jp.igapyon.mikuproject.projectxlsx.XlsxWorkbookLike;
@@ -72,14 +73,17 @@ public class CoreApiPublicTest {
         assertTrue(monthlyCalendar.entries.size() > 0);
         assertEquals("WBS", workbook.sheets.get(0).name);
         assertTrue(workbookBytes.length > 0);
-        assertEquals(6, bundle.entries.size());
-        assertEquals(Arrays.asList("wbs.md", "mermaid.mmd", "wbs.xlsx", "daily.svg", "weekly.svg", "monthly-calendar/2026-03.svg"),
+        assertEquals(7, bundle.entries.size());
+        assertEquals(Arrays.asList("wbs.md", "mermaid.mmd", "wbs.xlsx", "daily.svg", "weekly.svg", "monthly-calendar/2026-03.svg",
+                "monthly-calendar/2026-04.svg"),
                 entryNames(bundle));
         assertTrue(containsEntry(bundle, "wbs.md", "# WBS テーブル"));
         assertTrue(containsEntry(bundle, "mermaid.mmd", "gantt"));
         assertTrue(containsEntry(bundle, "daily.svg", "<svg"));
         assertTrue(containsEntry(bundle, "weekly.svg", "<svg"));
         assertTrue(bundle.zipBytes.length > 0);
+        assertEquals(ExcelIoZip.FIXED_2025_01_01_MOD_TIME, readUnsignedShortLE(bundle.zipBytes, 10));
+        assertEquals(ExcelIoZip.FIXED_2025_01_01_MOD_DATE, readUnsignedShortLE(bundle.zipBytes, 12));
     }
 
     @Test
@@ -179,5 +183,9 @@ public class CoreApiPublicTest {
     private String readVendorTestdata(String fileName) throws IOException {
         byte[] bytes = Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", fileName));
         return new String(bytes, StandardCharsets.UTF_8);
+    }
+
+    private int readUnsignedShortLE(byte[] bytes, int offset) {
+        return (bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8);
     }
 }

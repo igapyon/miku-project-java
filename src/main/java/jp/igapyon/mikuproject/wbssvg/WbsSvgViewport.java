@@ -25,26 +25,26 @@ public class WbsSvgViewport {
     public int dailyStartX(TaskModel task) {
         java.util.Date date = dateband.parseDateOnly(task.start);
         if (date == null) {
-            return 120;
+            return 0;
         }
         long diff = date.getTime() - baseDate().getTime();
         int days = (int) Math.max(0, diff / (24L * 60L * 60L * 1000L));
-        return 120 + days * 28;
+        return days * 38;
     }
 
     public int dailyWidth(TaskModel task) {
         int days = Math.max(1, dateband.buildDateBand(task.start, task.finish).size());
-        return days * 26;
+        return days * 38;
     }
 
     public int weeklyStartX(TaskModel task) {
         java.util.Date date = dateband.parseDateOnly(task.start);
         if (date == null) {
-            return 120;
+            return 0;
         }
         long diff = date.getTime() - baseDate().getTime();
         int weeks = (int) Math.max(0, diff / (7L * 24L * 60L * 60L * 1000L));
-        return 120 + weeks * 56;
+        return weeks * 38;
     }
 
     public int weeklyWidth(TaskModel task) {

@@ -21,7 +21,7 @@ public class ExcelIoNormalize {
     private static final Pattern MERGED_RANGE_PATTERN = Pattern.compile("^[A-Z]+\\d+:[A-Z]+\\d+$");
     private static final Pattern SQREF_CELL_PATTERN = Pattern.compile("^[A-Z]+\\d+$");
     private static final Pattern SQREF_RANGE_PATTERN = Pattern.compile("^[A-Z]+\\d+:[A-Z]+\\d+$");
-    private static final Pattern COLOR_PATTERN = Pattern.compile("^#?[0-9A-Fa-f]{6}$");
+    private static final Pattern COLOR_PATTERN = Pattern.compile("^(#?[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$");
 
     public XlsxWorkbookLike normalizeWorkbook(XlsxWorkbookLike workbook) {
         if (workbook == null || workbook.sheets == null || workbook.sheets.isEmpty()) {
@@ -73,6 +73,9 @@ public class ExcelIoNormalize {
             throw new IllegalArgumentException("Unsupported color format: " + color);
         }
         String hex = color.startsWith("#") ? color.substring(1) : color;
+        if (hex.length() == 8) {
+            return hex.toUpperCase(Locale.ROOT);
+        }
         return "FF" + hex.toUpperCase(Locale.ROOT);
     }
 

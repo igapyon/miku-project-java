@@ -139,7 +139,7 @@ public class WbsMarkdown {
                 }
             }
             String[] cells = new String[] {
-                    safe(task.wbs != null ? task.wbs : task.outlineNumber, "-"),
+                    taskWbsIdentifier(task),
                     classifyTaskKind(task),
                     task.outlineLevel == null ? "-" : String.valueOf(task.outlineLevel),
                     safe(task.name, "-"),
@@ -173,7 +173,7 @@ public class WbsMarkdown {
             if (outlineLevel > 1) {
                 indent.append("┗　");
             }
-            lines.add(indent.toString() + formatTreeInlineText(safe(task.wbs != null ? task.wbs : task.outlineNumber, "-"))
+            lines.add(indent.toString() + formatTreeInlineText(taskWbsIdentifier(task))
                     + " " + formatTreeInlineText(safe(task.name, "-")) + " ("
                     + formatTreeInlineText(formatTreeDateRange(task.start, task.finish)) + "): "
                     + formatTreeInlineText(formatPercentCell(task.percentComplete)));
@@ -233,6 +233,10 @@ public class WbsMarkdown {
             return "マイル";
         }
         return "タスク";
+    }
+
+    private String taskWbsIdentifier(TaskModel task) {
+        return safe(safe(task.wbs, task.outlineNumber), "-");
     }
 
     private String formatDurationLabel(TaskModel task, Set<String> holidaySet, Set<Integer> nonWorkingDayTypes,

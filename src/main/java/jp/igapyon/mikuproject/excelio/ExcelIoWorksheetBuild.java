@@ -6,6 +6,7 @@ package jp.igapyon.mikuproject.excelio;
 
 import jp.igapyon.mikuproject.projectxlsx.XlsxCellLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxColumnLike;
+import jp.igapyon.mikuproject.projectxlsx.XlsxDataValidationLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxRowLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxSheetLike;
 
@@ -27,6 +28,7 @@ public class ExcelIoWorksheetBuild {
             }
             builder.append("</mergeCells>");
         }
+        appendDataValidations(builder, sheet);
         builder.append("</worksheet>");
         return builder.toString();
     }
@@ -71,6 +73,20 @@ public class ExcelIoWorksheetBuild {
             builder.append("</c>");
         }
         builder.append("</row>");
+    }
+
+    private void appendDataValidations(StringBuilder builder, XlsxSheetLike sheet) {
+        if (sheet.dataValidations == null || sheet.dataValidations.isEmpty()) {
+            return;
+        }
+        builder.append("<dataValidations count=\"").append(sheet.dataValidations.size()).append("\">");
+        for (XlsxDataValidationLike validation : sheet.dataValidations) {
+            builder.append("<dataValidation type=\"").append(escapeXml(validation.type)).append("\" allowBlank=\"")
+                    .append(Boolean.TRUE.equals(validation.allowBlank) ? "1" : "0")
+                    .append("\" showErrorMessage=\"1\" sqref=\"").append(escapeXml(validation.sqref)).append("\">")
+                    .append("<formula1>").append(escapeXml(validation.formula1)).append("</formula1></dataValidation>");
+        }
+        builder.append("</dataValidations>");
     }
 
     private void appendCellValue(StringBuilder builder, XlsxCellLike cell) {

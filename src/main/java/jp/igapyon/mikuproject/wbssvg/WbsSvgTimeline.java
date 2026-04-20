@@ -18,7 +18,7 @@ public class WbsSvgTimeline {
         placement.startX = viewport.dailyStartX(task);
         placement.width = viewport.dailyWidth(task);
         placement.anchor = placement.startX > 700 ? "end" : "start";
-        placement.labelX = "end".equals(placement.anchor) ? placement.startX - 8 : placement.startX + placement.width + 8;
+        placement.labelX = "end".equals(placement.anchor) ? placement.startX - 12 : placement.startX + placement.width + 12;
         return placement;
     }
 

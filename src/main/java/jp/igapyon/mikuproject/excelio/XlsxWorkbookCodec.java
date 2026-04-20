@@ -24,23 +24,31 @@ public class XlsxWorkbookCodec {
     private final ExcelIoNormalize normalize = new ExcelIoNormalize();
 
     public byte[] exportWorkbook(XlsxWorkbookLike workbook) {
-        normalize.normalizeWorkbook(workbook);
-        StringBuilder builder = new StringBuilder();
-        appendWorkbook(builder, workbook);
-        return ExcelIoUtil.concatBytes(MAGIC, ExcelIoUtil.encodeUtf8(builder.toString()));
+        return exportWorkbookArchive(workbook);
     }
 
     public XlsxWorkbookLike importWorkbook(byte[] bytes) {
+        if (hasMagic(bytes)) {
+            return importLegacyWorkbook(bytes);
+        }
+        return importWorkbookArchive(bytes);
+    }
+
+    private XlsxWorkbookLike importLegacyWorkbook(byte[] bytes) {
+        String text = ExcelIoUtil.decodeUtf8(slice(bytes, MAGIC.length, bytes.length - MAGIC.length));
+        return new Parser(text).parseWorkbook();
+    }
+
+    private boolean hasMagic(byte[] bytes) {
         if (bytes == null || bytes.length < MAGIC.length) {
-            throw new IllegalArgumentException("invalid workbook bytes");
+            return false;
         }
         for (int index = 0; index < MAGIC.length; index++) {
             if (bytes[index] != MAGIC[index]) {
-                throw new IllegalArgumentException("unsupported workbook encoding");
+                return false;
             }
         }
-        String text = ExcelIoUtil.decodeUtf8(slice(bytes, MAGIC.length, bytes.length - MAGIC.length));
-        return new Parser(text).parseWorkbook();
+        return true;
     }
 
     public byte[] exportWorkbookArchive(XlsxWorkbookLike workbook) {

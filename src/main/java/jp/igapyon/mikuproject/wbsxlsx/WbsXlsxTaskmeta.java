@@ -13,6 +13,7 @@ import jp.igapyon.mikuproject.model.AssignmentModel;
 import jp.igapyon.mikuproject.model.CalendarModel;
 import jp.igapyon.mikuproject.model.ProjectModel;
 import jp.igapyon.mikuproject.model.ResourceModel;
+import jp.igapyon.mikuproject.model.TaskModel;
 
 public class WbsXlsxTaskmeta {
     public Taskmeta collectTaskmeta(ProjectModel model) {
@@ -25,6 +26,11 @@ public class WbsXlsxTaskmeta {
         for (ResourceModel resource : model.resources) {
             if (resource != null) {
                 taskmeta.resourceNameByUid.put(resource.uid, resource.name);
+            }
+        }
+        for (TaskModel task : model.tasks) {
+            if (task != null) {
+                taskmeta.predecessorNameByUid.put(task.uid, task.name);
             }
         }
         for (AssignmentModel assignment : model.assignments) {
@@ -50,6 +56,7 @@ public class WbsXlsxTaskmeta {
     public static class Taskmeta {
         public final Map<String, String> calendarNameByUid = new LinkedHashMap<String, String>();
         public final Map<String, String> resourceNameByUid = new LinkedHashMap<String, String>();
+        public final Map<String, String> predecessorNameByUid = new LinkedHashMap<String, String>();
         public final Map<String, List<String>> resourceNamesByTaskUid = new LinkedHashMap<String, List<String>>();
     }
 }

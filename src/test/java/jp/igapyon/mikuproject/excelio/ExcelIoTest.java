@@ -5,9 +5,11 @@
 package jp.igapyon.mikuproject.excelio;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +22,25 @@ import jp.igapyon.mikuproject.projectxlsx.XlsxSheetLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxWorkbookLike;
 
 public class ExcelIoTest {
+    @Test
+    public void packsStoredZipDeterministicallyWithZeroTimestampByDefault() {
+        ExcelIoZip zip = new ExcelIoZip();
+        List<ExcelIoZip.ZipEntryData> entries = new ArrayList<ExcelIoZip.ZipEntryData>();
+        entries.add(new ExcelIoZip.ZipEntryData("a.txt", ExcelIoUtil.encodeUtf8("alpha")));
+        entries.add(new ExcelIoZip.ZipEntryData("b.txt", ExcelIoUtil.encodeUtf8("beta")));
+
+        byte[] first = zip.packZip(entries);
+        byte[] second = zip.packZip(entries);
+        Map<String, byte[]> unpacked = zip.unpackZip(first);
+
+        assertArrayEquals(first, second);
+        assertEquals(0, readUnsignedShortLE(first, 8));
+        assertEquals(ExcelIoZip.ZERO_MOD_TIME, readUnsignedShortLE(first, 10));
+        assertEquals(ExcelIoZip.ZERO_MOD_DATE, readUnsignedShortLE(first, 12));
+        assertEquals("alpha", ExcelIoUtil.decodeUtf8(unpacked.get("a.txt")));
+        assertEquals("beta", ExcelIoUtil.decodeUtf8(unpacked.get("b.txt")));
+    }
+
     @Test
     public void roundTripsWorkbookBytes() {
         XlsxWorkbookCodec codec = new XlsxWorkbookCodec();
@@ -94,6 +115,9 @@ public class ExcelIoTest {
         String worksheetXml = ExcelIoUtil.decodeUtf8(unpacked.get("xl/worksheets/sheet1.xml"));
 
         assertTrue(bytes.length > 0);
+        assertEquals(0, readUnsignedShortLE(bytes, 8));
+        assertEquals(ExcelIoZip.ZERO_MOD_TIME, readUnsignedShortLE(bytes, 10));
+        assertEquals(ExcelIoZip.ZERO_MOD_DATE, readUnsignedShortLE(bytes, 12));
         assertTrue(entries.contains("[Content_Types].xml"));
         assertTrue(entries.contains("_rels/.rels"));
         assertTrue(entries.contains("xl/workbook.xml"));
@@ -174,5 +198,9 @@ public class ExcelIoTest {
                 normalize.validateSheetName("bad/name");
             }
         });
+    }
+
+    private int readUnsignedShortLE(byte[] bytes, int offset) {
+        return (bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8);
     }
 }
