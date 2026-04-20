@@ -24,10 +24,7 @@ import org.junit.jupiter.api.Test;
 public class MikuprojectNodeParityTest {
     @Test
     public void comparesReportDirectoryBytesWithNodeUpstreamWhenEnabled() throws IOException, InterruptedException {
-        assumeTrue("true".equalsIgnoreCase(System.getenv("MIKUPROJECT_RUN_NODE_PARITY")),
-                "set MIKUPROJECT_RUN_NODE_PARITY=true to run Node upstream parity");
-        assumeTrue(Files.isDirectory(Paths.get("vendor", "mikuproject", "node_modules")),
-                "run npm --prefix vendor/mikuproject ci before Node upstream parity");
+        assumeNodeParityEnabled();
 
         Path xmlFile = Files.createTempFile("mikuproject-node-parity", ".xml");
         Files.write(xmlFile, Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", "dependency.xml")));
@@ -39,14 +36,7 @@ public class MikuprojectNodeParityTest {
                 new java.io.PrintStream(new java.io.ByteArrayOutputStream(), true, StandardCharsets.UTF_8.name()),
                 new java.io.PrintStream(new java.io.ByteArrayOutputStream(), true, StandardCharsets.UTF_8.name())));
 
-        Process process = new ProcessBuilder("node", "src/test/node/export-upstream-report-dir.mjs", xmlFile.toString(),
-                nodeDir.toString())
-                .directory(Paths.get(".").toFile())
-                .redirectErrorStream(true)
-                .start();
-        byte[] processOutput = readAll(process.getInputStream());
-        int exitCode = process.waitFor();
-        assertEquals(0, exitCode, new String(processOutput, StandardCharsets.UTF_8));
+        runNode("src/test/node/export-upstream-report-dir.mjs", xmlFile.toString(), nodeDir.toString());
 
         List<String> javaNames = listRelativeFiles(javaDir);
         List<String> nodeNames = listRelativeFiles(nodeDir);
@@ -54,6 +44,61 @@ public class MikuprojectNodeParityTest {
         for (String name : javaNames) {
             assertArrayEquals(Files.readAllBytes(javaDir.resolve(name)), Files.readAllBytes(nodeDir.resolve(name)), name);
         }
+    }
+
+    @Test
+    public void comparesReportBundleZipBytesWithNodeUpstreamWhenEnabled() throws IOException, InterruptedException {
+        assumeNodeParityEnabled();
+
+        Path xmlFile = Files.createTempFile("mikuproject-node-parity-bundle", ".xml");
+        Files.write(xmlFile, Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", "dependency.xml")));
+        Path javaZip = Files.createTempFile("mikuproject-node-parity-bundle-java", ".zip");
+        Path nodeZip = Files.createTempFile("mikuproject-node-parity-bundle-node", ".zip");
+
+        MikuprojectCli cli = new MikuprojectCli();
+        assertEquals(0, cli.run(new String[] { "export-report-bundle", xmlFile.toString(), javaZip.toString() },
+                new java.io.PrintStream(new java.io.ByteArrayOutputStream(), true, StandardCharsets.UTF_8.name()),
+                new java.io.PrintStream(new java.io.ByteArrayOutputStream(), true, StandardCharsets.UTF_8.name())));
+
+        runNode("src/test/node/export-upstream-report-bundle.mjs", xmlFile.toString(), nodeZip.toString());
+
+        assertArrayEquals(Files.readAllBytes(nodeZip), Files.readAllBytes(javaZip), "report bundle zip");
+    }
+
+    @Test
+    public void comparesMonthlySvgZipBytesWithNodeUpstreamWhenEnabled() throws IOException, InterruptedException {
+        assumeNodeParityEnabled();
+
+        Path xmlFile = Files.createTempFile("mikuproject-node-parity-monthly", ".xml");
+        Files.write(xmlFile, Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", "dependency.xml")));
+        Path javaZip = Files.createTempFile("mikuproject-node-parity-monthly-java", ".zip");
+        Path nodeZip = Files.createTempFile("mikuproject-node-parity-monthly-node", ".zip");
+
+        MikuprojectCli cli = new MikuprojectCli();
+        assertEquals(0, cli.run(new String[] { "export-monthly-svg-zip", xmlFile.toString(), javaZip.toString() },
+                new java.io.PrintStream(new java.io.ByteArrayOutputStream(), true, StandardCharsets.UTF_8.name()),
+                new java.io.PrintStream(new java.io.ByteArrayOutputStream(), true, StandardCharsets.UTF_8.name())));
+
+        runNode("src/test/node/export-upstream-monthly-svg-zip.mjs", xmlFile.toString(), nodeZip.toString());
+
+        assertArrayEquals(Files.readAllBytes(nodeZip), Files.readAllBytes(javaZip), "monthly svg zip");
+    }
+
+    private void assumeNodeParityEnabled() {
+        assumeTrue("true".equalsIgnoreCase(System.getenv("MIKUPROJECT_RUN_NODE_PARITY")),
+                "set MIKUPROJECT_RUN_NODE_PARITY=true to run Node upstream parity");
+        assumeTrue(Files.isDirectory(Paths.get("vendor", "mikuproject", "node_modules")),
+                "run npm --prefix vendor/mikuproject ci before Node upstream parity");
+    }
+
+    private void runNode(String script, String input, String output) throws IOException, InterruptedException {
+        Process process = new ProcessBuilder("node", script, input, output)
+                .directory(Paths.get(".").toFile())
+                .redirectErrorStream(true)
+                .start();
+        byte[] processOutput = readAll(process.getInputStream());
+        int exitCode = process.waitFor();
+        assertEquals(0, exitCode, new String(processOutput, StandardCharsets.UTF_8));
     }
 
     private List<String> listRelativeFiles(Path root) throws IOException {

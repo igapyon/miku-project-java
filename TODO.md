@@ -15,6 +15,12 @@
 
 ### 直近の限定作業
 
+- 再開ポイント:
+  - ここまでで `dependency.xml` の report directory / report bundle ZIP / monthly SVG ZIP は Node upstream と byte-level parity 済み
+  - ここまでで WBS XLSX / SVG / report ZIP 系の大きな簡略化は潰し、`mvn package` と opt-in Node parity が通っている
+  - 次に再開するなら、report 系より `projectxlsx` の残差分を優先する
+  - 具体的には `ProjectXlsxExport*` の editable cell styling、sheet theme、Project sheet の Settings section / merged range を upstream TypeScript と照合して実装へ反映する
+  - その次の候補は `projectpatchjson` の warning / blocker details を upstream と構造比較すること
 - [x] 残作業を新規機能追加ではなく、既存範囲の確認 / docs 整理 / upstream 差分確認へ絞る
 - [x] `README.md`, `docs/remaining-migration-items.md`, `docs/upstream-class-mapping.md`, `docs/upstream-followup-log.md`, `docs/msprojectxml-import-design.md` の現在フェーズ表現を揃える
 - [ ] Agent Skills 側で `project_draft_view` 生成時に `planned_start` / `planned_finish` を入れる前提になっているか確認する
@@ -28,16 +34,19 @@
     - [x] `exportWorkbook(...)` が実 Excel OOXML zip ではなく独自 `mikuproject_xlsx_workbook_v1` 形式を返している問題を修正し、主要導線を OOXML ZIP へ切り替える
     - `exportWorkbookArchive(...)` / `importWorkbookArchive(...)` はあるが、report / CLI / Core API の主要導線から使われていない
     - [x] upstream の `dataValidations` と style descriptor の主要部を Java 側の OOXML build / parse に反映する
-    - `formula`, `freezePane` はまだ Java 側 model / OOXML build / parse に十分反映されていない
+    - [x] `formula`, `freezePane` を Java 側 model / OOXML build / parse に反映する
   - 優先度 A: `projectxlsx`
-    - `ProjectXlsxExport*` が upstream の列幅、merged range、data validation、editable cell styling、boolean option sheet、sheet theme を大きく省略している
+    - [x] `ProjectXlsxExport*` の列幅、boolean data validation、boolean option sheet を upstream 寄りに補強する
+    - `ProjectXlsxExport*` の editable cell styling、sheet theme、Project sheet の Settings section / merged range はまだ薄い
     - import 側も upstream の workbook validation / editable cell 前提とズレがないか、fixture round-trip だけでなく sheet 構造で確認する
   - 優先度 A: `wbsxlsx`
     - [x] WBS workbook の主要導線が独自 workbook bytes を出しており、`wbs.xlsx` というファイル名と実体が合っていない問題を修正する
     - [x] upstream 相当の row height、hidden columns、style、date band cell、progress band、summary / legend へ寄せる
-    - `freeze` と byte-level の worksheet XML serialization / package XML までは未一致
+    - [x] `dependency.xml` の Node parity で `wbs.xlsx` の OOXML ZIP / worksheet XML / styles XML / workbook XML が byte-level 一致するところまで寄せる
+    - `freeze` / `formula` は Java 側 model / OOXML build / parse へ反映済み。WBS workbook 自体は現時点でこれらを使っていない
   - 優先度 B: `wbssvg`
-    - 日付軸 / 月次カレンダー / style / bar 形状は修正を進めたが、label placement、viewport trim、dependency connector routing はまだ TypeScript 版より薄い
+    - [x] `dependency.xml` の Node parity で `daily.svg` / `weekly.svg` / `monthly-calendar/*.svg` が byte-level 一致するところまで寄せる
+    - 週次 SVG は viewport trim / label placement / dependency connector routing の主要部を Java 側へ反映済み
     - daily / weekly / monthly について、見た目の目視だけでなく class / shape / path 構造比較テストを追加する
   - 優先度 B: `projectpatchjson`
     - `first cut` 制限自体は upstream 由来だが、Java 側の warning 詳細や参照 blocker が薄くなりやすい
@@ -61,12 +70,16 @@
   - [x] `.xlsx` の主要導線を独自 `mikuproject_xlsx_workbook_v1` 出力から OOXML ZIP 出力へ切り替える
   - [x] `styles.xml` を固定 2 スタイルから upstream 相当の動的 style book 生成へ寄せる
   - [x] `wbs.xlsx` の worksheet model を upstream 相当の project info / task rows / legend / summary / progress band へ寄せる
-  - [ ] `.xlsx` の worksheet XML / styles XML / workbook XML の byte-level parity を entry 単位で確認する
-    - 現状: `dependency.xml` の opt-in Node parity は `wbs.md` まで一致し、`wbs.xlsx` で停止する
-    - 残差分: worksheet XML の空白 / `xml:space` / empty cell serialization、package XML の entry 順と整形、timestamp 行、`formula` / `freezePane`
+  - [x] `.xlsx` の worksheet XML / styles XML / workbook XML の byte-level parity を entry 単位で確認する
+    - 現状: `dependency.xml` の opt-in Node parity は report directory 出力一式で一致する
+  - [x] `dependency.xml` の opt-in Node parity で report bundle ZIP / monthly SVG ZIP の byte-level parity を確認する
+    - `CoreApiReport` の bundle entry 順も upstream と同じ `wbs.xlsx`, `wbs.md`, `mermaid.mmd`, `daily.svg`, `weekly.svg`, `monthly-calendar/*.svg` に揃える
+    - 残差分: Project XLSX 側の editable styling / sheet theme / Settings section などの workbook layout 差分は継続する
   - parity が難しい場合の例外は、差分理由を固定値、entry 順、JSON key order、XML serialization、数値丸め、locale / timezone、CLI diagnostics のどれかへ分類し、正規化比較へ逃げる箇所を TODO ではなく明示的な仕様として記録する
 - [ ] report 生成物全体の品質を再点検する
   - SVG の日付軸 / 月次カレンダーが簡略実装へ退化していたため、同じ report 系の XLSX / ZIP / directory export も信用しすぎない
+  - [x] `dependency.xml` の report directory 出力で、SVG / XLSX / MD / MMD の Node 版 byte-level parity を確認する
+  - [x] `dependency.xml` の report bundle ZIP / monthly SVG ZIP 出力で Node 版 byte-level parity を確認する
   - SVG は既存 TypeScript 版に寄せ、title 位置、style class、bar / milestone / phase の形状、dependency connector、weekly meta、monthly calendar の見た目を構造比較する
   - `export-report-dir`, `export-report-bundle`, `export-monthly-svg-zip`, `export-wbs-xlsx` を同一 fixture で出力し、entry 名、0 バイト有無、主要シート / 主要セル / SVG 構造を確認する
   - `wbs.xlsx` と standalone `export-wbs-xlsx` の内容が同等か確認する
@@ -77,11 +90,11 @@
 - [ ] XLSX / OOXML 系の簡略実装を upstream 相当へ戻す
   - [x] `CoreApiReport` の `wbs.xlsx` entry と `export-wbs-xlsx` が `XlsxWorkbookCodec.exportWorkbook(...)` の独自 `mikuproject_xlsx_workbook_v1` 形式を出しており、実 Excel workbook zip ではない問題を修正する
   - [x] `XlsxWorkbookCodec.exportWorkbookArchive(...)` / `importWorkbookArchive(...)` を report / CLI の主要導線から使う
-  - `XlsxSheetLike` に upstream の `freezePane` がなく、`XlsxCellLike` に upstream の `formula` がない
+  - [x] `XlsxSheetLike` に upstream の `freezePane`、`XlsxCellLike` に upstream の `formula` を追加する
   - [x] `ExcelIoWorksheetBuild` が `dataValidations` を OOXML へ出していない問題を修正する
-  - `ExcelIoWorksheetBuild` が `freezePane` を OOXML へ出していない
+  - [x] `ExcelIoWorksheetBuild` / parse が `freezePane` と formula cell を OOXML へ出し入れできるようにする
   - [x] `ExcelIoStylesBuild` が実際の `fillColor` / alignment / number format / wrap / border の組み合わせを十分に反映せず、ほぼ固定 style へ潰している問題を修正する
-  - `ProjectXlsxExport*` が upstream の列幅、merged range、data validation、editable cell styling、boolean option sheet などを大きく省略している
+  - `ProjectXlsxExport*` は列幅、boolean data validation、boolean option sheet を補強済み。editable cell styling、sheet theme、Project sheet の Settings section / merged range は継続
   - テストは byte size / decode だけでなく、zip entry、worksheet XML、styles XML、data validation、freeze pane、主要セル style を確認する
 
 ### 今週

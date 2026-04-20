@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import jp.igapyon.mikuproject.projectxlsx.XlsxCellLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxDataValidationLike;
+import jp.igapyon.mikuproject.projectxlsx.XlsxFreezePaneLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxRowLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxSheetLike;
 import jp.igapyon.mikuproject.projectxlsx.XlsxWorkbookLike;
@@ -161,6 +162,37 @@ public class ExcelIoTest {
         assertEquals(Integer.valueOf(24), imported.sheets.get(0).rows.get(0).height);
         assertEquals("Name", imported.sheets.get(0).rows.get(0).cells.get(0).value);
         assertEquals(Integer.valueOf(7), imported.sheets.get(0).rows.get(0).cells.get(1).value);
+    }
+
+    @Test
+    public void exportsAndImportsFormulaAndFreezePaneInOoxmlPackage() {
+        XlsxWorkbookCodec codec = new XlsxWorkbookCodec();
+        XlsxWorkbookLike workbook = new XlsxWorkbookLike();
+        XlsxSheetLike sheet = new XlsxSheetLike();
+        sheet.name = "Project";
+        XlsxFreezePaneLike freezePane = new XlsxFreezePaneLike();
+        freezePane.rowSplit = Integer.valueOf(1);
+        freezePane.colSplit = Integer.valueOf(1);
+        sheet.freezePane = freezePane;
+        XlsxRowLike row = new XlsxRowLike();
+        XlsxCellLike formulaCell = new XlsxCellLike();
+        formulaCell.formula = "SUM(B1:C1)";
+        formulaCell.value = Integer.valueOf(7);
+        row.cells.add(formulaCell);
+        sheet.rows.add(row);
+        workbook.sheets.add(sheet);
+
+        byte[] bytes = codec.exportWorkbookArchive(workbook);
+        Map<String, byte[]> unpacked = codec.unpackEntries(bytes);
+        String worksheetXml = ExcelIoUtil.decodeUtf8(unpacked.get("xl/worksheets/sheet1.xml"));
+        XlsxWorkbookLike imported = codec.importWorkbookArchive(bytes);
+
+        assertTrue(worksheetXml.contains("<pane xSplit=\"1\" ySplit=\"1\" topLeftCell=\"B2\" activePane=\"bottomRight\" state=\"frozen\"/>"));
+        assertTrue(worksheetXml.contains("<f>SUM(B1:C1)</f><v>7</v>"));
+        assertEquals(Integer.valueOf(1), imported.sheets.get(0).freezePane.rowSplit);
+        assertEquals(Integer.valueOf(1), imported.sheets.get(0).freezePane.colSplit);
+        assertEquals("SUM(B1:C1)", imported.sheets.get(0).rows.get(0).cells.get(0).formula);
+        assertEquals(Integer.valueOf(7), imported.sheets.get(0).rows.get(0).cells.get(0).value);
     }
 
     @Test

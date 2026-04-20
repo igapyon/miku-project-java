@@ -82,12 +82,13 @@ tests:
   CoreApiPublicTest.exposesWorkingReportApiSurface
   CoreApiPublicTest.exposesWorkingReportApiSurfaceForDependencyFixture
   CoreApiPublicTest.exposesWorkingReportApiSurfaceForHierarchyFixture
+  MikuprojectNodeParityTest.comparesReportBundleZipBytesWithNodeUpstreamWhenEnabled
   MikuprojectCliTest.exportsReportBundleAndReportDirForFixturesThroughCli
   MikuprojectCliTest.appliesWbsOptionArgumentsToReportBundleAndWbsXlsx
 
 diff summary:
   挙動差分:
-    現時点で大きな差分は見当たらない。Java 側では report bundle の entry 構成、dependency / hierarchy fixture の主要内容、bundle 内 `wbs.xlsx` decode を確認済みである。
+    現時点で大きな差分は見当たらない。Java 側では report bundle の entry 構成と entry 順、dependency / hierarchy fixture の主要内容、bundle 内 `wbs.xlsx` decode、`dependency.xml` の Node upstream bundle ZIP byte-level parity を確認済みである。
   命名差分:
     Java 側は `CoreApiReport` / `CoreApiReportAdapters` / `CoreApiReportPublic` に分割しているが、`report` 公開面との対応は追跡可能である。
   未移植差分:
@@ -98,6 +99,7 @@ diff summary:
 follow-up:
   - 実施した確認:
     `mvn test -Dtest=WbsMarkdownTest,WbsSvgTest,WbsXlsxTest,CoreApiPublicTest,MikuprojectCliTest`
+    `MIKUPROJECT_RUN_NODE_PARITY=true mvn test -Dtest=MikuprojectNodeParityTest`
   - fixture:
     `vendor/mikuproject/testdata/dependency.xml`
     `vendor/mikuproject/testdata/hierarchy.xml`
@@ -438,23 +440,23 @@ tests:
 
 diff summary:
   挙動差分:
-    現時点で大きな差分は見当たらない。Java 側では workbook sheet 変換、editable field import、`ProjectModel` 構築、hierarchy fixture round-trip を確認済みである。
+    以前は列幅、boolean data validation、boolean option sheet、formula / freezePane 対応が薄かった。Java 側では `formula` / `freezePane` を workbook-like model と OOXML build / parse に追加し、Project XLSX export へ列幅、boolean data validation、boolean option sheet を反映した。
   命名差分:
     Java 側は export / import に分割しているが、`ProjectXlsx` 公開面との対応は追跡可能である。
   未移植差分:
-    現時点で顕在化している未移植差分は記録していない。今後 upstream で workbook sheet 構成や import 契約が変わった場合は再確認が必要である。
+    editable cell styling、sheet theme、Project sheet の Settings section / merged range はまだ upstream より薄い。今後 upstream で workbook sheet 構成や import 契約が変わった場合は再確認が必要である。
   Java 側独自拡張:
     Core API wrapper や encode/decode 導線は upstream 本体の `project-xlsx.ts` ではなく、Java 側の wrapper 層として扱う。
 
 follow-up:
   - 実施した確認:
-    `mvn test -Dtest=ProjectXlsxTest,CoreApiWorkbookTest`
+    `mvn test -Dtest=ProjectXlsxTest,ExcelIoTest,MikuprojectNodeParityTest`
   - fixture:
     `vendor/mikuproject/testdata/hierarchy.xml`
   - 次回の確認観点:
-    upstream 側で workbook sheet 構成、editable field import、round-trip 契約が変わった場合は、unit と Core API wrapper の両方を見直す
+    upstream 側で workbook sheet 構成、editable field styling、sheet theme、round-trip 契約が変わった場合は、unit と Core API wrapper の両方を見直す
   - `docs/remaining-migration-items.md` への反映:
-    2026-04-20 時点では追加反映なし
+    2026-04-21 時点で report directory byte-level parity と Project XLSX layout 補強の現在地を反映
 ```
 
 ### 2026-04-20 `vendor/mikuproject/src/ts/core-api-workbook-xlsx.ts`

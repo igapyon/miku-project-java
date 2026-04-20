@@ -58,9 +58,6 @@ public class WbsSvgScaffold {
         builder.append("text { font-family: 'Hiragino Sans', 'Yu Gothic', sans-serif; fill: #1d2740; }");
         builder.append(".title { font-size: 18px; font-weight: 700; }");
         builder.append(".axis { font-size: 12px; fill: #5b6370; }");
-        if (weekly) {
-            builder.append(".axisTitle { font-size: 12px; fill: #5b6370; }");
-        }
         builder.append(".label { font-size: 13px; }");
         builder.append(".phaseLabel { font-size: 13px; font-weight: 700; }");
         builder.append(".grid { stroke: #c9d3e1; stroke-width: 1; }");

@@ -40,6 +40,13 @@ public class ProjectXlsxTest {
         assertEquals("mikuproject開発", workbook.sheets.get(0).rows.get(3).cells.get(1).value);
         assertEquals("Tasks", workbook.sheets.get(1).name);
         assertEquals("Tasks", workbook.sheets.get(1).rows.get(0).cells.get(0).value);
+        assertEquals(Double.valueOf(26d), workbook.sheets.get(0).columns.get(0).width);
+        assertEquals(Double.valueOf(42d), workbook.sheets.get(0).columns.get(1).width);
+        assertEquals("Options!$A$2:$A$3", workbook.sheets.get(0).dataValidations.get(0).formula1);
+        assertTrue(workbook.sheets.get(1).dataValidations.get(0).sqref.contains("L4:L"));
+        assertEquals(Double.valueOf(28d), workbook.sheets.get(1).columns.get(2).width);
+        assertEquals("BooleanChoice", workbook.sheets.get(6).rows.get(0).cells.get(0).value);
+        assertEquals("true", workbook.sheets.get(6).rows.get(1).cells.get(1).value);
     }
 
     @Test

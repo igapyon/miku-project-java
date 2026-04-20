@@ -74,7 +74,7 @@ public class CoreApiPublicTest {
         assertEquals("WBS", workbook.sheets.get(0).name);
         assertTrue(workbookBytes.length > 0);
         assertEquals(7, bundle.entries.size());
-        assertEquals(Arrays.asList("wbs.md", "mermaid.mmd", "wbs.xlsx", "daily.svg", "weekly.svg", "monthly-calendar/2026-03.svg",
+        assertEquals(Arrays.asList("wbs.xlsx", "wbs.md", "mermaid.mmd", "daily.svg", "weekly.svg", "monthly-calendar/2026-03.svg",
                 "monthly-calendar/2026-04.svg"),
                 entryNames(bundle));
         assertTrue(containsEntry(bundle, "wbs.md", "# WBS テーブル"));
@@ -93,7 +93,7 @@ public class CoreApiPublicTest {
 
         CoreApiReportAdapters.ReportBundle bundle = api.report.all.export(model);
 
-        assertEquals(Arrays.asList("wbs.md", "mermaid.mmd", "wbs.xlsx", "daily.svg", "weekly.svg", "monthly-calendar/2026-03.svg"),
+        assertEquals(Arrays.asList("wbs.xlsx", "wbs.md", "mermaid.mmd", "daily.svg", "weekly.svg", "monthly-calendar/2026-03.svg"),
                 entryNames(bundle));
         assertTrue(containsEntry(bundle, "wbs.md", "Dependency Project"));
         assertTrue(containsEntry(bundle, "mermaid.mmd", "Prepare"));
@@ -111,7 +111,7 @@ public class CoreApiPublicTest {
         CoreApiReportAdapters.ReportBundle bundle = api.report.all.export(model);
         XlsxWorkbookLike workbook = decodeWorkbookEntry(bundle, "wbs.xlsx");
 
-        assertEquals(Arrays.asList("wbs.md", "mermaid.mmd", "wbs.xlsx", "daily.svg", "weekly.svg", "monthly-calendar/2026-03.svg"),
+        assertEquals(Arrays.asList("wbs.xlsx", "wbs.md", "mermaid.mmd", "daily.svg", "weekly.svg", "monthly-calendar/2026-03.svg"),
                 entryNames(bundle));
         assertTrue(containsEntry(bundle, "wbs.md", "Hierarchy Project"));
         assertTrue(containsEntry(bundle, "wbs.md", "Child A"));
