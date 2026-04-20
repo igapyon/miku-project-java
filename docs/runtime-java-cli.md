@@ -19,7 +19,7 @@
 
 ## `mikuproject-dist.zip` の内容
 
-first cut の `dist.zip` には次を含める。
+現在の `dist.zip` には次を含める。
 
 - `mikuproject.jar`
 - `README.md`
@@ -102,8 +102,8 @@ Java CLI は、上の 4 段階のうち次の位置にある。
 
 - `1. core 公開面の薄い公開入口として揃える`: 対応済み
 - `2. 単発 command を全主要入出力へ揃える`: 対応済み
-- `3. option と batch command を整理する`: 継続中
-- `4. full entrypoint として保守可能に固定する`: 継続中
+- `3. option と batch command を整理する`: 主要導線は対応済み、既存 command の表現と追跡性を保守中
+- `4. full entrypoint として保守可能に固定する`: 主要導線は対応済み、README / test / 追随文書との同期を保守中
 
 したがって、次の自然な作業は `新 command の追加` より `既存 command 群の整理と保守可能性の固定` である。
 

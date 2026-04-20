@@ -91,6 +91,43 @@ public class WbsSvgTest {
         assertTrue(weeklySvg.contains("Prepare"));
     }
 
+    @Test
+    public void exportsHierarchyFixtureIntoSvgOutputs() throws IOException {
+        MsProjectXml xml = new MsProjectXml();
+        ProjectModel model = xml.importFromXml(readVendorTestdata("hierarchy.xml"));
+
+        String dailySvg = xml.exportNativeSvg(model);
+        String weeklySvg = xml.exportWeeklyNativeSvg(model);
+
+        assertTrue(dailySvg.contains("Hierarchy Project"));
+        assertTrue(dailySvg.contains("Child A"));
+        assertTrue(dailySvg.contains("Child B"));
+        assertTrue(weeklySvg.contains("weekly overview"));
+        assertTrue(weeklySvg.contains("Child A"));
+        assertTrue(weeklySvg.contains("Child B"));
+    }
+
+    @Test
+    public void appliesLabelAndHolidayOptionsToSvgOutputs() throws IOException {
+        MsProjectXml xml = new MsProjectXml();
+        ProjectModel model = xml.importFromXml(readVendorTestdata("dependency.xml"));
+        WbsSvg.NativeSvgOptions options = new WbsSvg.NativeSvgOptions();
+        options.labelMode = "uid";
+        options.holidayDates.add("2026-03-20");
+        options.holidayDates.add("2026-03-21");
+
+        String dailySvg = xml.exportNativeSvg(model, options);
+        String weeklySvg = xml.exportWeeklyNativeSvg(model, options);
+        WbsSvg.MonthlyCalendarSvgArchive archive = xml.exportMonthlyWbsCalendarSvgArchive(model, options);
+
+        assertTrue(dailySvg.contains(">1</text>"));
+        assertTrue(dailySvg.contains(">2</text>"));
+        assertTrue(weeklySvg.contains(">1</text>"));
+        assertTrue(weeklySvg.contains(">2</text>"));
+        assertTrue(archive.entries.get(0).svg.contains("holidays 2"));
+        assertTrue(archive.entries.get(0).svg.contains(">1</text>"));
+    }
+
     private String readVendorTestdata(String fileName) throws IOException {
         byte[] bytes = Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", fileName));
         return new String(bytes, StandardCharsets.UTF_8);

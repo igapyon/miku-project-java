@@ -112,6 +112,38 @@ public class WbsMarkdownTest {
         assertTrue(markdown.contains("Second child task"));
     }
 
+    @Test
+    public void exportsDependencyFixtureIntoReadableMarkdown() throws IOException {
+        MsProjectXml xml = new MsProjectXml();
+        String markdown = xml.exportWbsMarkdown(xml.importFromXml(readVendorTestdata("dependency.xml")));
+
+        assertTrue(markdown.contains("| プロジェクト名 | Dependency Project |"));
+        assertTrue(markdown.contains("Prepare"));
+        assertTrue(markdown.contains("Execute"));
+        assertTrue(markdown.contains("2026-03-16"));
+        assertTrue(markdown.contains("2026-03-19"));
+    }
+
+    @Test
+    public void appliesDisplayAndHolidayOptionsToMarkdown() {
+        MsProjectXml xml = new MsProjectXml();
+        jp.igapyon.mikuproject.model.ProjectModel model = xml.importFromXml(new jp.igapyon.mikuproject.msprojectxml.MsProjectSamples().buildSampleXml());
+        WbsMarkdownOptions options = new WbsMarkdownOptions();
+        options.displayDaysBeforeBaseDate = Integer.valueOf(1);
+        options.displayDaysAfterBaseDate = Integer.valueOf(2);
+        options.useBusinessDaysForDisplayRange = Boolean.TRUE;
+        options.useBusinessDaysForProgressBand = Boolean.TRUE;
+        options.holidayDates.add("2026-04-29");
+        options.holidayDates.add("2026-04-30");
+
+        String markdown = xml.exportWbsMarkdown(model, options);
+
+        assertTrue(markdown.contains("| 前日数 | 1 |"));
+        assertTrue(markdown.contains("| 後日数 | 2 |"));
+        assertTrue(markdown.contains("| 表示 | 営業日 |"));
+        assertTrue(markdown.contains("| 進捗 | 営業日 |"));
+    }
+
     private String readVendorTestdata(String fileName) throws IOException {
         byte[] bytes = Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", fileName));
         return new String(bytes, StandardCharsets.UTF_8);

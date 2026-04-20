@@ -9,6 +9,14 @@
 前提として、Node.js 版 upstream の `msproject-xml.ts` / `msproject-codec.ts` / `msproject-xml-dom.ts` / `msproject-calendar.ts` / `msproject-validate.ts`
 の責務分割を尊重する。
 
+## 現在の位置づけ
+
+この文書は STEP1 初期の import 設計メモとして残す。
+現在は、ここで候補として整理した `MsProjectXml` / `MsProjectCodec` / `MsProjectXmlDom` / `MsProjectCalendar` / `MsProjectValidate` に加え、CSV / Mermaid / AI view などの周辺導線も Java 側へ実装済みである。
+
+したがって、現フェーズではこの文書を新規実装リストとして扱わない。
+不足を見つけた場合は、既存実装と upstream 対応表、test 対応表、差分確認ログのどこに反映するかを先に確認する。
+
 ## 基本方針
 
 - Java 版でも `MS Project XML` import の主導線は `ProjectModel` 生成とする
@@ -35,9 +43,9 @@ upstream では、おおむね次の分担になっている。
 
 Java 版でも、この責務分割を基本的に踏襲する。
 
-## Java 側の first cut class 案
+## Java 側の初期移植 class 案
 
-`jp.igapyon.mikuproject.msprojectxml` 配下の first cut 候補は次のとおり。
+`jp.igapyon.mikuproject.msprojectxml` 配下の初期移植候補は次のとおり。
 
 - `MsProjectXml`
   - facade
@@ -51,7 +59,8 @@ Java 版でも、この責務分割を基本的に踏襲する。
 - `MsProjectValidate`
   - `ProjectModel` の妥当性検査
 
-必要に応じて、後続で次も追加候補とする。
+当初は、必要に応じて後続で次も追加候補としていた。
+現在は主要導線の対応 class が存在するため、以下は追加リストではなく、upstream 対応を追うための関連 class 群として扱う。
 
 - `MsProjectValidateHelpers`
 - `MsProjectSamples`
@@ -59,7 +68,8 @@ Java 版でも、この責務分割を基本的に踏襲する。
 - `MsProjectAiViews`
 - `MsProjectMermaid`
 
-ただし STEP1 では、まず `XML import/export` に必要な最小集合を優先する。
+STEP1 初期では、まず `XML import/export` に必要な最小集合を優先した。
+現在の残作業は、これらの class を新規追加することではなく、既存実装が upstream 更新時に追える状態を保つことである。
 
 ## import の処理段階
 
@@ -150,7 +160,7 @@ STEP1 の段階では、validation は import 完了後の確認用であり、i
 
 ## package 案
 
-first cut では、次の package を基本候補とする。
+初期移植では、次の package を基本候補とする。
 
 - `jp.igapyon.mikuproject.model`
 - `jp.igapyon.mikuproject.msprojectxml`
@@ -166,7 +176,7 @@ first cut では、次の package を基本候補とする。
 
 ## Java 1.8 前提での XML API 方針
 
-STEP1 の first cut では、Node.js 版 upstream の DOM ベースの構造を追いやすくするため、Java 側でも DOM ベースを第一候補とする。
+STEP1 の初期移植では、Node.js 版 upstream の DOM ベースの構造を追いやすくするため、Java 側でも DOM ベースを第一候補とする。
 
 この時点では、次を優先する。
 
@@ -174,7 +184,7 @@ STEP1 の first cut では、Node.js 版 upstream の DOM ベースの構造を�
 - upstream の `textContent(...)` / `getElementsByTagName(...)` 的な流れとの対応
 - 小さな helper で処理を追えること
 
-このため、first cut では SAX や StAX への最適化を先行しない。
+このため、初期移植では SAX や StAX への最適化を先行しない。
 
 ## 例外とエラーの位置づけ
 
@@ -189,9 +199,10 @@ STEP1 の import 設計では、次を分けて扱う。
 
 ただし、XML 自体の parse failure は import 失敗として扱う。
 
-## first cut の未確定事項
+## 初期移植時点の未確定事項
 
-次は別途詳細化する。
+次は初期移植時点では別途詳細化する項目として扱っていた。
+現在は `docs/step1-spec.md`, `docs/remaining-migration-items.md`, `docs/upstream-class-mapping.md`, `docs/upstream-test-mapping.md` に実装後の方針と確認単位を集約している。
 
 - Java 側で `normalizeProjectModel` をどこへ置くか
 - import 時に validation を自動実行するか

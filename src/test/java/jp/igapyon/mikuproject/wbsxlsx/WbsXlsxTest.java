@@ -104,6 +104,42 @@ public class WbsXlsxTest {
         assertTrue(containsCellText(workbook, "Child B"));
     }
 
+    @Test
+    public void exportsDependencyFixtureIntoDedicatedWorkbook() throws IOException {
+        WbsXlsx wbsXlsx = new WbsXlsx();
+        ProjectModel model = new MsProjectXml().importFromXml(readVendorTestdata("dependency.xml"));
+
+        XlsxWorkbookLike workbook = wbsXlsx.exportWbsWorkbook(model);
+
+        assertEquals("WBS", workbook.sheets.get(0).name);
+        assertTrue(containsCellText(workbook, "Dependency Project"));
+        assertTrue(containsCellText(workbook, "Prepare"));
+        assertTrue(containsCellText(workbook, "Execute"));
+        assertTrue(containsCellText(workbook, "100%"));
+        assertTrue(containsCellText(workbook, "0%"));
+    }
+
+    @Test
+    public void appliesDisplayAndHolidayOptionsToDedicatedWorkbook() {
+        WbsXlsx wbsXlsx = new WbsXlsx();
+        ProjectModel model = new MsProjectSamples().buildSampleProjectModel();
+        WbsXlsx.WbsExportOptions options = new WbsXlsx.WbsExportOptions();
+        options.displayDaysBeforeBaseDate = Integer.valueOf(1);
+        options.displayDaysAfterBaseDate = Integer.valueOf(2);
+        options.useBusinessDaysForDisplayRange = Boolean.TRUE;
+        options.useBusinessDaysForProgressBand = Boolean.TRUE;
+        options.holidayDates.add("2026-04-29");
+        options.holidayDates.add("2026-04-30");
+
+        XlsxWorkbookLike workbook = wbsXlsx.exportWbsWorkbook(model, options);
+
+        assertEquals("1", valueAtRowLabel(workbook, "前日数"));
+        assertEquals("2", valueAtRowLabel(workbook, "後日数"));
+        assertEquals("営業日", valueAtRowLabel(workbook, "表示"));
+        assertEquals("営業日", valueAtRowLabel(workbook, "進捗"));
+        assertEquals("2", valueAtProjectInfoLabel(workbook, "祝日"));
+    }
+
     private int findRowIndexByCellValue(XlsxWorkbookLike workbook, String value) {
         for (int rowIndex = 0; rowIndex < workbook.sheets.get(0).rows.size(); rowIndex++) {
             Object cellValue = workbook.sheets.get(0).rows.get(rowIndex).cells.get(0).value;
@@ -124,6 +160,28 @@ public class WbsXlsxTest {
             }
         }
         return false;
+    }
+
+    private String valueAtRowLabel(XlsxWorkbookLike workbook, String label) {
+        for (int rowIndex = 0; rowIndex < workbook.sheets.get(0).rows.size(); rowIndex++) {
+            Object cellValue = workbook.sheets.get(0).rows.get(rowIndex).cells.get(0).value;
+            if (label.equals(cellValue)) {
+                Object value = workbook.sheets.get(0).rows.get(rowIndex).cells.get(1).value;
+                return value == null ? null : String.valueOf(value);
+            }
+        }
+        return null;
+    }
+
+    private String valueAtProjectInfoLabel(XlsxWorkbookLike workbook, String label) {
+        for (int rowIndex = 0; rowIndex < workbook.sheets.get(0).rows.size(); rowIndex++) {
+            Object cellValue = workbook.sheets.get(0).rows.get(rowIndex).cells.get(0).value;
+            if (label.equals(cellValue)) {
+                Object value = workbook.sheets.get(0).rows.get(rowIndex).cells.get(2).value;
+                return value == null ? null : String.valueOf(value);
+            }
+        }
+        return null;
     }
 
     private String readVendorTestdata(String fileName) throws IOException {

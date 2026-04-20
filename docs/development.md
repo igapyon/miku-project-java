@@ -2,7 +2,12 @@
 
 ## 基本方針
 
+追随運用文書群の入口は `README.md` の `Development Docs` 節にも置いており、読み順もそこに合わせている。
+
 `mikuproject-java` は、`vendor/mikuproject` に保持した Node.js 版 upstream を参照しながら、Java 版へ移植していく。
+
+現在は、主要導線の新規追加よりも、既存実装の確認、TODO / docs 整理、移植済み範囲の検証、upstream 差分確認を優先する保守フェーズとして扱う。
+新しい command や API を増やす前に、既存範囲が upstream 対応表、test 対応表、follow-up log とずれていないかを確認する。
 
 このリポジトリでは、通常の新規 Java プロジェクトのように Java 側の都合だけで構成を最適化することを第一目的にしない。
 重要なのは、upstream との対応関係が見え、あとから upstream 更新へ追従しやすいことである。
@@ -23,6 +28,42 @@ Java 1.8 前提でも利用可能な JUnit 系の現行版を第一候補とし�
 
 テスト実行の正本は `mvn test` とする。
 素の `javac` は、主に `src/main/java` の簡易構文確認に使い、`src/test/java` の単発確認手段としては前提にしない。
+
+追随や保守で部分確認したいときは、`mvn test` に加えて次の targeted 実行を使ってよい。
+
+- report unit 回帰:
+  - `mvn test -Dtest=WbsMarkdownTest,WbsSvgTest,WbsXlsxTest`
+- report API / CLI を含むまとまった回帰:
+  - `mvn test -Dtest=WbsMarkdownTest,WbsSvgTest,WbsXlsxTest,CoreApiPublicTest,MikuprojectCliTest`
+- CLI entrypoint 回帰:
+  - `mvn test -Dtest=MikuprojectCliTest`
+- import / AI view 回帰:
+  - `mvn test -Dtest=CoreApiImportTest,MsProjectAiViewsTest`
+- workbook 回帰:
+  - `mvn test -Dtest=ProjectWorkbookJsonTest,ProjectXlsxTest,CoreApiWorkbookTest`
+- upstream 追随の保守回帰:
+  - `mvn test -Dtest=WbsMarkdownTest,WbsSvgTest,WbsXlsxTest,ProjectWorkbookJsonTest,ProjectXlsxTest,CoreApiWorkbookTest,CoreApiPublicTest,CoreApiImportTest,MsProjectAiViewsTest,MikuprojectCliTest`
+
+upstream 更新追随で実行結果を差分確認へつなぐときは、次も併せて参照する。
+
+- `docs/upstream-test-mapping.md`
+  - どの upstream file / test 意図に対して、どの Java test を回すかの正本
+- `docs/upstream-followup-log.md`
+  - 実際の差分確認結果を `upstream file` 単位で残す記録置き場
+
+運用メモ:
+
+- `docs/*.md` のみを更新する場合は、原則として追加テストを回さない
+- 既存の直近通過結果がある場合は、それを文書へ反映してよい
+- コード変更を含む場合、または新しい focused 回帰コマンド自体を文書へ追加する場合だけ、その対象単位を実行して確認する
+- この種の追随運用文書の整備は、`docs-only` のコミットとしてまとめてよい
+
+upstream 追随時の最短フロー:
+
+1. `docs/remaining-migration-items.md` で現在地と対象範囲を確認する
+2. `docs/upstream-class-mapping.md` で対象 upstream file に対応する Java class を引く
+3. `docs/upstream-test-mapping.md` で対応 test と focused 回帰単位を引く
+4. 必要な test を実行し、結果を `docs/upstream-followup-log.md` と `docs/remaining-migration-items.md` に反映する
 
 開発環境によっては Maven の依存取得で IPv6 起因の通信問題が起きうるため、このリポジトリでは `.mvn/jvm.config` で IPv4 優先を指定する。
 
@@ -126,7 +167,7 @@ Java には多くの有用なライブラリがあるが、移植初期段階で
 - Node.js upstream で外部ライブラリを利用している箇所は、対応する Java ライブラリの利用を検討してよい
 - ただし、Node.js 側で利用しているライブラリに相当する Java ライブラリが見当たらない、または適合度が低い場合は、Java 側でスクラッチ実装してよい
 - Java 側だけで独自に重い外部ライブラリへ置き換える判断は、upstream 対応が見えにくくなるため慎重に行う
-- first cut では、実装の洗練より upstream との対応可能性を優先する
+- 初期移植では、実装の洗練より upstream との対応可能性を優先する
 
 理由は次のとおり。
 

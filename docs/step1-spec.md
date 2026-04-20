@@ -1,5 +1,13 @@
 # STEP1 Spec
 
+## 現在の位置づけ
+
+この文書は、Java 版 `mikuproject` の STEP1 で採用した設計判断と current implementation の基準をまとめる文書である。
+冒頭の `STEP1 のスコープ` は初期実装の最小範囲を示すものであり、現在の未実装リストではない。
+
+現在は、XML round-trip を土台に、workbook JSON / XLSX、AI JSON、patch JSON、CLI、SVG / Markdown / Mermaid などの周辺導線も Java 側に実装済みである。
+現フェーズでは新規機能追加ではなく、既存実装がこの文書の判断基準と upstream 対応表に沿っているかを確認する。
+
 ## 目的
 
 Java 版 `mikuproject` の STEP1 では、`MS Project XML` の意味的ラウンドトリップを成立させることを目的とする。
@@ -23,14 +31,15 @@ Java 版でも、Node.js 版 upstream の思想をそのまま引き継ぐ。
 - Java 版独自の思想へ作り替えない
 - upstream と思想がずれる設計は、移植性と追随性を損なうため避ける
 
-## STEP1 のスコープ
+## STEP1 初期のスコープ
 
-STEP1 で扱う最小スコープは次のとおり。
+STEP1 初期に扱う最小スコープは次のとおり。
 
 - `MS Project XML -> ProjectModel`
 - `ProjectModel -> MS Project XML`
 
-この段階では、次は後段とする。
+初期段階では、次は後段とした。
+現在は主要導線が Java 側に存在するため、以下は追加リストではなく、XML round-trip を土台に後続で広げた領域として扱う。
 
 - `XLSX`
 - workbook JSON
@@ -57,7 +66,7 @@ STEP1 では、コア部分から Java の POJO で表現する。
 - 未確定な領域を無理に広げない
 - 初期段階では、広い汎用構造へ逃がすことより、Node.js upstream の責務に追随しやすい形を優先する
 
-詳細な型設計は今後の検討事項だが、少なくとも STEP1 では「まず XML 往復に必要な範囲を POJO として切る」方針を採る。
+詳細な型設計は初期移植時点では後続検討事項だったが、少なくとも STEP1 では「まず XML 往復に必要な範囲を POJO として切る」方針を採った。
 
 ## STEP1 で優先して扱う対象
 
@@ -69,7 +78,7 @@ STEP1 の `ProjectModel` では、少なくとも次の要素群を優先対象�
 - `Assignments`
 - `Calendars`
 
-ただし、各要素のどのフィールドまで first cut で扱うかは、別途詳細化する。
+ただし、各要素のどのフィールドまで初期移植で扱うかは、別途詳細化した。
 
 ## 非目標
 
@@ -80,13 +89,15 @@ STEP1 の時点では、次を目標にしない。
 - Java 版だけの高度な抽象化
 - Node.js 版 upstream から独立した仕様再設計
 
-## 今後の詳細化項目
+## 初期移植時点の詳細化項目
 
-- `ProjectModel` の first cut フィールド範囲
+- `ProjectModel` の初期移植フィールド範囲
 - XML import の責務分割
 - XML export の責務分割
 - 日付時刻の扱い
 - 数値型の扱い
+
+これらの実装後方針は、この文書の後続節、`docs/remaining-migration-items.md`, `docs/upstream-class-mapping.md`, `docs/upstream-test-mapping.md` を正本として扱う。
 
 ## `null` / 未設定 / 空文字 / `0` の扱い
 
@@ -103,7 +114,7 @@ STEP1 の current implementation では、値の有無を次のように扱う�
 
 - XML text 取得では、要素がない場合は空文字を返す
 - そのうえで、各 field への格納時に `isEmpty()` を見て `null` を避けるか、値ありのときだけ代入する
-- boolean は `1` / `true` を `true`、それ以外を `false` として読む first cut を採る
+- boolean は `1` / `true` を `true`、それ以外を `false` として読む初期方針を採る
 - 数値は parse 失敗時に既定値へ倒す
 
 意味:
@@ -198,7 +209,7 @@ STEP1 の current implementation では、`parse` / `import` / `validate` の返
 
 - `validate` は「読めるか」ではなく「妥当か」を返す責務とする
 
-### 3. first cut で継続可能な import 差分は result に warnings を積む
+### 3. 初期移植で継続可能な import 差分は result に warnings を積む
 
 対象:
 
@@ -219,7 +230,7 @@ STEP1 の current implementation では、`parse` / `import` / `validate` の返
 
 意味:
 
-- first cut では、局所的な不整合を 1 件で全体失敗にしない
+- 初期移植では、局所的な不整合を 1 件で全体失敗にしない
 - ただし「結果が使える範囲でのみ」継続する
 
 ### 実装判断の基準
@@ -238,7 +249,7 @@ STEP1 の current implementation では、Node.js 側の options object は Java
 
 ### 基本原則
 
-- builder pattern は first cut では使わない
+- builder pattern は初期移植では使わない
 - getter / setter 必須の JavaBean に寄せすぎない
 - upstream の option 名と意味を追いやすい field 名を優先する
 - option がない呼び出しのために、`options なし overload` と `options あり overload` を併置してよい
@@ -265,7 +276,7 @@ STEP1 の current implementation では、Node.js 側の options object は Java
 意味:
 
 - Node.js の「property がない」状態を、Java では nullable field で近似する
-- list 系は `null` チェックより空 collection で扱うほうが first cut 実装を単純化できる
+- list 系は `null` チェックより空 collection で扱うほうが初期移植を単純化できる
 
 ### 配置の基準
 
@@ -289,7 +300,7 @@ STEP1 の current implementation では、Node.js 側の options object は Java
 
 - upstream が object 引数 1 個で受ける箇所は、Java 側でもまず 1 個の options/request POJO で受ける
 - 引数が少数でも upstream 追跡性が高いなら、無理に個別引数へ展開しない
-- first cut では immutable 化や fluent API 化を優先しない
+- 初期移植では immutable 化や fluent API 化を優先しない
 - field 名は upstream 語彙を優先し、Java 側独自の一般名へ置き換えない
 
 ## package 依存方向とモジュール境界
@@ -496,7 +507,7 @@ STEP1 の current implementation では、I/O は `text` と `bytes` を正本�
 ### stream の扱い
 
 - zip pack/unpack や XML parser 接続では `ByteArrayInputStream` / `ByteArrayOutputStream` を内部利用してよい
-- ただし public API は、first cut では `InputStream` / `OutputStream` overload を増やさない
+- ただし public API は、初期移植では `InputStream` / `OutputStream` overload を増やさない
 - stream API が必要になっても、まずは CLI/runtime の要求として追加を検討する
 
 ### 今後の実装判断の基準
@@ -515,7 +526,7 @@ STEP1 の current implementation では、日付時刻の正本は `String` で�
 - `ProjectModel` の日付時刻 field は `String` のまま保持する
 - XML / workbook / patch / AI view との境界でも、まずは文字列表現を維持する
 - date-only と date-time を混在して受けうるが、必要に応じて局所的に正規化する
-- timezone を含まない local date-time を first cut の主表現として扱う
+- timezone を含まない local date-time を初期移植の主表現として扱う
 
 ### 現在の扱い
 
@@ -533,7 +544,7 @@ STEP1 の current implementation では、日付時刻の正本は `String` で�
 
 意味:
 
-- first cut では timezone-aware な統一型へ全面変換しない
+- 初期移植では timezone-aware な統一型へ全面変換しない
 - 文字列表現の保持を優先しつつ、比較や検査で必要な最低限の解釈だけ行う
 
 ### 日付帯計算と表示
@@ -547,7 +558,7 @@ STEP1 の current implementation では、日付時刻の正本は `String` で�
 - upstream が文字列で持つ日付時刻は、Java 側でもまず `String` を維持する
 - 比較や補正の helper では `java.time` を使ってよい
 - report や dateband では date-only ロジックを優先し、時刻や timezone を持ち込まない
-- timezone を含む入力を受けても、first cut では意味比較に使うだけで、正本の全面正規化は行わない
+- timezone を含む入力を受けても、初期移植では意味比較に使うだけで、正本の全面正規化は行わない
 
 ## 数値型の方針
 
@@ -572,7 +583,7 @@ STEP1 の current implementation では、数値は `Integer` / `Double` / `Stri
 意味:
 
 - XML や workbook では未設定を持ちうるため、`Integer` で `null` を保持する
-- percent や code 値は first cut では整数として扱う
+- percent や code 値は初期移植では整数として扱う
 
 ### `Double` を使うもの
 
@@ -600,7 +611,7 @@ STEP1 の current implementation では、数値は `Integer` / `Double` / `Stri
 
 意味:
 
-- これらは first cut では単純な数値へ正規化しない
+- これらは初期移植では単純な数値へ正規化しない
 - 表示・round-trip・upstream 追跡性を優先して文字列で持つ
 
 ### parse 時の扱い

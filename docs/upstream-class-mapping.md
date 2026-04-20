@@ -3,9 +3,400 @@
 ## 目的
 
 この文書は、Node.js upstream の主要ファイルと Java 側 class / package の対応関係を固定するためのメモである。
+repo top から入るときの入口は `README.md` の `Development Docs` 節とする。
 
 移植作業では、Java 側の作りやすさよりも upstream 追随時の見通しを重視する。
 そのため、どの Java class がどの upstream file を受け持つかを、先に明示しておく。
+
+## 差分確認テンプレート
+
+upstream 更新追随で 1 file を確認するときは、少なくとも次の形でメモすると追跡しやすい。
+
+```text
+upstream file:
+  vendor/mikuproject/src/ts/<target>.ts
+
+java classes:
+  jp.igapyon.mikuproject.<package>.<ClassA>
+  jp.igapyon.mikuproject.<package>.<ClassB>
+
+tests:
+  <RelatedTest1>
+  <RelatedTest2>
+
+diff summary:
+  挙動差分:
+  命名差分:
+  未移植差分:
+  Java 側独自拡張:
+
+follow-up:
+  - 確認した test:
+  - 確認した fixture 比較:
+  - 不足時に補った test / fixture:
+  - `docs/remaining-migration-items.md` への反映要否:
+```
+
+このテンプレートの目的は、差分確認の粒度を `upstream file -> Java class / test` で固定することである。
+実際の差分確認結果は `docs/upstream-followup-log.md` に、同じ `upstream file` 単位で残す。
+
+補足:
+
+- `docs only` 更新では、原則として追加テストを回さない
+- コード変更を含む場合、または新しい focused 回帰コマンド自体を関連文書へ追加する場合だけ、対象単位を実行して確認する
+- この種の追随運用文書の整備は、`docs-only` のコミットとしてまとめてよい
+
+最短フロー:
+
+1. `docs/remaining-migration-items.md` で現在地と対象範囲を確認する
+2. この文書で対象 upstream file に対応する Java class を引く
+3. `docs/upstream-test-mapping.md` で対応 test と focused 回帰単位を引く
+4. `docs/development.md` で実行する focused test command を確認する
+5. 必要なら対象単位だけ test を実行し、`docs/upstream-followup-log.md` と `docs/remaining-migration-items.md` に結果を反映する
+
+## 現在の sample coverage
+
+- report bundle / public report API:
+  - `vendor/mikuproject/src/ts/core-api-report.ts`
+- unified import / external import:
+  - `vendor/mikuproject/src/ts/core-api-import.ts`
+- AI view export / import:
+  - `vendor/mikuproject/src/ts/msproject-ai-views.ts`
+- workbook JSON:
+  - `vendor/mikuproject/src/ts/project-workbook-json.ts`
+- project xlsx:
+  - `vendor/mikuproject/src/ts/project-xlsx.ts`
+- workbook wrapper:
+  - `vendor/mikuproject/src/ts/core-api-workbook.ts`
+- workbook xlsx wrapper:
+  - `vendor/mikuproject/src/ts/core-api-workbook-xlsx.ts`
+- SVG report:
+  - `vendor/mikuproject/src/ts/wbs-svg.ts`
+- Markdown report:
+  - `vendor/mikuproject/src/ts/wbs-markdown.ts`
+- XLSX report:
+  - `vendor/mikuproject/src/ts/wbs-xlsx.ts`
+
+report / workbook / import / AI view の主要導線は、この文書でも sample ベースで辿れる状態にある。
+現フェーズでは、新規機能追加ではなく、この対応表と既存実装 / test 対応のズレを小さく保つことを優先する。
+
+## 差分確認サンプル
+
+次は、`wbs-svg.ts` 周辺を確認するときの簡易サンプルである。
+
+```text
+upstream file:
+  vendor/mikuproject/src/ts/wbs-svg.ts
+
+java classes:
+  jp.igapyon.mikuproject.wbssvg.WbsSvg
+  jp.igapyon.mikuproject.wbssvg.WbsSvgPublic
+  jp.igapyon.mikuproject.wbssvg.WbsSvgRender
+  jp.igapyon.mikuproject.wbssvg.WbsSvgCalendar
+  jp.igapyon.mikuproject.wbssvg.WbsSvgZip
+
+tests:
+  WbsSvgTest.exportsDailyAndWeeklySvg
+  WbsSvgTest.exportsDependencyFixtureIntoSvgOutputs
+  WbsSvgTest.exportsHierarchyFixtureIntoSvgOutputs
+  WbsSvgTest.appliesLabelAndHolidayOptionsToSvgOutputs
+  CoreApiPublicTest.exposesWorkingReportApiSurfaceForDependencyFixture
+  CoreApiPublicTest.exposesWorkingReportApiSurfaceForHierarchyFixture
+  MikuprojectCliTest.appliesSvgOptionArgumentsToSvgExports
+  MikuprojectCliTest.exportsReportBundleAndReportDirForFixturesThroughCli
+
+diff summary:
+  挙動差分:
+    daily / weekly / monthly の出力内容、label mode、holiday 件数表示、dependency path の有無を見る
+  命名差分:
+    upstream の helper 分割と Java 側の class 分割が追跡可能かを見る
+  未移植差分:
+    upstream 側で増えた SVG option や月次 archive 挙動が Java 側へ入っているかを見る
+  Java 側独自拡張:
+    CLI option parse や report bundle / report directory 連携は upstream 本体とは分けて扱う
+
+follow-up:
+  - 追加/更新した test:
+    WbsSvgTest / CoreApiPublicTest / MikuprojectCliTest のどこで吸収したかを明記する
+  - 追加/更新した fixture 比較:
+    hierarchy / dependency fixture のどちらで確認したかを明記する
+  - `docs/remaining-migration-items.md` への反映要否:
+    option 契約や report 精度面の残件に影響する場合だけ反映する
+```
+
+次は、`core-api-report.ts` 周辺を確認するときの簡易サンプルである。
+
+```text
+upstream file:
+  vendor/mikuproject/src/ts/core-api-report.ts
+
+java classes:
+  jp.igapyon.mikuproject.coreapi.CoreApiReport
+  jp.igapyon.mikuproject.coreapi.CoreApiReportAdapters
+  jp.igapyon.mikuproject.coreapi.CoreApiReportPublic
+
+tests:
+  CoreApiPublicTest.exposesWorkingReportApiSurface
+  CoreApiPublicTest.exposesWorkingReportApiSurfaceForDependencyFixture
+  CoreApiPublicTest.exposesWorkingReportApiSurfaceForHierarchyFixture
+  MikuprojectCliTest.exportsReportBundleAndReportDirForFixturesThroughCli
+  MikuprojectCliTest.appliesWbsOptionArgumentsToReportBundleAndWbsXlsx
+
+diff summary:
+  挙動差分:
+    report bundle の entry 構成、`wbs.xlsx` 同梱有無、fixture ごとの主要内容を確認する
+  命名差分:
+    upstream の report API 名と Java 側 adapter / public wrapper の公開名が追跡可能かを見る
+  未移植差分:
+    upstream 側で report entry や option が増えた場合に Java 側の `all` export と CLI 導線まで入っているかを見る
+  Java 側独自拡張:
+    report directory export や CLI diagnostics は `core-api-report.ts` 本体とは分けて扱う
+
+follow-up:
+  - 追加/更新した test:
+    CoreApiPublicTest を基点に、必要なら MikuprojectCliTest の bundle / report dir 比較まで広げる
+  - 追加/更新した fixture 比較:
+    dependency / hierarchy fixture のどちらで entry 構成と内容差分を確認したかを明記する
+  - `docs/remaining-migration-items.md` への反映要否:
+    report 出力の精度面や option 契約の残件に影響する場合だけ反映する
+```
+
+次は、`msproject-ai-views.ts` 周辺を確認するときの簡易サンプルである。
+
+```text
+upstream file:
+  vendor/mikuproject/src/ts/msproject-ai-views.ts
+
+java classes:
+  jp.igapyon.mikuproject.msprojectxml.MsProjectAiViews
+  jp.igapyon.mikuproject.coreapi.CoreApiMsprojectAi
+  jp.igapyon.mikuproject.coreapi.CoreApiRegistry
+
+tests:
+  MsProjectAiViewsTest.exportsProjectOverviewAndDefaultPhaseDetailViewsFromHierarchy
+  MsProjectAiViewsTest.exportsTaskEditViewWithPredecessorsSuccessorsAndAssignments
+  MsProjectAiViewsTest.exportsScopedPhaseDetailAndRejectsInvalidRootUid
+  MsProjectAiViewsTest.buildsProjectDraftRequestAndImportsPredecessorMappingFromProjectDraftView
+  MsProjectAiViewsTest.rejectsInvalidProjectDraftViewReferences
+  MikuprojectCliTest.exportsWorkbookJsonAndAiViews
+  MikuprojectCliTest.exportsScopedPhaseDetailAndRejectsInvalidRootUidThroughCli
+
+diff summary:
+  挙動差分:
+    `project_overview_view` / `phase_detail_view` / `task_edit_view` / `project_draft_request` の出力内容と参照整合を確認する
+  命名差分:
+    upstream の view kind 名と Java 側 JSON field 名、CLI command 名が追跡可能かを見る
+  未移植差分:
+    upstream 側で view field や scoped option が増えた場合に Java 側の unit / CLI 導線へ入っているかを見る
+  Java 側独自拡張:
+    CLI batch export や diagnostics は `msproject-ai-views.ts` 本体とは分けて扱う
+
+follow-up:
+  - 追加/更新した test:
+    まず MsProjectAiViewsTest で吸収し、CLI 契約に影響する場合だけ MikuprojectCliTest まで広げる
+  - 追加/更新した fixture 比較:
+    hierarchy fixture の overview / scoped phase detail で確認したかを明記する
+  - `docs/remaining-migration-items.md` への反映要否:
+    AI view export/import の残件や command 契約に影響する場合だけ反映する
+```
+
+次は、`core-api-import.ts` 周辺を確認するときの簡易サンプルである。
+
+```text
+upstream file:
+  vendor/mikuproject/src/ts/core-api-import.ts
+
+java classes:
+  jp.igapyon.mikuproject.coreapi.CoreApiImport
+  jp.igapyon.mikuproject.coreapi.CoreApiAiJsonImport
+  jp.igapyon.mikuproject.coreapi.CoreApiExternalImport
+  jp.igapyon.mikuproject.coreapi.CoreApiExternalDocument
+
+tests:
+  CoreApiImportTest.parsesFencedAiJsonTextAndDetectsKind
+  CoreApiImportTest.importsProjectDraftViewWithoutUiDependencies
+  CoreApiImportTest.importsWorkbookJsonWithAndWithoutBaseModel
+  CoreApiImportTest.importsAiJsonTextAndExposesAiJsonSpec
+  CoreApiImportTest.importsExternalFormatsThroughImportExternal
+  CoreApiImportTest.appliesPatchJsonThroughUnifiedEntryPoint
+  CoreApiImportTest.rejectsPatchJsonWhenBaseModelIsMissing
+  CoreApiImportTest.rejectsUnsupportedFormatAndModeCombinationsInImportExternal
+  CoreApiImportTest.rejectsMergeImportsWhenBaseModelIsMissing
+  CoreApiImportTest.roundTripsHierarchyFixtureThroughUnifiedImportWrappers
+
+diff summary:
+  挙動差分:
+    `project_draft_view` / `workbook_json` / `patch_json` / `ms_project_xml` / `xlsx` の import 結果と `mode` 判定を確認する
+  命名差分:
+    upstream の `kind` / `mode` / `source.format` 名と Java 側 API の field 名が追跡可能かを見る
+  未移植差分:
+    upstream 側で import source や mode 制約が増えた場合に Java 側の unified import と wrapper 導線へ入っているかを見る
+  Java 側独自拡張:
+    CLI entrypoint や diagnostics は `core-api-import.ts` 本体とは分けて扱う
+
+follow-up:
+  - 追加/更新した test:
+    まず CoreApiImportTest で吸収し、CLI 契約に影響する場合だけ MikuprojectCliTest の import 系まで広げる
+  - 追加/更新した fixture 比較:
+    dependency / hierarchy fixture の replace / merge round-trip で確認したかを明記する
+  - `docs/remaining-migration-items.md` への反映要否:
+    import mode 制約や external format の残件に影響する場合だけ反映する
+```
+
+次は、`project-workbook-json.ts` 周辺を確認するときの簡易サンプルである。
+
+```text
+upstream file:
+  vendor/mikuproject/src/ts/project-workbook-json.ts
+
+java classes:
+  jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJson
+  jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonExport
+  jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonImport
+  jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonValidate
+
+tests:
+  ProjectWorkbookJsonTest.exportsWorkbookJsonWithFixedFormatAndSheets
+  ProjectWorkbookJsonTest.importsLimitedEditableFieldsThroughWorkbookJson
+  ProjectWorkbookJsonTest.rejectsInvalidWorkbookJsonFormat
+  ProjectWorkbookJsonTest.reportsWarningsForUnknownSheetAndUnknownColumns
+  ProjectWorkbookJsonTest.rejectsNonArraySheetsAndNonObjectRows
+  ProjectWorkbookJsonTest.keepsNonEditableTaskColumnsUnchangedThroughWorkbookJsonImport
+  ProjectWorkbookJsonTest.roundTripsHierarchyFixtureThroughWorkbookJson
+  CoreApiWorkbookTest.importsWorkbookJsonWithAndWithoutBaseModel
+  CoreApiWorkbookTest.validatesWorkbookJsonAndAppliesPatchJson
+  CoreApiWorkbookTest.roundTripsHierarchyFixtureThroughWorkbookWrappers
+
+diff summary:
+  挙動差分:
+    workbook JSON の fixed format、editable field、warning / reject 契約、hierarchy fixture round-trip を確認する
+  命名差分:
+    upstream の workbook JSON helper 群と Java 側の export / import / validate 分割が追跡可能かを見る
+  未移植差分:
+    upstream 側で sheet 構成や editable field 契約が増えた場合に Java 側へ入っているかを見る
+  Java 側独自拡張:
+    Core API wrapper 経由の統一導線は upstream 本体とは分けて扱う
+
+follow-up:
+  - 追加/更新した test:
+    まず ProjectWorkbookJsonTest で吸収し、wrapper 契約に影響する場合だけ CoreApiWorkbookTest まで広げる
+  - 追加/更新した fixture 比較:
+    hierarchy fixture の workbook JSON round-trip で確認したかを明記する
+  - `docs/remaining-migration-items.md` への反映要否:
+    workbook JSON schema や editable field 契約の残件に影響する場合だけ反映する
+```
+
+次は、`core-api-workbook.ts` 周辺を確認するときの簡易サンプルである。
+
+```text
+upstream file:
+  vendor/mikuproject/src/ts/core-api-workbook.ts
+
+java classes:
+  jp.igapyon.mikuproject.coreapi.CoreApiWorkbook
+  jp.igapyon.mikuproject.coreapi.CoreApiWorkbookJson
+  jp.igapyon.mikuproject.coreapi.CoreApiWorkbookXlsx
+
+tests:
+  CoreApiWorkbookTest.importsWorkbookJsonWithAndWithoutBaseModel
+  CoreApiWorkbookTest.validatesWorkbookJsonAndAppliesPatchJson
+  CoreApiWorkbookTest.exposesProjectXlsxThroughUnifiedEntryPoint
+  CoreApiWorkbookTest.encodesAndDecodesWorkbookThroughUnifiedEntryPoint
+  CoreApiWorkbookTest.roundTripsHierarchyFixtureThroughWorkbookWrappers
+  ProjectWorkbookJsonTest.roundTripsHierarchyFixtureThroughWorkbookJson
+  ProjectXlsxTest.roundTripsHierarchyFixtureThroughWorkbook
+
+diff summary:
+  挙動差分:
+    workbook JSON / xlsx wrapper、encode/decode、validate / patch、hierarchy fixture round-trip を確認する
+  命名差分:
+    upstream の workbook wrapper 名と Java 側の workbookJson / xlsx wrapper 分割が追跡可能かを見る
+  未移植差分:
+    upstream 側で workbook wrapper の mode や公開 API が増えた場合に Java 側へ入っているかを見る
+  Java 側独自拡張:
+    CLI 導線は upstream 本体の `core-api-workbook.ts` ではなく、Java CLI entrypoint 側の拡張として扱う
+
+follow-up:
+  - 追加/更新した test:
+    まず CoreApiWorkbookTest で吸収し、必要なら ProjectWorkbookJsonTest / ProjectXlsxTest の fixture 比較まで広げる
+  - 追加/更新した fixture 比較:
+    hierarchy fixture の workbook JSON / xlsx round-trip で確認したかを明記する
+  - `docs/remaining-migration-items.md` への反映要否:
+    workbook wrapper 公開面や round-trip 契約の残件に影響する場合だけ反映する
+```
+
+次は、`project-xlsx.ts` 周辺を確認するときの簡易サンプルである。
+
+```text
+upstream file:
+  vendor/mikuproject/src/ts/project-xlsx.ts
+
+java classes:
+  jp.igapyon.mikuproject.projectxlsx.ProjectXlsx
+  jp.igapyon.mikuproject.projectxlsx.ProjectXlsxExport
+  jp.igapyon.mikuproject.projectxlsx.ProjectXlsxImport
+
+tests:
+  ProjectXlsxTest.convertsProjectModelIntoWorkbookSheets
+  ProjectXlsxTest.importsLimitedEditableFieldsThroughWorkbook
+  ProjectXlsxTest.importsWorkbookAsProjectModel
+  ProjectXlsxTest.roundTripsHierarchyFixtureThroughWorkbook
+  CoreApiWorkbookTest.exposesProjectXlsxThroughUnifiedEntryPoint
+  CoreApiWorkbookTest.encodesAndDecodesWorkbookThroughUnifiedEntryPoint
+  CoreApiWorkbookTest.roundTripsHierarchyFixtureThroughWorkbookWrappers
+
+diff summary:
+  挙動差分:
+    workbook sheet 変換、editable field import、`ProjectModel` 構築、hierarchy fixture round-trip を確認する
+  命名差分:
+    upstream の project xlsx helper 群と Java 側の export / import 分割が追跡可能かを見る
+  未移植差分:
+    upstream 側で workbook sheet 構成や import 契約が増えた場合に Java 側へ入っているかを見る
+  Java 側独自拡張:
+    Core API wrapper や encode/decode 導線は upstream 本体の `project-xlsx.ts` とは分けて扱う
+
+follow-up:
+  - 追加/更新した test:
+    まず ProjectXlsxTest で吸収し、wrapper 契約に影響する場合だけ CoreApiWorkbookTest まで広げる
+  - 追加/更新した fixture 比較:
+    hierarchy fixture の workbook export / import round-trip で確認したかを明記する
+  - `docs/remaining-migration-items.md` への反映要否:
+    workbook sheet 構成や import 契約の残件に影響する場合だけ反映する
+```
+
+次は、`core-api-workbook-xlsx.ts` 周辺を確認するときの簡易サンプルである。
+
+```text
+upstream file:
+  vendor/mikuproject/src/ts/core-api-workbook-xlsx.ts
+
+java classes:
+  jp.igapyon.mikuproject.coreapi.CoreApiWorkbookXlsx
+
+tests:
+  CoreApiWorkbookTest.exposesProjectXlsxThroughUnifiedEntryPoint
+  CoreApiWorkbookTest.encodesAndDecodesWorkbookThroughUnifiedEntryPoint
+  CoreApiWorkbookTest.roundTripsHierarchyFixtureThroughWorkbookWrappers
+  ProjectXlsxTest.roundTripsHierarchyFixtureThroughWorkbook
+
+diff summary:
+  挙動差分:
+    xlsx wrapper の export / import、encode / decode、hierarchy fixture round-trip を確認する
+  命名差分:
+    upstream の workbook xlsx wrapper 名と Java 側の `CoreApiWorkbookXlsx` が追跡可能かを見る
+  未移植差分:
+    upstream 側で xlsx wrapper の公開 API や mode 契約が増えた場合に Java 側へ入っているかを見る
+  Java 側独自拡張:
+    CLI entrypoint や report 導線は upstream 本体の `core-api-workbook-xlsx.ts` とは分けて扱う
+
+follow-up:
+  - 追加/更新した test:
+    まず CoreApiWorkbookTest で吸収し、必要なら ProjectXlsxTest の fixture 比較まで広げる
+  - 追加/更新した fixture 比較:
+    hierarchy fixture の xlsx export / import round-trip で確認したかを明記する
+  - `docs/remaining-migration-items.md` への反映要否:
+    xlsx wrapper 公開面や encode / decode 契約の残件に影響する場合だけ反映する
+```
 
 ## 現在の主対応
 
@@ -348,7 +739,7 @@
 - 責務:
   - last fenced `json` block 抽出
   - AI JSON kind 判定
-  - Java first cut の最小 JSON parse
+  - Java 側の最小 JSON parse
 
 ### `vendor/mikuproject/src/ts/ai-json-spec.ts`
 
@@ -478,7 +869,7 @@
   - `jp.igapyon.mikuproject.coreapi.CoreApiReport`
 - 責務:
   - report entry export
-  - Java first cut では `wbs.md`, `mermaid.mmd`, `wbs.xlsx`, `daily.svg`, `weekly.svg`, `monthly-calendar/*` を生成
+  - Java 側では `wbs.md`, `mermaid.mmd`, `wbs.xlsx`, `daily.svg`, `weekly.svg`, `monthly-calendar/*` を生成
   - zip bundle 作成
 
 ### `vendor/mikuproject/src/ts/core-api-report-adapters.ts`
@@ -487,7 +878,7 @@
   - `jp.igapyon.mikuproject.coreapi.CoreApiReportAdapters`
 - 責務:
   - report 公開面の adapter
-  - first cut では `all / wbsMarkdown / mermaid / svg / wbsXlsx` を実動
+  - `all / wbsMarkdown / mermaid / svg / wbsXlsx` を実動
 
 ### `vendor/mikuproject/src/ts/core-api-report-public.ts`
 
@@ -507,7 +898,7 @@
   - workbook archive export
   - package entry list / unpack
   - archive import の公開入口
-  - Java first cut では workbook object の round-trip byte codec と OOXML-like zip package import/export を提供
+  - Java 側では workbook object の round-trip byte codec と OOXML-like zip package import/export を提供
 
 ### `vendor/mikuproject/src/ts/excel-io-package-xml.ts`
 
@@ -726,7 +1117,7 @@
 - Java 側 class:
   - `jp.igapyon.mikuproject.wbsxlsx.WbsXlsxExport`
 - 責務:
-  - project info / date band / task row / legend / summary を含む first cut workbook 生成
+  - project info / date band / task row / legend / summary を含む workbook 生成
   - `projectxlsx.XlsxWorkbookLike` を使って report / excel-io と接続する
 
 ### `vendor/mikuproject/src/ts/wbs-xlsx-base.ts`
@@ -778,11 +1169,13 @@
 - Java 側 test:
   - `MsProjectXmlTest.importsUpstreamDependencyXmlFixture`
 
-## 現在未着手または保留
+## 現在の保留領域
 
-以下は upstream には存在するが、Java STEP1 ではまだ直接対応 class を置いていない領域である。
+AI / patch / workbook / CSV / report の主要導線は、Java 側にも対応 class と test がある。
+そのため、現時点でこの文書が扱う残件は、新しい大分類を実装することではなく、upstream 更新時に既存対応表、test 対応、実記録を崩さず追える状態を保つことである。
 
-### AI / patch / workbook / CSV / report
+直接対応 class の追加を急がない領域は、Java CLI runtime の対象外である Web UI / browser main 系、または Java 側独自の配布 / automation 都合に限る。
+これらを扱う場合も、新規機能追加ではなく、`docs/remaining-migration-items.md` に保留理由と確認単位を明記してから判断する。
 
 ## 補足
 
