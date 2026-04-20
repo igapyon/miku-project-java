@@ -20,7 +20,9 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import jp.igapyon.mikuproject.excelio.XlsxWorkbookCodec;
 import jp.igapyon.mikuproject.model.ProjectModel;
+import jp.igapyon.mikuproject.projectxlsx.XlsxWorkbookLike;
 import jp.igapyon.mikuproject.projectworkbookjson.WorkbookJsonDocument;
 
 public class CoreApiPublicTest {
@@ -97,6 +99,28 @@ public class CoreApiPublicTest {
         assertTrue(bundle.zipBytes.length > 0);
     }
 
+    @Test
+    public void exposesWorkingReportApiSurfaceForHierarchyFixture() throws IOException {
+        CoreApi api = new CoreApi();
+        ProjectModel model = api.msProject.importFromXml(readVendorTestdata("hierarchy.xml"));
+
+        CoreApiReportAdapters.ReportBundle bundle = api.report.all.export(model);
+        XlsxWorkbookLike workbook = decodeWorkbookEntry(bundle, "wbs.xlsx");
+
+        assertEquals(Arrays.asList("wbs.md", "mermaid.mmd", "wbs.xlsx", "daily.svg", "weekly.svg", "monthly-calendar/2026-03.svg"),
+                entryNames(bundle));
+        assertTrue(containsEntry(bundle, "wbs.md", "Hierarchy Project"));
+        assertTrue(containsEntry(bundle, "wbs.md", "Child A"));
+        assertTrue(containsEntry(bundle, "mermaid.mmd", "title Hierarchy Project"));
+        assertTrue(containsEntry(bundle, "daily.svg", "Child A"));
+        assertTrue(containsEntry(bundle, "weekly.svg", "weekly overview"));
+        assertEquals("WBS", workbook.sheets.get(0).name);
+        assertTrue(containsCellText(workbook, "Hierarchy Project"));
+        assertTrue(containsCellText(workbook, "Child A"));
+        assertTrue(containsCellText(workbook, "Child B"));
+        assertTrue(bundle.zipBytes.length > 0);
+    }
+
     private List<String> entryNames(CoreApiReportAdapters.ReportBundle bundle) {
         List<String> names = new ArrayList<String>();
         for (CoreApiReport.ReportEntry entry : bundle.entries) {
@@ -109,6 +133,27 @@ public class CoreApiPublicTest {
         for (CoreApiReport.ReportEntry entry : bundle.entries) {
             if (expectedName.equals(entry.name)) {
                 return new String(entry.data, StandardCharsets.UTF_8).contains(expectedText);
+            }
+        }
+        return false;
+    }
+
+    private XlsxWorkbookLike decodeWorkbookEntry(CoreApiReportAdapters.ReportBundle bundle, String expectedName) {
+        for (CoreApiReport.ReportEntry entry : bundle.entries) {
+            if (expectedName.equals(entry.name)) {
+                return new XlsxWorkbookCodec().importWorkbook(entry.data);
+            }
+        }
+        throw new IllegalArgumentException("entry が見つかりません: " + expectedName);
+    }
+
+    private boolean containsCellText(XlsxWorkbookLike workbook, String value) {
+        for (int rowIndex = 0; rowIndex < workbook.sheets.get(0).rows.size(); rowIndex++) {
+            for (int cellIndex = 0; cellIndex < workbook.sheets.get(0).rows.get(rowIndex).cells.size(); cellIndex++) {
+                Object cellValue = workbook.sheets.get(0).rows.get(rowIndex).cells.get(cellIndex).value;
+                if (cellValue != null && String.valueOf(cellValue).contains(value)) {
+                    return true;
+                }
             }
         }
         return false;

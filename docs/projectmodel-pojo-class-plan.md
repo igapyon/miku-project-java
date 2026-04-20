@@ -7,6 +7,13 @@
 前提として、Java 側でも型構造は Node.js 版 upstream に寄せる。
 Java 向けに命名規約は調整するが、責務や語彙は upstream から大きくずらさない。
 
+## 現在の位置づけ
+
+この文書は STEP1 初期に `types.ts` と Java POJO class 群の対応を決めるための設計メモとして残す。
+現在は主要 model class が Java 側に存在するため、この文書の `候補` や `未確定` は未実装 TODO ではなく、当時の判断背景として読む。
+
+現フェーズで model field や class の不足を見つけた場合は、新規機能追加ではなく、既存仕様の不足または upstream 差分として扱い、対応表と test 対応へ反映する。
+
 ## 基本方針
 
 - `types.ts` の主要型に対応する Java class を用意する
@@ -17,7 +24,7 @@ Java 向けに命名規約は調整するが、責務や語彙は upstream か�
 
 ## package 方針
 
-first cut では、POJO は `jp.igapyon.mikuproject.model` 配下へ置くことを基本候補とする。
+初期移植では、POJO は `jp.igapyon.mikuproject.model` 配下へ置くことを基本候補とする。
 
 必要に応じて、後続で package を分けることはありうるが、初期段階では細分化しすぎない。
 
@@ -119,7 +126,7 @@ Node.js 版 upstream の `ValidationIssue` も、Java 側で独立 class とす�
 
 `level` と `scope` は、Java 側では enum 化も候補だが、これは別途詳細化する。
 
-## first cut での class 作成順
+## 初期移植での class 作成順
 
 POJO class は、まず次の順で作成するのが自然である。
 
@@ -144,17 +151,18 @@ POJO class は、まず次の順で作成するのが自然である。
 - `TimephasedDataModel` 系
 - `ValidationIssue`
 
-## first cut での field 詳細化方針
+## 初期移植での field 詳細化方針
 
 class を作る順序と、field を全部一気に埋めることは分けて考える。
 
 - class の骨格は upstream に合わせて先に作る
 - field は `docs/projectmodel-first-cut.md` の優先順に従って段階的に埋める
-- first cut に入っていない field も、後で追加しやすいよう class 自体の対応関係は先に固定する
+- 初期移植に入っていない field も、後で補いやすいよう class 自体の対応関係は先に固定する
 
 ## Java 側でまだ未確定の点
 
-次は別途詳細化する。
+次は初期移植時点では別途詳細化する項目として扱っていた。
+現在の実装後方針は `docs/step1-spec.md`, `docs/remaining-migration-items.md`, `docs/upstream-class-mapping.md`, `docs/upstream-test-mapping.md` を正本として扱う。
 
 - field を public にするか private + accessor にするか
 - builder を使うかどうか

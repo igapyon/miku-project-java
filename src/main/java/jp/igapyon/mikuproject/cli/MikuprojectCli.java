@@ -68,20 +68,38 @@ public class MikuprojectCli {
             if ("export-mermaid".equals(command)) {
                 return exportMermaid(args, out, err);
             }
+            if ("export-mermaid-batch".equals(command)) {
+                return exportMermaidBatch(args, out, err);
+            }
             if ("export-wbs-markdown".equals(command)) {
                 return exportWbsMarkdown(args, out, err);
+            }
+            if ("export-wbs-markdown-batch".equals(command)) {
+                return exportWbsMarkdownBatch(args, out, err);
             }
             if ("export-daily-svg".equals(command)) {
                 return exportDailySvg(args, out, err);
             }
+            if ("export-daily-svg-batch".equals(command)) {
+                return exportDailySvgBatch(args, out, err);
+            }
             if ("export-weekly-svg".equals(command)) {
                 return exportWeeklySvg(args, out, err);
+            }
+            if ("export-weekly-svg-batch".equals(command)) {
+                return exportWeeklySvgBatch(args, out, err);
             }
             if ("export-monthly-svg-zip".equals(command)) {
                 return exportMonthlySvgZip(args, out, err);
             }
+            if ("export-monthly-svg-zip-batch".equals(command)) {
+                return exportMonthlySvgZipBatch(args, out, err);
+            }
             if ("export-report-bundle".equals(command)) {
                 return exportReportBundle(args, out, err);
+            }
+            if ("export-report-bundle-batch".equals(command)) {
+                return exportReportBundleBatch(args, out, err);
             }
             if ("export-report-dir".equals(command)) {
                 return exportReportDir(args, out, err);
@@ -91,6 +109,9 @@ public class MikuprojectCli {
             }
             if ("export-wbs-xlsx".equals(command)) {
                 return exportWbsXlsx(args, out, err);
+            }
+            if ("export-wbs-xlsx-batch".equals(command)) {
+                return exportWbsXlsxBatch(args, out, err);
             }
             if ("export-workbook-json".equals(command)) {
                 return exportWorkbookJson(args, out, err);
@@ -113,29 +134,50 @@ public class MikuprojectCli {
             if ("export-task-edit-view".equals(command)) {
                 return exportTaskEditView(args, out, err);
             }
+            if ("export-task-edit-view-batch".equals(command)) {
+                return exportTaskEditViewBatch(args, out, err);
+            }
             if ("export-project-draft-request".equals(command)) {
                 return exportProjectDraftRequest(args, out, err);
             }
             if ("validate-workbook-json".equals(command)) {
                 return validateWorkbookJson(args, out, err);
             }
+            if ("validate-workbook-json-batch".equals(command)) {
+                return validateWorkbookJsonBatch(args, out, err);
+            }
             if ("import-workbook-json".equals(command)) {
                 return importWorkbookJson(args, out, err);
+            }
+            if ("import-workbook-json-batch".equals(command)) {
+                return importWorkbookJsonBatch(args, out, err);
             }
             if ("merge-workbook-json".equals(command)) {
                 return mergeWorkbookJson(args, out, err);
             }
+            if ("merge-workbook-json-batch".equals(command)) {
+                return mergeWorkbookJsonBatch(args, out, err);
+            }
             if ("validate-patch-json".equals(command)) {
                 return validatePatchJson(args, out, err);
             }
+            if ("validate-patch-json-batch".equals(command)) {
+                return validatePatchJsonBatch(args, out, err);
+            }
             if ("apply-patch-json".equals(command)) {
                 return applyPatchJson(args, out, err);
+            }
+            if ("apply-patch-json-batch".equals(command)) {
+                return applyPatchJsonBatch(args, out, err);
             }
             if ("export-ai-json-spec".equals(command)) {
                 return exportAiJsonSpec(args, out, err);
             }
             if ("detect-ai-json-kind".equals(command)) {
                 return detectAiJsonKind(args, out, err);
+            }
+            if ("detect-ai-json-kind-batch".equals(command)) {
+                return detectAiJsonKindBatch(args, out, err);
             }
             if ("import-ai-json".equals(command)) {
                 return importAiJson(args, out, err);
@@ -152,28 +194,32 @@ public class MikuprojectCli {
             if ("validate-xlsx".equals(command)) {
                 return validateXlsx(args, out, err);
             }
+            if ("validate-xlsx-batch".equals(command)) {
+                return validateXlsxBatch(args, out, err);
+            }
             if ("import-xlsx".equals(command)) {
                 return importXlsx(args, out, err);
+            }
+            if ("import-xlsx-batch".equals(command)) {
+                return importXlsxBatch(args, out, err);
             }
             if ("merge-xlsx".equals(command)) {
                 return mergeXlsx(args, out, err);
             }
-            err.println("unknown command: " + command);
-            printUsage(err);
-            return 2;
+            if ("merge-xlsx-batch".equals(command)) {
+                return mergeXlsxBatch(args, out, err);
+            }
+            return usageError(err, "unknown command: " + command, true);
         } catch (IOException ex) {
-            err.println("I/O error: " + ex.getMessage());
-            return 1;
+            return commandError(err, "I/O error: " + ex.getMessage());
         } catch (RuntimeException ex) {
-            err.println("command failed: " + ex.getMessage());
-            return 1;
+            return commandError(err, "command failed: " + ex.getMessage());
         }
     }
 
     private int validateXml(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 2) {
-            err.println("validate-xml requires <input.xml>");
-            return 2;
+            return usageError(err, "validate-xml requires <input.xml>");
         }
         ProjectModel model = importXml(args[1]);
         List<ValidationIssue> issues = msProjectXml.validateProjectModel(model);
@@ -190,8 +236,7 @@ public class MikuprojectCli {
 
     private int validateXmlBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 2) {
-            err.println("validate-xml-batch requires <input.xml>...");
-            return 2;
+            return usageError(err, "validate-xml-batch requires <input.xml>...");
         }
         int exitCode = 0;
         for (int index = 1; index < args.length; index++) {
@@ -213,44 +258,141 @@ public class MikuprojectCli {
 
     private int exportMermaid(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 2) {
-            err.println("export-mermaid requires <input.xml>");
-            return 2;
+            return usageError(err, "export-mermaid requires <input.xml>");
         }
         out.print(msProjectXml.exportMermaidGantt(importXml(args[1])));
         return 0;
     }
 
+    private int exportMermaidBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
+        if (args.length < 4) {
+            return usageError(err, "export-mermaid-batch requires <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]...");
+        }
+        if (((args.length - 2) % 2) != 0) {
+            return usageError(err, "export-mermaid-batch requires <input.xml> <name> pairs");
+        }
+        Path outputRoot = Paths.get(args[1]);
+        for (int index = 2; index < args.length; index += 2) {
+            String input = args[index];
+            String name = args[index + 1];
+            String mermaidText = msProjectXml.exportMermaidGantt(importXml(input));
+            Path outputFile = outputRoot.resolve(name + ".mmd");
+            Path parent = outputFile.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            Files.write(outputFile, mermaidText.getBytes(StandardCharsets.UTF_8));
+            out.println("wrote " + outputFile);
+        }
+        return 0;
+    }
+
     private int exportWbsMarkdown(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 2) {
-            err.println("export-wbs-markdown requires <input.xml> [<beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv>]]]]]");
-            return 2;
+            return usageError(err, "export-wbs-markdown requires <input.xml> [<beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv>]]]]]");
         }
         out.print(msProjectXml.exportWbsMarkdown(importXml(args[1]), parseWbsMarkdownOptions(args, 2)));
         return 0;
     }
 
+    private int exportWbsMarkdownBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
+        if (args.length < 4) {
+            return usageError(err,
+                    "export-wbs-markdown-batch requires <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv>]]]]]");
+        }
+        int delimiterIndex = findArg(args, "--");
+        int pairEnd = delimiterIndex >= 0 ? delimiterIndex : args.length;
+        if (((pairEnd - 2) % 2) != 0) {
+            return usageError(err, "export-wbs-markdown-batch requires <input.xml> <name> pairs");
+        }
+        WbsMarkdownOptions options = parseWbsMarkdownOptions(args, delimiterIndex >= 0 ? delimiterIndex + 1 : args.length);
+        Path outputRoot = Paths.get(args[1]);
+        for (int index = 2; index < pairEnd; index += 2) {
+            String input = args[index];
+            String name = args[index + 1];
+            String markdownText = msProjectXml.exportWbsMarkdown(importXml(input), options);
+            Path outputFile = outputRoot.resolve(name + ".md");
+            Path parent = outputFile.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            Files.write(outputFile, markdownText.getBytes(StandardCharsets.UTF_8));
+            out.println("wrote " + outputFile);
+        }
+        return 0;
+    }
+
     private int exportDailySvg(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 2) {
-            err.println("export-daily-svg requires <input.xml> [<labelMode>]");
-            return 2;
+            return usageError(err, "export-daily-svg requires <input.xml> [<labelMode>]");
         }
         out.print(msProjectXml.exportNativeSvg(importXml(args[1]), parseNativeSvgOptions(args, 2)));
         return 0;
     }
 
+    private int exportDailySvgBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
+        if (args.length < 4) {
+            return usageError(err, "export-daily-svg-batch requires <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <labelMode>]");
+        }
+        int delimiterIndex = findArg(args, "--");
+        int pairEnd = delimiterIndex >= 0 ? delimiterIndex : args.length;
+        if (((pairEnd - 2) % 2) != 0) {
+            return usageError(err, "export-daily-svg-batch requires <input.xml> <name> pairs");
+        }
+        NativeSvgOptions options = parseNativeSvgOptions(args, delimiterIndex >= 0 ? delimiterIndex + 1 : args.length);
+        Path outputRoot = Paths.get(args[1]);
+        for (int index = 2; index < pairEnd; index += 2) {
+            String input = args[index];
+            String name = args[index + 1];
+            String svgText = msProjectXml.exportNativeSvg(importXml(input), options);
+            Path outputFile = outputRoot.resolve(name + ".svg");
+            Path parent = outputFile.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            Files.write(outputFile, svgText.getBytes(StandardCharsets.UTF_8));
+            out.println("wrote " + outputFile);
+        }
+        return 0;
+    }
+
     private int exportWeeklySvg(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 2) {
-            err.println("export-weekly-svg requires <input.xml> [<labelMode>]");
-            return 2;
+            return usageError(err, "export-weekly-svg requires <input.xml> [<labelMode>]");
         }
         out.print(msProjectXml.exportWeeklyNativeSvg(importXml(args[1]), parseNativeSvgOptions(args, 2)));
         return 0;
     }
 
+    private int exportWeeklySvgBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
+        if (args.length < 4) {
+            return usageError(err, "export-weekly-svg-batch requires <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <labelMode>]");
+        }
+        int delimiterIndex = findArg(args, "--");
+        int pairEnd = delimiterIndex >= 0 ? delimiterIndex : args.length;
+        if (((pairEnd - 2) % 2) != 0) {
+            return usageError(err, "export-weekly-svg-batch requires <input.xml> <name> pairs");
+        }
+        NativeSvgOptions options = parseNativeSvgOptions(args, delimiterIndex >= 0 ? delimiterIndex + 1 : args.length);
+        Path outputRoot = Paths.get(args[1]);
+        for (int index = 2; index < pairEnd; index += 2) {
+            String input = args[index];
+            String name = args[index + 1];
+            String svgText = msProjectXml.exportWeeklyNativeSvg(importXml(input), options);
+            Path outputFile = outputRoot.resolve(name + ".svg");
+            Path parent = outputFile.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            Files.write(outputFile, svgText.getBytes(StandardCharsets.UTF_8));
+            out.println("wrote " + outputFile);
+        }
+        return 0;
+    }
+
     private int exportMonthlySvgZip(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 3) {
-            err.println("export-monthly-svg-zip requires <input.xml> <output.zip> [<holidayDatesCsv> [<labelMode>]]");
-            return 2;
+            return usageError(err, "export-monthly-svg-zip requires <input.xml> <output.zip> [<holidayDatesCsv> [<labelMode>]]");
         }
         MonthlyCalendarSvgArchive archive = msProjectXml.exportMonthlyWbsCalendarSvgArchive(importXml(args[1]), parseMonthlySvgOptions(args, 3));
         Files.write(Paths.get(args[2]), archive.zipBytes);
@@ -258,11 +400,37 @@ public class MikuprojectCli {
         return 0;
     }
 
+    private int exportMonthlySvgZipBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
+        if (args.length < 4) {
+            return usageError(err,
+                    "export-monthly-svg-zip-batch requires <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <holidayDatesCsv> [<labelMode>]]");
+        }
+        int delimiterIndex = findArg(args, "--");
+        int pairEnd = delimiterIndex >= 0 ? delimiterIndex : args.length;
+        if (((pairEnd - 2) % 2) != 0) {
+            return usageError(err, "export-monthly-svg-zip-batch requires <input.xml> <name> pairs");
+        }
+        NativeSvgOptions options = parseMonthlySvgOptions(args, delimiterIndex >= 0 ? delimiterIndex + 1 : args.length);
+        Path outputRoot = Paths.get(args[1]);
+        for (int index = 2; index < pairEnd; index += 2) {
+            String input = args[index];
+            String name = args[index + 1];
+            MonthlyCalendarSvgArchive archive = msProjectXml.exportMonthlyWbsCalendarSvgArchive(importXml(input), options);
+            Path outputFile = outputRoot.resolve(name + ".zip");
+            Path parent = outputFile.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            Files.write(outputFile, archive.zipBytes);
+            out.println("wrote " + outputFile + " (" + archive.entries.size() + " entries)");
+        }
+        return 0;
+    }
+
     private int exportReportBundle(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 3) {
-            err.println(
+            return usageError(err,
                     "export-report-bundle requires <input.xml> <output.zip> [<beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv> [<labelMode>]]]]]]");
-            return 2;
         }
         WbsMarkdownOptions markdownOptions = parseWbsMarkdownOptions(args, 3);
         WbsExportOptions xlsxOptions = parseWbsXlsxOptions(args, 3);
@@ -273,11 +441,39 @@ public class MikuprojectCli {
         return 0;
     }
 
+    private int exportReportBundleBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
+        if (args.length < 4) {
+            return usageError(err,
+                    "export-report-bundle-batch requires <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv> [<labelMode>]]]]]]");
+        }
+        int delimiterIndex = findArg(args, "--");
+        int pairEnd = delimiterIndex >= 0 ? delimiterIndex : args.length;
+        if (((pairEnd - 2) % 2) != 0) {
+            return usageError(err, "export-report-bundle-batch requires <input.xml> <name> pairs");
+        }
+        WbsMarkdownOptions markdownOptions = parseWbsMarkdownOptions(args, delimiterIndex >= 0 ? delimiterIndex + 1 : args.length);
+        WbsExportOptions xlsxOptions = parseWbsXlsxOptions(args, delimiterIndex >= 0 ? delimiterIndex + 1 : args.length);
+        NativeSvgOptions svgOptions = parseReportSvgOptions(args, delimiterIndex >= 0 ? delimiterIndex + 1 : args.length);
+        Path outputRoot = Paths.get(args[1]);
+        for (int index = 2; index < pairEnd; index += 2) {
+            String input = args[index];
+            String name = args[index + 1];
+            CoreApiReportAdapters.ReportBundle bundle = reportAdapters.report.all.export(importXml(input), markdownOptions, xlsxOptions, svgOptions);
+            Path outputFile = outputRoot.resolve(name + ".zip");
+            Path parent = outputFile.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            Files.write(outputFile, bundle.zipBytes);
+            out.println("wrote " + outputFile + " (" + bundle.entries.size() + " entries)");
+        }
+        return 0;
+    }
+
     private int exportReportDir(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 3) {
-            err.println(
+            return usageError(err,
                     "export-report-dir requires <input.xml> <output.dir> [<beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv> [<labelMode>]]]]]]");
-            return 2;
         }
         WbsMarkdownOptions markdownOptions = parseWbsMarkdownOptions(args, 3);
         WbsExportOptions xlsxOptions = parseWbsXlsxOptions(args, 3);
@@ -298,15 +494,13 @@ public class MikuprojectCli {
 
     private int exportReportDirBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 4) {
-            err.println(
+            return usageError(err,
                     "export-report-dir-batch requires <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv> [<labelMode>]]]]]]");
-            return 2;
         }
         int delimiterIndex = findArg(args, "--");
         int pairEnd = delimiterIndex >= 0 ? delimiterIndex : args.length;
         if (((pairEnd - 2) % 2) != 0) {
-            err.println("export-report-dir-batch requires <input.xml> <name> pairs");
-            return 2;
+            return usageError(err, "export-report-dir-batch requires <input.xml> <name> pairs");
         }
         WbsMarkdownOptions markdownOptions = parseWbsMarkdownOptions(args, delimiterIndex >= 0 ? delimiterIndex + 1 : args.length);
         WbsExportOptions xlsxOptions = parseWbsXlsxOptions(args, delimiterIndex >= 0 ? delimiterIndex + 1 : args.length);
@@ -325,9 +519,8 @@ public class MikuprojectCli {
 
     private int exportWbsXlsx(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 3) {
-            err.println(
+            return usageError(err,
                     "export-wbs-xlsx requires <input.xml> <output.xlsxbin> [<beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv>]]]]]");
-            return 2;
         }
         byte[] bytes = reportAdapters.report.wbsXlsx.exportBytes(importXml(args[1]), parseWbsXlsxOptions(args, 3));
         Files.write(Paths.get(args[2]), bytes);
@@ -335,10 +528,36 @@ public class MikuprojectCli {
         return 0;
     }
 
+    private int exportWbsXlsxBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
+        if (args.length < 4) {
+            return usageError(err,
+                    "export-wbs-xlsx-batch requires <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv>]]]]]");
+        }
+        int delimiterIndex = findArg(args, "--");
+        int pairEnd = delimiterIndex >= 0 ? delimiterIndex : args.length;
+        if (((pairEnd - 2) % 2) != 0) {
+            return usageError(err, "export-wbs-xlsx-batch requires <input.xml> <name> pairs");
+        }
+        WbsExportOptions options = parseWbsXlsxOptions(args, delimiterIndex >= 0 ? delimiterIndex + 1 : args.length);
+        Path outputRoot = Paths.get(args[1]);
+        for (int index = 2; index < pairEnd; index += 2) {
+            String input = args[index];
+            String name = args[index + 1];
+            byte[] bytes = reportAdapters.report.wbsXlsx.exportBytes(importXml(input), options);
+            Path outputFile = outputRoot.resolve(name + ".xlsxbin");
+            Path parent = outputFile.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            Files.write(outputFile, bytes);
+            out.println("wrote " + outputFile + " (" + bytes.length + " bytes)");
+        }
+        return 0;
+    }
+
     private int exportWorkbookJson(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 2) {
-            err.println("export-workbook-json requires <input.xml>");
-            return 2;
+            return usageError(err, "export-workbook-json requires <input.xml>");
         }
         out.print(exportWorkbookJsonText(importXml(args[1])));
         return 0;
@@ -346,12 +565,10 @@ public class MikuprojectCli {
 
     private int exportWorkbookJsonBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 4) {
-            err.println("export-workbook-json-batch requires <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]...");
-            return 2;
+            return usageError(err, "export-workbook-json-batch requires <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]...");
         }
         if (((args.length - 2) % 2) != 0) {
-            err.println("export-workbook-json-batch requires <input.xml> <name> pairs");
-            return 2;
+            return usageError(err, "export-workbook-json-batch requires <input.xml> <name> pairs");
         }
         Path outputRoot = Paths.get(args[1]);
         for (int index = 2; index < args.length; index += 2) {
@@ -371,8 +588,7 @@ public class MikuprojectCli {
 
     private int exportProjectOverviewView(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 2) {
-            err.println("export-project-overview-view requires <input.xml>");
-            return 2;
+            return usageError(err, "export-project-overview-view requires <input.xml>");
         }
         out.print(jsonUtil.stringifyJson(msProjectXml.exportProjectOverviewView(importXml(args[1]))));
         return 0;
@@ -380,12 +596,10 @@ public class MikuprojectCli {
 
     private int exportProjectOverviewViewBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 4) {
-            err.println("export-project-overview-view-batch requires <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]...");
-            return 2;
+            return usageError(err, "export-project-overview-view-batch requires <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]...");
         }
         if (((args.length - 2) % 2) != 0) {
-            err.println("export-project-overview-view-batch requires <input.xml> <name> pairs");
-            return 2;
+            return usageError(err, "export-project-overview-view-batch requires <input.xml> <name> pairs");
         }
         Path outputRoot = Paths.get(args[1]);
         for (int index = 2; index < args.length; index += 2) {
@@ -405,8 +619,7 @@ public class MikuprojectCli {
 
     private int exportPhaseDetailView(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 2) {
-            err.println("export-phase-detail-view requires <input.xml> [<phaseUid> [<mode> [<rootUid> [<maxDepth>]]]]");
-            return 2;
+            return usageError(err, "export-phase-detail-view requires <input.xml> [<phaseUid> [<mode> [<rootUid> [<maxDepth>]]]]");
         }
         ProjectModel model = importXml(args[1]);
         String requestedPhaseUid = args.length >= 3 ? args[2] : null;
@@ -419,15 +632,13 @@ public class MikuprojectCli {
 
     private int exportPhaseDetailViewBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 4) {
-            err.println(
+            return usageError(err,
                     "export-phase-detail-view-batch requires <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <phaseUid> [<mode> [<rootUid> [<maxDepth>]]]]");
-            return 2;
         }
         int delimiterIndex = findArg(args, "--");
         int pairEnd = delimiterIndex >= 0 ? delimiterIndex : args.length;
         if (((pairEnd - 2) % 2) != 0) {
-            err.println("export-phase-detail-view-batch requires <input.xml> <name> pairs");
-            return 2;
+            return usageError(err, "export-phase-detail-view-batch requires <input.xml> <name> pairs");
         }
         String requestedPhaseUid = delimiterIndex >= 0 && delimiterIndex + 1 < args.length ? args[delimiterIndex + 1] : null;
         String mode = delimiterIndex >= 0 && delimiterIndex + 2 < args.length ? args[delimiterIndex + 2] : null;
@@ -452,17 +663,41 @@ public class MikuprojectCli {
 
     private int exportTaskEditView(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 3) {
-            err.println("export-task-edit-view requires <input.xml> <taskUid>");
-            return 2;
+            return usageError(err, "export-task-edit-view requires <input.xml> <taskUid>");
         }
         out.print(jsonUtil.stringifyJson(msProjectXml.exportTaskEditView(importXml(args[1]), args[2])));
         return 0;
     }
 
+    private int exportTaskEditViewBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
+        if (args.length < 5) {
+            return usageError(err,
+                    "export-task-edit-view-batch requires <outputRoot.dir> <taskUid> <input.xml> <name> [<input.xml> <name>]...");
+        }
+        if (((args.length - 3) % 2) != 0) {
+            return usageError(err, "export-task-edit-view-batch requires <input.xml> <name> pairs");
+        }
+        Path outputRoot = Paths.get(args[1]);
+        String taskUid = args[2];
+        for (int index = 3; index < args.length; index += 2) {
+            String input = args[index];
+            String name = args[index + 1];
+            String jsonText = jsonUtil.stringifyJson(msProjectXml.exportTaskEditView(importXml(input), taskUid));
+            Path outputFile = outputRoot.resolve(name + ".json");
+            Path parent = outputFile.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            Files.write(outputFile, jsonText.getBytes(StandardCharsets.UTF_8));
+            out.println("wrote " + outputFile);
+        }
+        return 0;
+    }
+
     private int exportProjectDraftRequest(String[] args, PrintStream out, PrintStream err) {
         if (args.length < 3) {
-            err.println("export-project-draft-request requires <name> <plannedStart> [<goal> [<teamCount> [<mustHavePhasesCsv> [<mustHaveMilestonesCsv>]]]]");
-            return 2;
+            return usageError(err,
+                    "export-project-draft-request requires <name> <plannedStart> [<goal> [<teamCount> [<mustHavePhasesCsv> [<mustHaveMilestonesCsv>]]]]");
         }
         String name = args[1];
         String plannedStart = args[2];
@@ -476,8 +711,7 @@ public class MikuprojectCli {
 
     private int validateWorkbookJson(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 2) {
-            err.println("validate-workbook-json requires <input.json>");
-            return 2;
+            return usageError(err, "validate-workbook-json requires <input.json>");
         }
         Object json = parseJsonFile(args[1]);
         jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonValidate.ValidationResult result =
@@ -489,10 +723,22 @@ public class MikuprojectCli {
         return 0;
     }
 
+    private int validateWorkbookJsonBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
+        if (args.length < 2) {
+            return usageError(err, "validate-workbook-json-batch requires <input.json>...");
+        }
+        for (int index = 1; index < args.length; index++) {
+            Object json = parseJsonFile(args[index]);
+            jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonValidate.ValidationResult result =
+                    workbookJson.validateWorkbookJsonDocument(json);
+            out.println(args[index] + "\twarnings=" + result.warnings.size());
+        }
+        return 0;
+    }
+
     private int importWorkbookJson(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 3) {
-            err.println("import-workbook-json requires <input.json> <output.xml>");
-            return 2;
+            return usageError(err, "import-workbook-json requires <input.json> <output.xml>");
         }
         Object json = parseJsonFile(args[1]);
         jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonImport.ImportAsProjectModelResult result =
@@ -502,10 +748,32 @@ public class MikuprojectCli {
         return 0;
     }
 
+    private int importWorkbookJsonBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
+        if (args.length < 4) {
+            return usageError(err, "import-workbook-json-batch requires <outputRoot.dir> <input.json> <name> [<input.json> <name>]...");
+        }
+        if (((args.length - 2) % 2) != 0) {
+            return usageError(err, "import-workbook-json-batch requires <input.json> <name> pairs");
+        }
+        Path outputRoot = Paths.get(args[1]);
+        for (int index = 2; index < args.length; index += 2) {
+            Object json = parseJsonFile(args[index]);
+            jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonImport.ImportAsProjectModelResult result =
+                    workbookJson.importProjectWorkbookJsonAsProjectModel(json);
+            Path outputFile = outputRoot.resolve(args[index + 1] + ".xml");
+            Path parent = outputFile.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            writeXml(outputFile.toString(), result.model);
+            out.println("wrote " + outputFile + " (warnings=" + result.warnings.size() + ")");
+        }
+        return 0;
+    }
+
     private int mergeWorkbookJson(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 4) {
-            err.println("merge-workbook-json requires <base.xml> <input.json> <output.xml>");
-            return 2;
+            return usageError(err, "merge-workbook-json requires <base.xml> <input.json> <output.xml>");
         }
         ProjectModel baseModel = importXml(args[1]);
         Object json = parseJsonFile(args[2]);
@@ -516,10 +784,33 @@ public class MikuprojectCli {
         return 0;
     }
 
+    private int mergeWorkbookJsonBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
+        if (args.length < 5) {
+            return usageError(err, "merge-workbook-json-batch requires <base.xml> <outputRoot.dir> <input.json> <name> [<input.json> <name>]...");
+        }
+        if (((args.length - 3) % 2) != 0) {
+            return usageError(err, "merge-workbook-json-batch requires <input.json> <name> pairs");
+        }
+        ProjectModel baseModel = importXml(args[1]);
+        Path outputRoot = Paths.get(args[2]);
+        for (int index = 3; index < args.length; index += 2) {
+            Object json = parseJsonFile(args[index]);
+            jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonImport.ImportResult result =
+                    workbookJson.importProjectWorkbookJson(json, baseModel);
+            Path outputFile = outputRoot.resolve(args[index + 1] + ".xml");
+            Path parent = outputFile.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            writeXml(outputFile.toString(), result.model);
+            out.println("wrote " + outputFile + " (changes=" + result.changes.size() + ", warnings=" + result.warnings.size() + ")");
+        }
+        return 0;
+    }
+
     private int validatePatchJson(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 2) {
-            err.println("validate-patch-json requires <input.json>");
-            return 2;
+            return usageError(err, "validate-patch-json requires <input.json>");
         }
         Object json = parseJsonFile(args[1]);
         jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonCore.ValidationResult result = patchJson.validatePatchDocument(json);
@@ -530,10 +821,21 @@ public class MikuprojectCli {
         return 0;
     }
 
+    private int validatePatchJsonBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
+        if (args.length < 2) {
+            return usageError(err, "validate-patch-json-batch requires <input.json>...");
+        }
+        for (int index = 1; index < args.length; index++) {
+            Object json = parseJsonFile(args[index]);
+            jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonCore.ValidationResult result = patchJson.validatePatchDocument(json);
+            out.println(args[index] + "\toperations=" + result.document.operations.size() + "\twarnings=" + result.warnings.size());
+        }
+        return 0;
+    }
+
     private int applyPatchJson(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 4) {
-            err.println("apply-patch-json requires <base.xml> <patch.json> <output.xml>");
-            return 2;
+            return usageError(err, "apply-patch-json requires <base.xml> <patch.json> <output.xml>");
         }
         ProjectModel baseModel = importXml(args[1]);
         Object json = parseJsonFile(args[2]);
@@ -544,6 +846,30 @@ public class MikuprojectCli {
         return 0;
     }
 
+    private int applyPatchJsonBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
+        if (args.length < 5) {
+            return usageError(err, "apply-patch-json-batch requires <base.xml> <outputRoot.dir> <patch.json> <name> [<patch.json> <name>]...");
+        }
+        if (((args.length - 3) % 2) != 0) {
+            return usageError(err, "apply-patch-json-batch requires <patch.json> <name> pairs");
+        }
+        ProjectModel baseModel = importXml(args[1]);
+        Path outputRoot = Paths.get(args[2]);
+        for (int index = 3; index < args.length; index += 2) {
+            Object json = parseJsonFile(args[index]);
+            jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonCore.ImportResult result =
+                    patchJson.importProjectPatchJson(json, baseModel);
+            Path outputFile = outputRoot.resolve(args[index + 1] + ".xml");
+            Path parent = outputFile.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            writeXml(outputFile.toString(), result.model);
+            out.println("wrote " + outputFile + " (changes=" + result.changes.size() + ", warnings=" + result.warnings.size() + ")");
+        }
+        return 0;
+    }
+
     private int exportAiJsonSpec(String[] args, PrintStream out, PrintStream err) {
         out.print(coreApiImport.getAiJsonSpecText());
         return 0;
@@ -551,26 +877,38 @@ public class MikuprojectCli {
 
     private int detectAiJsonKind(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 2) {
-            err.println("detect-ai-json-kind requires <input.txt>");
-            return 2;
+            return usageError(err, "detect-ai-json-kind requires <input.txt>");
         }
         CoreApiAiJsonParseResult parsed = coreApiImport.parseAiJsonText(readText(args[1]));
         out.println("kind=" + safe(parsed.kind));
         return parsed.kind == null || parsed.kind.length() == 0 ? 1 : 0;
     }
 
+    private int detectAiJsonKindBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
+        if (args.length < 2) {
+            return usageError(err, "detect-ai-json-kind-batch requires <input.txt>...");
+        }
+        int exitCode = 0;
+        for (int index = 1; index < args.length; index++) {
+            CoreApiAiJsonParseResult parsed = coreApiImport.parseAiJsonText(readText(args[index]));
+            out.println(args[index] + "\tkind=" + safe(parsed.kind));
+            if (parsed.kind == null || parsed.kind.length() == 0) {
+                exitCode = 1;
+            }
+        }
+        return exitCode;
+    }
+
     private int importAiJson(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 3) {
-            err.println("import-ai-json requires <input.txt> <output.xml> [<base.xml>]");
-            return 2;
+            return usageError(err, "import-ai-json requires <input.txt> <output.xml> [<base.xml>]");
         }
         String sourceText = readText(args[1]);
         CoreApiAiJsonParseResult parsed = args.length >= 4
                 ? coreApiAiJson.importAiJsonText(sourceText, importXml(args[3]))
                 : coreApiAiJson.importAiJsonText(sourceText);
         if (parsed.result == null || parsed.result.model == null) {
-            err.println("AI JSON import result is empty");
-            return 1;
+            return commandError(err, "AI JSON import result is empty");
         }
         writeXml(args[2], parsed.result.model);
         out.println("wrote " + args[2] + " (kind=" + safe(parsed.kind) + ", mode=" + safe(parsed.result.mode) + ")");
@@ -579,8 +917,7 @@ public class MikuprojectCli {
 
     private int importExternal(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 5) {
-            err.println("import-external requires <format> <mode> <input> <output.xml> [<base.xml>]");
-            return 2;
+            return usageError(err, "import-external requires <format> <mode> <input> <output.xml> [<base.xml>]");
         }
         CoreApiExternalImport.ExternalImportInput input = new CoreApiExternalImport.ExternalImportInput();
         input.source = new CoreApiExternalImport.ExternalImportSource();
@@ -599,8 +936,7 @@ public class MikuprojectCli {
 
     private int exportXlsx(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 3) {
-            err.println("export-xlsx requires <input.xml> <output.xlsxbin>");
-            return 2;
+            return usageError(err, "export-xlsx requires <input.xml> <output.xlsxbin>");
         }
         byte[] bytes = workbookXlsx.encodeWorkbook(workbookXlsx.exportWorkbook(importXml(args[1])));
         Files.write(Paths.get(args[2]), bytes);
@@ -610,12 +946,10 @@ public class MikuprojectCli {
 
     private int exportXlsxBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 4) {
-            err.println("export-xlsx-batch requires <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]...");
-            return 2;
+            return usageError(err, "export-xlsx-batch requires <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]...");
         }
         if (((args.length - 2) % 2) != 0) {
-            err.println("export-xlsx-batch requires <input.xml> <name> pairs");
-            return 2;
+            return usageError(err, "export-xlsx-batch requires <input.xml> <name> pairs");
         }
         Path outputRoot = Paths.get(args[1]);
         for (int index = 2; index < args.length; index += 2) {
@@ -635,18 +969,27 @@ public class MikuprojectCli {
 
     private int validateXlsx(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 2) {
-            err.println("validate-xlsx requires <input.xlsxbin>");
-            return 2;
+            return usageError(err, "validate-xlsx requires <input.xlsxbin>");
         }
         byte[] bytes = Files.readAllBytes(Paths.get(args[1]));
         out.println("sheets=" + workbookXlsx.decodeWorkbook(bytes).sheets.size());
         return 0;
     }
 
+    private int validateXlsxBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
+        if (args.length < 2) {
+            return usageError(err, "validate-xlsx-batch requires <input.xlsxbin>...");
+        }
+        for (int index = 1; index < args.length; index++) {
+            byte[] bytes = Files.readAllBytes(Paths.get(args[index]));
+            out.println(args[index] + "\tsheets=" + workbookXlsx.decodeWorkbook(bytes).sheets.size());
+        }
+        return 0;
+    }
+
     private int importXlsx(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 3) {
-            err.println("import-xlsx requires <input.xlsxbin> <output.xml>");
-            return 2;
+            return usageError(err, "import-xlsx requires <input.xlsxbin> <output.xml>");
         }
         byte[] bytes = Files.readAllBytes(Paths.get(args[1]));
         ProjectModel model = workbookXlsx.importAsProjectModel(workbookXlsx.decodeWorkbook(bytes));
@@ -655,16 +998,60 @@ public class MikuprojectCli {
         return 0;
     }
 
+    private int importXlsxBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
+        if (args.length < 4) {
+            return usageError(err, "import-xlsx-batch requires <outputRoot.dir> <input.xlsxbin> <name> [<input.xlsxbin> <name>]...");
+        }
+        if (((args.length - 2) % 2) != 0) {
+            return usageError(err, "import-xlsx-batch requires <input.xlsxbin> <name> pairs");
+        }
+        Path outputRoot = Paths.get(args[1]);
+        for (int index = 2; index < args.length; index += 2) {
+            byte[] bytes = Files.readAllBytes(Paths.get(args[index]));
+            ProjectModel model = workbookXlsx.importAsProjectModel(workbookXlsx.decodeWorkbook(bytes));
+            Path outputFile = outputRoot.resolve(args[index + 1] + ".xml");
+            Path parent = outputFile.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            writeXml(outputFile.toString(), model);
+            out.println("wrote " + outputFile);
+        }
+        return 0;
+    }
+
     private int mergeXlsx(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 4) {
-            err.println("merge-xlsx requires <base.xml> <input.xlsxbin> <output.xml>");
-            return 2;
+            return usageError(err, "merge-xlsx requires <base.xml> <input.xlsxbin> <output.xml>");
         }
         ProjectModel baseModel = importXml(args[1]);
         byte[] bytes = Files.readAllBytes(Paths.get(args[2]));
         ProjectModel model = workbookXlsx.importIntoProjectModel(workbookXlsx.decodeWorkbook(bytes), baseModel);
         writeXml(args[3], model);
         out.println("wrote " + args[3]);
+        return 0;
+    }
+
+    private int mergeXlsxBatch(String[] args, PrintStream out, PrintStream err) throws IOException {
+        if (args.length < 5) {
+            return usageError(err, "merge-xlsx-batch requires <base.xml> <outputRoot.dir> <input.xlsxbin> <name> [<input.xlsxbin> <name>]...");
+        }
+        if (((args.length - 3) % 2) != 0) {
+            return usageError(err, "merge-xlsx-batch requires <input.xlsxbin> <name> pairs");
+        }
+        ProjectModel baseModel = importXml(args[1]);
+        Path outputRoot = Paths.get(args[2]);
+        for (int index = 3; index < args.length; index += 2) {
+            byte[] bytes = Files.readAllBytes(Paths.get(args[index]));
+            ProjectModel model = workbookXlsx.importIntoProjectModel(workbookXlsx.decodeWorkbook(bytes), baseModel);
+            Path outputFile = outputRoot.resolve(args[index + 1] + ".xml");
+            Path parent = outputFile.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            writeXml(outputFile.toString(), model);
+            out.println("wrote " + outputFile);
+        }
         return 0;
     }
 
@@ -713,6 +1100,23 @@ public class MikuprojectCli {
 
     private boolean isHelp(String command) {
         return "--help".equals(command) || "-h".equals(command) || "help".equals(command);
+    }
+
+    private int usageError(PrintStream err, String message) {
+        return usageError(err, message, false);
+    }
+
+    private int usageError(PrintStream err, String message, boolean printFullUsage) {
+        err.println("usage error: " + message);
+        if (printFullUsage) {
+            printUsage(err);
+        }
+        return 2;
+    }
+
+    private int commandError(PrintStream err, String message) {
+        err.println(message);
+        return 1;
     }
 
     private WbsMarkdownOptions parseWbsMarkdownOptions(String[] args, int fromIndex) {
@@ -815,14 +1219,21 @@ public class MikuprojectCli {
         out.println("  validate-xml <input.xml>");
         out.println("  validate-xml-batch <input.xml>...");
         out.println("  export-mermaid <input.xml>");
+        out.println("  export-mermaid-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]...");
         out.println("  export-wbs-markdown <input.xml> [<beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv>]]]]]");
+        out.println("  export-wbs-markdown-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv>]]]]]");
         out.println("  export-daily-svg <input.xml> [<labelMode>]");
+        out.println("  export-daily-svg-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <labelMode>]");
         out.println("  export-weekly-svg <input.xml> [<labelMode>]");
+        out.println("  export-weekly-svg-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <labelMode>]");
         out.println("  export-monthly-svg-zip <input.xml> <output.zip> [<holidayDatesCsv> [<labelMode>]]");
+        out.println("  export-monthly-svg-zip-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <holidayDatesCsv> [<labelMode>]]");
         out.println("  export-report-bundle <input.xml> <output.zip> [<beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv> [<labelMode>]]]]]]");
+        out.println("  export-report-bundle-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv> [<labelMode>]]]]]]");
         out.println("  export-report-dir <input.xml> <output.dir> [<beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv> [<labelMode>]]]]]]");
         out.println("  export-report-dir-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv> [<labelMode>]]]]]]");
         out.println("  export-wbs-xlsx <input.xml> <output.xlsxbin> [<beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv>]]]]]");
+        out.println("  export-wbs-xlsx-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv>]]]]]");
         out.println("  export-workbook-json <input.xml>");
         out.println("  export-workbook-json-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]...");
         out.println("  export-project-overview-view <input.xml>");
@@ -830,21 +1241,31 @@ public class MikuprojectCli {
         out.println("  export-phase-detail-view <input.xml> [<phaseUid> [<mode> [<rootUid> [<maxDepth>]]]]");
         out.println("  export-phase-detail-view-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <phaseUid> [<mode> [<rootUid> [<maxDepth>]]]]");
         out.println("  export-task-edit-view <input.xml> <taskUid>");
+        out.println("  export-task-edit-view-batch <outputRoot.dir> <taskUid> <input.xml> <name> [<input.xml> <name>]...");
         out.println("  export-project-draft-request <name> <plannedStart> [<goal> [<teamCount> [<mustHavePhasesCsv> [<mustHaveMilestonesCsv>]]]]");
         out.println("  validate-workbook-json <input.json>");
+        out.println("  validate-workbook-json-batch <input.json>...");
         out.println("  import-workbook-json <input.json> <output.xml>");
+        out.println("  import-workbook-json-batch <outputRoot.dir> <input.json> <name> [<input.json> <name>]...");
         out.println("  merge-workbook-json <base.xml> <input.json> <output.xml>");
+        out.println("  merge-workbook-json-batch <base.xml> <outputRoot.dir> <input.json> <name> [<input.json> <name>]...");
         out.println("  validate-patch-json <input.json>");
+        out.println("  validate-patch-json-batch <input.json>...");
         out.println("  apply-patch-json <base.xml> <patch.json> <output.xml>");
+        out.println("  apply-patch-json-batch <base.xml> <outputRoot.dir> <patch.json> <name> [<patch.json> <name>]...");
         out.println("  export-ai-json-spec");
         out.println("  detect-ai-json-kind <input.txt>");
+        out.println("  detect-ai-json-kind-batch <input.txt>...");
         out.println("  import-ai-json <input.txt> <output.xml> [<base.xml>]");
         out.println("  import-external <format> <mode> <input> <output.xml> [<base.xml>]");
         out.println("  export-xlsx <input.xml> <output.xlsxbin>");
         out.println("  export-xlsx-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]...");
         out.println("  validate-xlsx <input.xlsxbin>");
+        out.println("  validate-xlsx-batch <input.xlsxbin>...");
         out.println("  import-xlsx <input.xlsxbin> <output.xml>");
+        out.println("  import-xlsx-batch <outputRoot.dir> <input.xlsxbin> <name> [<input.xlsxbin> <name>]...");
         out.println("  merge-xlsx <base.xml> <input.xlsxbin> <output.xml>");
+        out.println("  merge-xlsx-batch <base.xml> <outputRoot.dir> <input.xlsxbin> <name> [<input.xlsxbin> <name>]...");
     }
 
     private String safe(String value) {
