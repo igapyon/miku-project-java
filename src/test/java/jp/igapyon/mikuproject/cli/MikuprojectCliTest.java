@@ -8,7 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.zip.ZipInputStream;
 
@@ -855,6 +858,37 @@ public class MikuprojectCliTest {
     }
 
     @Test
+    public void exportsAiJsonSpecFromClasspathWhenWorkingDirectoryHasNoVendor() throws IOException, InterruptedException {
+        Path workingDirectory = Files.createTempDirectory("mikuproject-cli-no-vendor");
+        try {
+            Process process = new ProcessBuilder(
+                    javaExecutable(),
+                    "-cp",
+                    Paths.get("target", "classes").toAbsolutePath().toString(),
+                    MikuprojectCli.class.getName(),
+                    "export-ai-json-spec")
+                    .directory(workingDirectory.toFile())
+                    .start();
+
+            boolean completed = process.waitFor(30, TimeUnit.SECONDS);
+            if (!completed) {
+                process.destroyForcibly();
+                process.waitFor();
+            }
+            String stdout = readProcessText(process.getInputStream());
+            String stderr = readProcessText(process.getErrorStream());
+
+            assertTrue(completed);
+            assertEquals(0, process.exitValue(), stderr);
+            assertTrue(stdout.contains("project_draft_view"));
+            assertTrue(stdout.contains("Patch JSON"));
+            assertEquals("", stderr);
+        } finally {
+            Files.deleteIfExists(workingDirectory);
+        }
+    }
+
+    @Test
     public void exportsHierarchyAndDependencyFixturesThroughCli() throws IOException {
         Path hierarchyXmlFile = Files.createTempFile("mikuproject-cli-hierarchy", ".xml");
         Path dependencyXmlFile = Files.createTempFile("mikuproject-cli-dependency", ".xml");
@@ -1232,6 +1266,20 @@ public class MikuprojectCliTest {
     }
 
     private String text(ByteArrayOutputStream out) {
+        return new String(out.toByteArray(), StandardCharsets.UTF_8);
+    }
+
+    private String javaExecutable() {
+        return System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+    }
+
+    private String readProcessText(InputStream in) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int length;
+        while ((length = in.read(buffer)) != -1) {
+            out.write(buffer, 0, length);
+        }
         return new String(out.toByteArray(), StandardCharsets.UTF_8);
     }
 

@@ -641,7 +641,7 @@ STEP1 の current implementation では、text の入出力は UTF-8 を既定�
 ### 現在の扱い
 
 - CLI の `readText` / `writeXml` は `StandardCharsets.UTF_8` を明示している
-- `CoreApiAiJson` の spec 読み込みも UTF-8 を明示している
+- `CoreApiAiJson` の spec 読み込みも UTF-8 を明示し、実行時には classpath / JAR 内リソースから読む
 - `ExcelIoUtil.encodeUtf8` / `decodeUtf8` を text-binary 境界の共通 helper として使っている
 - OOXML-like XML builder は XML 宣言でも `encoding="UTF-8"` を出している
 - `XlsxWorkbookCodec` の text 部分も UTF-8 で encode / decode する

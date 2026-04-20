@@ -4,6 +4,7 @@
  */
 package jp.igapyon.mikuproject.wbssvg;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -60,6 +61,23 @@ public class WbsSvgTest {
         assertTrue(dailySvg.contains("data-from-uid=\"1\""));
         assertTrue(dailySvg.contains("data-to-uid=\"2\""));
         assertTrue(weeklySvg.contains("class=\"dependencyPath\""));
+    }
+
+    @Test
+    public void keepsDailySvgTasksInsideViewBoxForLateZeroDurationTasks() {
+        MsProjectXml xml = new MsProjectXml();
+        ProjectModel model = new ProjectModel();
+        model.project.name = "Late Zero Duration Demo";
+        model.project.startDate = "2026-04-20T20:36:58";
+        model.project.finishDate = "2026-04-20T20:36:58";
+        model.tasks.add(task("1", "First", "2026-04-20T20:36:58", "2026-04-20T20:36:58"));
+        model.tasks.add(task("2", "Second", "2026-04-20T20:36:58", "2026-04-20T20:36:58"));
+        model = xml.normalizeProjectModel(model);
+
+        String dailySvg = xml.exportNativeSvg(model);
+
+        assertTrue(dailySvg.contains("<rect x=\"120\""));
+        assertFalse(dailySvg.contains("x=\"1520\""));
     }
 
     @Test

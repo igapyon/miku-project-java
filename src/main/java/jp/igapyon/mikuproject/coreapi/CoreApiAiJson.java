@@ -4,27 +4,36 @@
  */
 package jp.igapyon.mikuproject.coreapi;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import jp.igapyon.mikuproject.model.ProjectModel;
 
 public class CoreApiAiJson {
+    private static final String AI_JSON_SPEC_RESOURCE = "mikuproject-ai-json-spec.md";
     private static final Pattern VERSION_PATTERN = Pattern.compile("^- Version:\\s*`([^`]+)`", Pattern.MULTILINE);
 
     private final CoreApiAiJsonUtil util = new CoreApiAiJsonUtil();
     private final CoreApiAiJsonImport imports = new CoreApiAiJsonImport();
 
     public String getAiJsonSpecText() {
-        try {
-            byte[] bytes = Files.readAllBytes(Paths.get("vendor", "mikuproject", "docs", "mikuproject-ai-json-spec.md"));
-            return new String(bytes, StandardCharsets.UTF_8);
+        try (InputStream in = CoreApiAiJson.class.getResourceAsStream(AI_JSON_SPEC_RESOURCE)) {
+            if (in == null) {
+                throw new IllegalStateException("AI JSON spec text resource が見つかりません: " + AI_JSON_SPEC_RESOURCE);
+            }
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int length;
+            while ((length = in.read(buffer)) != -1) {
+                out.write(buffer, 0, length);
+            }
+            return new String(out.toByteArray(), StandardCharsets.UTF_8);
         } catch (IOException ex) {
-            throw new IllegalStateException("AI JSON spec text を読み込めません", ex);
+            throw new IllegalStateException("AI JSON spec text resource を読み込めません: " + AI_JSON_SPEC_RESOURCE, ex);
         }
     }
 

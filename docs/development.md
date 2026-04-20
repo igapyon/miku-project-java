@@ -23,6 +23,10 @@ Java CLI の正式配布成果物は、`mvn package` で生成される単一 ja
 この成果物は downstream 連携を考慮し、fat jar 前提で維持する。
 配布パッケージとしては、`target/mikuproject-dist.zip` も生成し、利用側向け文書として `docs/runtime-java-cli.md` を同梱する。
 
+AI JSON 仕様 Markdown は、実行時には classpath / JAR 内リソースとして扱う。
+元ファイルは `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` に置き、Maven の `process-resources` で `target/classes/jp/igapyon/mikuproject/coreapi/mikuproject-ai-json-spec.md` へコピーする。
+API / CLI 実行時に `vendor/...` 相対パスを直接読む実装には戻さない。
+
 自動テストは JUnit を使う。
 Java 1.8 前提でも利用可能な JUnit 系の現行版を第一候補とし、原則として JUnit 5 Jupiter を優先する。
 

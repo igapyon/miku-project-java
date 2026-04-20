@@ -102,6 +102,7 @@ public class CoreApiImportTest {
         assertEquals("mikuproject-ai-json-spec", spec.id);
         assertTrue(spec.version != null && !spec.version.isEmpty());
         assertTrue(spec.text.contains("project_draft_view"));
+        assertEquals(spec.text, api.getAiJsonSpecText());
         assertTrue(api.getAiJsonSpecText().contains("Patch JSON"));
     }
 

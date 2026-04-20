@@ -66,6 +66,22 @@ CLI は `java -jar mikuproject.jar <command> ...` の形で実行する。
 
 詳細な command 一覧は `README.md` を参照する。
 
+## 実行時リソース
+
+`export-ai-json-spec` は、ビルド済み classpath / JAR 内に含まれる `mikuproject-ai-json-spec.md` を出力する。
+実行時にカレントディレクトリ上の `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` は参照しない。
+
+この Markdown は Maven の `process-resources` で `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` から `target/classes/jp/igapyon/mikuproject/coreapi/mikuproject-ai-json-spec.md` へコピーされる。
+そのため、配布済み `mikuproject.jar` は任意のカレントディレクトリから `java -jar mikuproject.jar export-ai-json-spec` を実行できる。
+
+## report SVG の注意
+
+daily / weekly SVG は、モデル内の最も早い task 開始日を timeline の基準日として描画する。
+これにより、サンプル月以外の日付を持つ project でも、task bar が SVG viewBox 外へ飛びにくい。
+
+ただし、入力 model の全 task が同一日時かつ zero duration の場合、出力 SVG は有効でも全 task bar が同じ日付位置へ縦に並ぶ。
+2泊3日など期間を持つ計画として見せたい場合は、AI JSON / workbook JSON / XML の段階で task の `Start` / `Finish` または `planned_start` / `planned_finish` に実日程を入れる。
+
 ## 最小 entrypoint から全機能 entrypoint への段取り
 
 Java CLI は、`validate-xml` と主要 export だけを持つ最小 entrypoint から開始したが、現在は workbook / patch / AI JSON / xlsx / batch command まで含む実用的な entrypoint へ広がっている。

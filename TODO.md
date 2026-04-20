@@ -17,6 +17,12 @@
 
 - [x] 残作業を新規機能追加ではなく、既存範囲の確認 / docs 整理 / upstream 差分確認へ絞る
 - [x] `README.md`, `docs/remaining-migration-items.md`, `docs/upstream-class-mapping.md`, `docs/upstream-followup-log.md`, `docs/msprojectxml-import-design.md` の現在フェーズ表現を揃える
+- [ ] Agent Skills 側で `project_draft_view` 生成時に `planned_start` / `planned_finish` を入れる前提になっているか確認する
+  - 2泊3日など期間を持つ計画で全 task が同一日時 / zero duration になると、daily SVG は有効でも工程として横方向に展開されない
+  - まず downstream 側の draft 生成契約を確認し、Java 側で補完すべきかは別途判断する
+- [ ] mikuproject-java 側で zero duration task が大量に来たときの warning 方針を検討する
+  - workbook JSON / AI JSON / XML import のどこで警告するかを決める
+  - 現時点では実装せず、report SVG の見た目不良を生む入力品質観点として保留する
 
 ### 今週
 
