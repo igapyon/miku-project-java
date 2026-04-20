@@ -10,30 +10,30 @@
 
 ## High
 
-- 派生出力 / workbook import / calendar の棚卸し結果を踏まえ、`仕様上の制約` と `実装漏れ` を一覧化したギャップメモを作る
-- workbook / CSV / Mermaid / Markdown / SVG / WBS XLSX の各出力について、`lossless 交換形式` と `片方向の人向け派生出力` を明示した対応表を docs に追加する
-- workbook `XLSX / JSON import` について、`限定列のみ` が仕様である範囲と、未対応のまま残っている列を分けて明文化する
-- workbook `Tasks.Predecessors` について、`UID` 列挙だけを戻す現状と、`type / lag` を保持しない制約を docs に明記する
-- workbook `Project` について、`OutlineCodes / WBSMasks / ExtendedAttributes` は export 上見えても import 対象外である点を docs に明記する
-- `Calendars` sheet について、`WeekDays / Exceptions / WorkWeeks` の列見出しに対して、現状は件数確認用であり lossless 編集用ではない点を明記する
-- `Patch JSON` の first cut 制約について、`delete_task / delete_resource / delete_calendar` が block する条件を docs と diagnostics で一貫して示す
-- `Patch JSON` の未対応 key / 未対応 op を warning で無視する現状について、どこまでを許容仕様として固定するか整理する
-- `CSV + ParentID` の最小逆変換で落としてよい項目と、lossless でないことを利用者へ明示すべき項目を整理する
+- [x] 派生出力 / workbook import / calendar の棚卸し結果を踏まえ、`仕様上の制約` と `実装漏れ` を一覧化したギャップメモを作る
+- [x] workbook / CSV / Mermaid / Markdown / SVG / WBS XLSX の各出力について、`lossless 交換形式` と `片方向の人向け派生出力` を明示した対応表を docs に追加する
+- [x] workbook `XLSX / JSON import` について、`限定列のみ` が仕様である範囲と、未対応のまま残っている列を分けて明文化する
+- [x] workbook `Tasks.Predecessors` について、`UID` 列挙だけを戻す現状と、`type / lag` を保持しない制約を docs に明記する
+- [x] workbook `Project` について、`OutlineCodes / WBSMasks / ExtendedAttributes` は export 上見えても import 対象外である点を docs に明記する
+- [x] `Calendars` sheet について、`WeekDays / Exceptions / WorkWeeks` の列見出しに対して、現状は件数確認用であり lossless 編集用ではない点を明記する
+- [x] `Patch JSON` の first cut 制約について、`delete_task / delete_resource / delete_calendar` が block する条件を docs と diagnostics で一貫して示す
+- [x] `Patch JSON` の未対応 key / 未対応 op を warning で無視する現状について、どこまでを許容仕様として固定するか整理する
+- [x] `CSV + ParentID` の最小逆変換で落としてよい項目と、lossless でないことを利用者へ明示すべき項目を整理する
 
 ## Medium
 
-- `WbsDateband` は `weekDays / exceptions` を読む一方で workbook import/export がそこまで運べていないため、calendar ロジックと workbook 表現の責務ずれを解消する
-- `NonWorkingDays` import について、`workingTimes` など exception detail を落としている点を整理し、どこまで戻すか優先順位を決める
-- `Calendars` の workbook export について、件数表示ではなく実体編集へ広げるか、このまま read-only metadata に留めるか判断する
-- `update_calendar` / `add_calendar` の first cut が `name / is_base_calendar / base_calendar_uid` に留まる点を、calendar 実体編集の非対応範囲とあわせて docs に明記する
-- `ExtendedAttributes` について、preview/代表値確認で留める範囲と、lossless 保持・import/export 対応へ進める範囲を分けて優先順位を決める
-- `Baseline / TimephasedData` について、validation で存在だけ追う段階に留めるのか、内部保持だけ先に始めるのか、report/export まで含めて扱うのか段階案を作る
-- `Assignment` について、`ActualWork / RemainingWork / ActualCost / RemainingCost / OvertimeWork / ActualOvertimeWork` をどの入出力で保持し、どこでは意図的に落とすか整理する
-- `Calendar` について、`IsBaselineCalendar` を内部保持だけに留めるのか、validation・preview・交換形式へ出すのかを決める
-- workbook import の次段候補として、少なくとも次の列を優先順位つきで整理する
+- [x] `WbsDateband` は `weekDays / exceptions` を読む一方で workbook import/export がそこまで運べていないため、calendar ロジックと workbook 表現の責務ずれを解消する
+- [x] `NonWorkingDays` import について、`workingTimes` など exception detail を落としている点を整理し、どこまで戻すか優先順位を決める
+- [x] `Calendars` の workbook export について、件数表示ではなく実体編集へ広げるか、このまま read-only metadata に留めるか判断する
+- [x] `update_calendar` / `add_calendar` の first cut が `name / is_base_calendar / base_calendar_uid` に留まる点を、calendar 実体編集の非対応範囲とあわせて docs に明記する
+- [x] `ExtendedAttributes` について、preview/代表値確認で留める範囲と、lossless 保持・import/export 対応へ進める範囲を分けて優先順位を決める
+- [x] `Baseline / TimephasedData` について、validation で存在だけ追う段階に留めるのか、内部保持だけ先に始めるのか、report/export まで含めて扱うのか段階案を作る
+- [x] `Assignment` について、`ActualWork / RemainingWork / ActualCost / RemainingCost / OvertimeWork / ActualOvertimeWork` をどの入出力で保持し、どこでは意図的に落とすか整理する
+- [x] `Calendar` について、`IsBaselineCalendar` を内部保持だけに留めるのか、validation・preview・交換形式へ出すのかを決める
+- [x] workbook import の次段候補として、少なくとも次の列を優先順位つきで整理する
   - 優先候補: `Resources.StandardRate / OvertimeRate / CostPerUse`
   - 優先候補: `Assignments.Start / Finish`
-- `XLSX Import` の実地回帰観点を明文化し、主要 editable 列や真偽値列が戻ることを継続確認する
+- [x] `XLSX Import` の実地回帰観点を明文化し、主要 editable 列や真偽値列が戻ることを継続確認する
 
 ## Low
 

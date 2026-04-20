@@ -358,9 +358,9 @@ import 時の扱いも `XLSX Import` と完全に揃える。
 現時点で `XLSX Import` の反映対象としている列は次のとおり。
 
 - `Project`: `Name / Title / Author / Company / StartDate / FinishDate / CurrentDate / StatusDate / CalendarUID / MinutesPerDay / MinutesPerWeek / DaysPerMonth / ScheduleFromStart`
-- `Tasks`: `Name / Start / Finish / Duration / PercentComplete / PercentWorkComplete / Milestone / Summary / Critical / CalendarUID / Predecessors / Notes`
-- `Resources`: `Name / Group / MaxUnits / CalendarUID`
-- `Assignments`: `Units / Work / PercentWorkComplete`
+- `Tasks`: `Name / Start / Finish / Duration / PercentComplete / PercentWorkComplete / Milestone / Summary / Critical / Type / Priority / CalendarUID / ConstraintType / ConstraintDate / Deadline / Predecessors / Notes`
+- `Resources`: `Name / Type / Initials / Group / MaxUnits / CalendarUID / StandardRate / OvertimeRate / CostPerUse / Work / ActualWork / RemainingWork / Cost / ActualCost / RemainingCost / PercentWorkComplete / WorkGroup / StandardRateFormat / OvertimeRateFormat`
+- `Assignments`: `Start / Finish / StartVariance / FinishVariance / Delay / Milestone / WorkContour / Units / Work / Cost / ActualWork / RemainingWork / ActualCost / RemainingCost / OvertimeWork / ActualOvertimeWork / PercentWorkComplete`
 - `Calendars`: `Name / IsBaseCalendar / BaseCalendarUID`
 - `NonWorkingDays`: `Name / Date / FromDate / ToDate / DayWorking`
 
@@ -369,13 +369,22 @@ import 時の扱いも `XLSX Import` と完全に揃える。
 | Sheet | Editable Columns | Notes |
 | --- | --- | --- |
 | `Project` | `Name / Title / Author / Company / StartDate / FinishDate / CurrentDate / StatusDate / CalendarUID / MinutesPerDay / MinutesPerWeek / DaysPerMonth / ScheduleFromStart` | project 単位の部分更新として扱う |
-| `Tasks` | `Name / Start / Finish / Duration / PercentComplete / PercentWorkComplete / Milestone / Summary / Critical / CalendarUID / Predecessors / Notes` | `UID` をキーに部分更新する |
-| `Resources` | `Name / Group / MaxUnits / CalendarUID` | `UID` をキーに部分更新する |
-| `Assignments` | `Units / Work / PercentWorkComplete` | `UID` をキーに部分更新する |
+| `Tasks` | `Name / Start / Finish / Duration / PercentComplete / PercentWorkComplete / Milestone / Summary / Critical / Type / Priority / CalendarUID / ConstraintType / ConstraintDate / Deadline / Predecessors / Notes` | `UID` をキーに部分更新する |
+| `Resources` | `Name / Type / Initials / Group / MaxUnits / CalendarUID / StandardRate / OvertimeRate / CostPerUse / Work / ActualWork / RemainingWork / Cost / ActualCost / RemainingCost / PercentWorkComplete / WorkGroup / StandardRateFormat / OvertimeRateFormat` | `UID` をキーに部分更新する |
+| `Assignments` | `Start / Finish / StartVariance / FinishVariance / Delay / Milestone / WorkContour / Units / Work / Cost / ActualWork / RemainingWork / ActualCost / RemainingCost / OvertimeWork / ActualOvertimeWork / PercentWorkComplete` | `UID` をキーに部分更新する |
 | `Calendars` | `Name / IsBaseCalendar / BaseCalendarUID` | `UID` をキーに部分更新する |
 | `NonWorkingDays` | `Name / Date / FromDate / ToDate / DayWorking` | `CalendarUID + Index` をキーに部分更新する |
 
 `mikuproject_workbook_json` の import も、この表と同じ反映対象列・キー・部分更新ルールを使う。
+
+workbook import では、少なくとも次を既存 editable 列として継続回帰対象にする。
+
+1. `Assignments.Start / Finish`
+2. `Resources.StandardRate / OvertimeRate / CostPerUse`
+3. `Assignments.ActualWork / RemainingWork`
+4. `Assignments.ActualCost / RemainingCost / OvertimeWork / ActualOvertimeWork`
+
+一方で `Calendars.WeekDays / Exceptions / WorkWeeks` と `ExtendedAttributes / Baseline / TimephasedData` は後段候補とする。
 
 `Tasks` シートの header ごとの扱いは次のとおり。
 
@@ -401,7 +410,12 @@ import 時の扱いも `XLSX Import` と完全に揃える。
 
 `Predecessors` の workbook import は、現時点では `predecessorUid` の `,` 区切り一覧を読む最小対応とする。`type / linkLag` などの詳細な依存表現は将来拡張とする。
 
+`Project` sheet では、`OutlineCodes / WBSMasks / ExtendedAttributes` が export 上見えても、現時点の workbook import 対象には含めない。
+これらは preview / export 上の確認対象であり、workbook からの lossless 編集列ではない。
+
 `Resources` と `Assignments` が 0 件の workbook では、どの列が import 対象か分かるように、editable 列だけ着色されたダミー行を 1 行出してよい。これは表示補助であり、`UID` 等のキーが空なので import 時には無視される。
+
+`XLSX Import` の実地回帰では、少なくとも `ProjectXlsxTest` / `CoreApiWorkbookTest` / `MikuprojectCliTest` を使って、主要 editable 列、`○ / ー` の真偽値列、非 editable 列の非破壊性を継続確認する。
 
 ### Calendar 編集方針
 
@@ -414,6 +428,13 @@ import 時の扱いも `XLSX Import` と完全に揃える。
 ### 現時点で反映対象外のもの
 
 これ以外の列や、未対応シートの編集は、現在の `XLSX Import` では反映対象としない。特に `Calendars` では、`WeekDays / WorkWeeks` はまだ反映対象外とする。`Exceptions` は `NonWorkingDays` シートとして限定的に扱う。
+
+`Calendars` sheet の `WeekDays / Exceptions / WorkWeeks` は、現時点では実体編集列ではなく件数確認用の metadata とみなす。
+したがって `Calendars` sheet は `Name / IsBaseCalendar / BaseCalendarUID` の最小編集と、calendar 実体の存在確認を兼ねた一覧として扱う。
+
+`NonWorkingDays` sheet は `Name / Date / FromDate / ToDate / DayWorking` の最小編集だけを扱う。
+`Exception WorkingTimes` のような部分稼働例外は、現時点の workbook import/export では保持しない。
+したがって workbook を経由した calendar 表現は、`WbsDateband` が読む XML 正本の calendar より縮退した形になる。
 
 ## WBS ステータスの扱い方針
 
@@ -610,9 +631,11 @@ Patch JSON の次段 MVP 方針:
 - `update_calendar.is_base_calendar` は boolean として扱う
 - `update_calendar.base_calendar_uid` は文字列として扱い、空文字を指定した場合はクリアしてよい
 - `update_calendar.base_calendar_uid` は既存 calendar を指す必要があり、自身を指してはならない
+- `update_calendar` の first cut は `name / is_base_calendar / base_calendar_uid` のみを扱い、`WeekDays / Exceptions / WorkWeeks` の実体編集は扱わない
 - `add_calendar` の first cut は `uid` / `name` を必須とする
 - `add_calendar` では `is_base_calendar` / `base_calendar_uid` を任意で受けてよい
 - `add_calendar.base_calendar_uid` は既存 calendar を指す必要があり、自身を指してはならない
+- `add_calendar` の first cut でも、calendar 実体は空のまま追加し、`WeekDays / Exceptions / WorkWeeks` は別段とする
 - `delete_calendar` の first cut は `uid` を受け、project / task / resource / 他 calendar の `base_calendar_uid` から参照されていない calendar の単純削除だけを扱う
 - `delete_calendar` が成功した場合、差分表示では対象 calendar の `Name` を `(deleted)` として示す
 - `add_resource` の first cut は `uid` / `name` を必須とする
@@ -670,7 +693,9 @@ Patch JSON の次段 MVP 方針:
 - `unlink_tasks` の first draft も `from_uid` / `to_uid` を必須とし、必要なら `type` や `lag` または `lag_hours` で解除対象を特定できる形とする
 - `unlink_tasks` で複数の依存関係が同じ条件に一致した場合は、その条件に一致した link をすべて解除する方針とする
 - first draft では、依存関係の変更は predecessor 一覧の全置換ではなく、追加と解除を op 単位で返す方針とする
-- 未知 `op`、存在しない `uid`、不正 field、不正日付は validation または import warning/error の対象とする
+- 未知 `op` は warning を返して無視する
+- 対応済み `op` に含まれる未対応 key も warning を返して無視する
+- 存在しない `uid`、不正 field、不正日付は validation または import warning/error の対象とする
 - `project_draft_view` は新規草案作成を優先するため、非稼働日を厳密に考慮しなくてもよい
 - `project_draft_view` では、粗い草案でもよいので task に仮の `planned_start` / `planned_finish` を入れてよい
 - この仮日付は通常 task だけでなく、summary task と milestone にも入れてよい
@@ -880,6 +905,9 @@ STEP 1 では、次のようなものは後回し候補とする。
 
 - `.xlsx import` における自由編集の全面対応
 - `Calendars / Baseline / TimephasedData / ExtendedAttributes` の `.xlsx` 編集反映
+
+ただし、`ExtendedAttributes / Baseline / TimephasedData / IsBaselineCalendar` は内部モデルと XML round-trip では保持してよい。
+現段階では `内部保持 + validation` を先に固定し、workbook / CSV / report への全面露出は次段判断とする。
 
 - 表示設定
 - UI レイアウト情報
@@ -1177,6 +1205,9 @@ STEP 1 では、次は非目標とする。
 - `Assignment` の `TimephasedData` の最小 round-trip
 - `Task / Assignment` の `Cost / ActualCost / RemainingCost` の round-trip
 - round-trip テスト
+
+ここでいう round-trip は、まず `MS Project XML` 正本での保持を指す。
+workbook `XLSX / JSON` や `CSV + ParentID` で同じ範囲まで編集可能であることまでは意味しない。
 
 ## Mermaid gantt 出力メモ
 

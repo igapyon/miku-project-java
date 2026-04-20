@@ -2,54 +2,52 @@
 
 ## 使い分け
 
-- この `TODO.md` は Java 版全機能移植の段階計画を扱う
+- この `TODO.md` は Java 版 CLI 中心の移植計画を扱う
 - `vendor/mikuproject/docs/TODO.md` は upstream 機能差分、仕様制約、入出力の未整理事項を扱う
 
 ## 最重要
 
 ### 今週
 
-- [ ] Node.js 版の全機能を最終的な移植対象とし、STEP ごとの暫定スコープと最終到達点を分けて管理する
-- [ ] core / CLI / report / Web UI の 4 系統で、全機能移植の段階計画を作る
-- [ ] Web UI / browser main 系を含む移植順序を決める
+- [x] Java 版の対象を `CLI` 中心に固定し、対象範囲を文書で揃える
+  - [x] `README.md` / `docs/remaining-migration-items.md` / `TODO.md` で、Java 版の対象範囲を `CLI` 中心に揃える
+  - [x] `移植済み` `未着手` の 2 区分で、現時点の領域分類を定義する
+  - [x] `straight conversion` を原則とし、Java-first 再設計は後段で扱う方針を文書で固定する
+- [x] core / CLI / report の 3 系統で、移植計画を作る
+  - [x] core 系について、upstream file 単位で `対応済み / 要差分確認 / 未着手` を棚卸しする
+  - [x] CLI 系について、既存 command と upstream command/導線との差分を棚卸しする
+  - [x] report 系について、`lossless 交換形式` と `人向け派生出力` の役割を切り分けたうえで移植残を棚卸しする
 
 ### 次
 
-- [ ] upstream 更新追随時の確認単位を、Java 側でも対応ファイル単位で辿れるようにする
-- [ ] Node 版 upstream から継承する仕様と、Java 版でまだ保留の仕様を切り分ける
-- [ ] Web UI / browser main 系の Java 側配置方針を決める
+- [x] upstream 更新追随時の確認単位を、Java 側でも対応ファイル単位で辿れるようにする
+- [x] Node 版 upstream から継承する仕様と、Java 版でまだ保留の仕様を切り分ける
 
 ### 後で
 
-- [ ] Java CLI entry の役割を最小 entrypoint から全機能 entrypoint へ拡張する段取りを決める
-- [ ] `main*.ts` 群の依存関係を整理し、Java 側でどこから移植開始するか決める
-- [ ] browser main 系の first slice を決める
+- [x] Java CLI entry の役割を最小 entrypoint から全機能 entrypoint へ拡張する段取りを決める
 
 ## 近い順
 
 ### 1. Core の精度を上げる
 
-- [ ] `null` / 未設定 / 空文字 / `0` の扱いを整理する
-- [ ] parse / import / validate 系のエラー返却方針を決める
-- [ ] Node 側 options object を Java でどう表現するか決める
-- [ ] package 依存方向とモジュール境界を整理する
+- [x] `null` / 未設定 / 空文字 / `0` の扱いを整理する
+- [x] parse / import / validate 系のエラー返却方針を決める
+- [x] Node 側 options object を Java でどう表現するか決める
+- [x] package 依存方向とモジュール境界を整理する
 
 ### 2. Java 側の配置を固める
 
-- [ ] Java 側は過度な Java 流再編を避け、upstream のファイル境界を尊重して分割する
-- [ ] upstream 1 ファイルに対して Java 側で複数クラスへ分ける場合も、追跡しやすい命名規則を決める
-- [ ] Java 側の package 構成案を決める
+- [x] Java 側は過度な Java 流再編を避け、upstream のファイル境界を尊重して分割する
+- [x] upstream 1 ファイルに対して Java 側で複数クラスへ分ける場合も、追跡しやすい命名規則を決める
+- [x] Java 側の package 構成案を決める
 
 ### 3. CLI / runtime を整える
 
-- [ ] text / bytes / stream の I/O API 方針を決める
-- [ ] 日付時刻の型とタイムゾーン方針を決める
-- [ ] 数値型の方針を決める
-- [ ] 文字コードを UTF-8 前提でどこまで明示するか決める
-
-### 4. Web UI 移植を始める
-
-- [ ] Web UI の state / import / export / preview の境界を、Java 側でも追跡可能にする
+- [x] text / bytes / stream の I/O API 方針を決める
+- [x] 日付時刻の型とタイムゾーン方針を決める
+- [x] 数値型の方針を決める
+- [x] 文字コードを UTF-8 前提でどこまで明示するか決める
 
 ## テスト
 
@@ -58,14 +56,14 @@
 - [x] JUnit Jupiter を Maven に追加する
 - [x] upstream 対応を意識したテスト class 命名規則を決める
 - [x] upstream の主要テストと Java 側テストの対応表を作る
-- [ ] upstream fixture 比較を、core / workbook / report / Web UI へ段階拡張する
+- [x] upstream fixture 比較を、core / workbook / report へ段階拡張する
 
 ## ドキュメント
 
 - [x] `README.md` に Java 版の目的を追記する
 - [x] upstream 対応方針を `README.md` に追記する
-- [ ] `README.md` と `docs/remaining-migration-items.md` の進捗前提を定期的に同期する
-- [ ] Java 版全機能移植の現在地を、core 完了率と full port 完了率で分けて示す
+- [x] `README.md` と `docs/remaining-migration-items.md` の進捗前提を定期的に同期する
+- [x] Java 版移植の現在地を、core 完了率と CLI/report 完了率で分けて示す
 
 ## 完了済みメモ
 
