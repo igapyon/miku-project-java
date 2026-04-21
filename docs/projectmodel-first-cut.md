@@ -2,7 +2,7 @@
 
 ## 目的
 
-この文書は、Java 版 `mikuproject` の STEP1 において、`ProjectModel` の初期移植としてどこから実装するかを整理するためのメモである。
+この文書は、Java 版 `mikuproject` の STEP1 において、`ProjectModel` の初期移植としてどこから実装するかを整理した設計メモである。
 
 前提として、Java 版でも最終的には Node.js 版 upstream の `ProjectModel` 思想を引き継ぐ。
 この文書は対象を削るためのものではなく、実装順序を明確にするためのものである。
@@ -10,9 +10,17 @@
 ## 現在の位置づけ
 
 この文書は STEP1 初期に `ProjectModel` の実装順序を決めるための設計メモとして残す。
-現在は、主要 POJO と codec / workbook / patch / xlsx 連携の導線が Java 側に存在するため、この文書を未実装 field の追加リストとしては扱わない。
+現在は、主要 POJO と codec / workbook / patch / xlsx / report / AI view 連携の導線が Java 側に存在するため、この文書を未実装 field の追加リストとしては扱わない。
 
 現フェーズで不足を見つけた場合は、新規機能追加ではなく、既存仕様の不足または upstream 差分として `docs/remaining-migration-items.md`, `docs/upstream-class-mapping.md`, `docs/upstream-test-mapping.md` のどこに反映するかを確認する。
+
+現在の正本:
+
+- `docs/miku-straight-conversion-guide.md`
+- `docs/step1-spec.md`
+- `docs/remaining-migration-items.md`
+- `docs/upstream-class-mapping.md`
+- `docs/upstream-test-mapping.md`
 
 ## 基本方針
 
@@ -33,9 +41,9 @@ Node.js 版 upstream の `ProjectModel` は、少なくとも次の 5 要素を�
 
 Java 版 STEP1 でも、この構造をそのまま基本骨格とする。
 
-## 初期移植の優先対象
+## 初期移植時の優先対象
 
-初期移植では、次の順序で実装を優先する。
+STEP1 初期では、次の順序で実装を優先した。
 
 1. `Project`
 2. `Tasks`
@@ -47,7 +55,7 @@ Java 版 STEP1 でも、この構造をそのまま基本骨格とする。
 
 ## `Project` 初期移植
 
-まずは、Node.js 版 upstream の `project` から、round-trip の核になる次の項目を優先する。
+Node.js 版 upstream の `project` から、round-trip の核として次の項目を優先した。
 
 - `name`
 - `startDate`
@@ -56,7 +64,7 @@ Java 版 STEP1 でも、この構造をそのまま基本骨格とする。
 - `currentDate`
 - `calendarUID`
 
-次の項目も、Node.js 版 upstream が `ProjectModel` に持っているため、STEP1 の後半で順次取り込む対象とする。
+次の項目も、Node.js 版 upstream が `ProjectModel` に持っているため、STEP1 の後半で順次取り込む対象として整理した。
 
 - `title`
 - `author`
@@ -102,7 +110,7 @@ Java 版 STEP1 でも、この構造をそのまま基本骨格とする。
 
 ## `Task` 初期移植
 
-まずは、Node.js 版 upstream の `TaskModel` から、WBS と依存関係の round-trip に必要な次の項目を優先する。
+Node.js 版 upstream の `TaskModel` から、WBS と依存関係の round-trip に必要な次の項目を優先した。
 
 - `uid`
 - `id`
@@ -120,7 +128,7 @@ Java 版 STEP1 でも、この構造をそのまま基本骨格とする。
 - `predecessors`
 - `notes`
 
-次の項目は、Node.js 版 upstream に存在し、STEP1 の後半で順次広げる対象とする。
+次の項目は、Node.js 版 upstream に存在し、STEP1 の後半で順次広げる対象として整理した。
 
 - `type`
 - `priority`
@@ -154,7 +162,7 @@ Java 版 STEP1 でも、この構造をそのまま基本骨格とする。
 
 ## `Resource` 初期移植
 
-まずは、Node.js 版 upstream の `ResourceModel` から、task との関連と基本的な割当解釈に必要な次の項目を優先する。
+Node.js 版 upstream の `ResourceModel` から、task との関連と基本的な割当解釈に必要な次の項目を優先した。
 
 - `uid`
 - `id`
@@ -163,7 +171,7 @@ Java 版 STEP1 でも、この構造をそのまま基本骨格とする。
 - `maxUnits`
 - `calendarUID`
 
-次の項目は、STEP1 の後半で順次広げる対象とする。
+次の項目は、STEP1 の後半で順次広げる対象として整理した。
 
 - `type`
 - `initials`
@@ -186,7 +194,7 @@ Java 版 STEP1 でも、この構造をそのまま基本骨格とする。
 
 ## `Assignment` 初期移植
 
-まずは、Node.js 版 upstream の `AssignmentModel` から、task と resource の結合に必要な次の項目を優先する。
+Node.js 版 upstream の `AssignmentModel` から、task と resource の結合に必要な次の項目を優先した。
 
 - `uid`
 - `taskUid`
@@ -195,7 +203,7 @@ Java 版 STEP1 でも、この構造をそのまま基本骨格とする。
 - `work`
 - `percentWorkComplete`
 
-次の項目は、STEP1 の後半で順次広げる対象とする。
+次の項目は、STEP1 の後半で順次広げる対象として整理した。
 
 - `start`
 - `finish`
@@ -217,14 +225,14 @@ Java 版 STEP1 でも、この構造をそのまま基本骨格とする。
 
 ## `Calendar` 初期移植
 
-まずは、Node.js 版 upstream の `CalendarModel` から、project / task / resource 参照の基盤になる次の項目を優先する。
+Node.js 版 upstream の `CalendarModel` から、project / task / resource 参照の基盤になる次の項目を優先した。
 
 - `uid`
 - `name`
 - `isBaseCalendar`
 - `baseCalendarUID`
 
-次の項目は、STEP1 の後半で順次広げる対象とする。
+次の項目は、STEP1 の後半で順次広げる対象として整理した。
 
 - `isBaselineCalendar`
 - `weekDays`
@@ -248,7 +256,7 @@ Java 版 STEP1 でも、この構造をそのまま基本骨格とする。
 - 初期移植に入っていない項目も、Node.js 版 upstream に存在する以上、将来的な移植対象である
 - Java 版独自都合で upstream の型構造を縮退させた恒久仕様にはしない
 
-## 次の詳細化項目
+## 初期移植時点の詳細化項目
 
 以下は初期移植時点の詳細化項目である。
 現在の実装後方針は `docs/step1-spec.md` と追随運用文書群を正本として扱う。

@@ -2,7 +2,7 @@
 
 ## 目的
 
-この文書は、Node.js 版 upstream の `types.ts` を、Java 版の POJO class 群へどう読み替えるかを整理するためのメモである。
+この文書は、Node.js 版 upstream の `types.ts` を、Java 版の POJO class 群へどう読み替えるかを整理した設計メモである。
 
 前提として、Java 側でも型構造は Node.js 版 upstream に寄せる。
 Java 向けに命名規約は調整するが、責務や語彙は upstream から大きくずらさない。
@@ -14,6 +14,14 @@ Java 向けに命名規約は調整するが、責務や語彙は upstream か�
 
 現フェーズで model field や class の不足を見つけた場合は、新規機能追加ではなく、既存仕様の不足または upstream 差分として扱い、対応表と test 対応へ反映する。
 
+現在の正本:
+
+- `docs/miku-straight-conversion-guide.md`
+- `docs/step1-spec.md`
+- `docs/remaining-migration-items.md`
+- `docs/upstream-class-mapping.md`
+- `docs/upstream-test-mapping.md`
+
 ## 基本方針
 
 - `types.ts` の主要型に対応する Java class を用意する
@@ -24,15 +32,15 @@ Java 向けに命名規約は調整するが、責務や語彙は upstream か�
 
 ## package 方針
 
-初期移植では、POJO は `jp.igapyon.mikuproject.model` 配下へ置くことを基本候補とする。
+現在の POJO は `jp.igapyon.mikuproject.model` 配下へ置く方針で運用している。
 
-必要に応じて、後続で package を分けることはありうるが、初期段階では細分化しすぎない。
+必要に応じて、後続で package を分けることはありうるが、current implementation でも細分化しすぎない。
 
 ## 主要対応表
 
 Node.js upstream の `types.ts` に対する Java 側 class 対応は、まず次を基本とする。
 
-| upstream type | Java class 候補 |
+| upstream type | Java class |
 | --- | --- |
 | `ProjectModel` | `ProjectModel` |
 | `ProjectInfo` | `ProjectInfo` |
@@ -118,17 +126,17 @@ Node.js 版 upstream で配列としてぶら下がっている下位型も、Ja
 
 Node.js 版 upstream の `ValidationIssue` も、Java 側で独立 class とする。
 
-最低限、次を持つ class を候補とする。
+現在は、少なくとも次を持つ class として扱う。
 
 - `level`
 - `scope`
 - `message`
 
-`level` と `scope` は、Java 側では enum 化も候補だが、これは別途詳細化する。
+`level` と `scope` は enum 化候補もあったが、現在の実装後方針は `docs/step1-spec.md` を正本として扱う。
 
 ## 初期移植での class 作成順
 
-POJO class は、まず次の順で作成するのが自然である。
+POJO class は、STEP1 初期ではまず次の順で作成するのが自然だと整理した。
 
 1. `ProjectModel`
 2. `ProjectInfo`
@@ -142,7 +150,7 @@ POJO class は、まず次の順で作成するのが自然である。
 10. `CalendarExceptionModel`
 11. `WorkWeekModel`
 
-その後、必要に応じて次を順次追加する。
+その後、必要に応じて次を順次追加する想定で整理した。
 
 - `OutlineCodeModel` 系
 - `WbsMaskModel`
@@ -159,7 +167,7 @@ class を作る順序と、field を全部一気に埋めることは分けて�
 - field は `docs/projectmodel-first-cut.md` の優先順に従って段階的に埋める
 - 初期移植に入っていない field も、後で補いやすいよう class 自体の対応関係は先に固定する
 
-## Java 側でまだ未確定の点
+## 初期移植時点で未確定だった点
 
 次は初期移植時点では別途詳細化する項目として扱っていた。
 現在の実装後方針は `docs/step1-spec.md`, `docs/remaining-migration-items.md`, `docs/upstream-class-mapping.md`, `docs/upstream-test-mapping.md` を正本として扱う。

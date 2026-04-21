@@ -4,7 +4,7 @@
 
 この文書は、Java 版 `mikuproject` の STEP1 における
 `MS Project XML -> ProjectModel`
-の最小 import 設計を整理するためのメモである。
+の最小 import 設計を整理した設計メモである。
 
 前提として、Node.js 版 upstream の `msproject-xml.ts` / `msproject-codec.ts` / `msproject-xml-dom.ts` / `msproject-calendar.ts` / `msproject-validate.ts`
 の責務分割を尊重する。
@@ -12,10 +12,18 @@
 ## 現在の位置づけ
 
 この文書は STEP1 初期の import 設計メモとして残す。
-現在は、ここで候補として整理した `MsProjectXml` / `MsProjectCodec` / `MsProjectXmlDom` / `MsProjectCalendar` / `MsProjectValidate` に加え、CSV / Mermaid / AI view などの周辺導線も Java 側へ実装済みである。
+現在は、ここで整理した `MsProjectXml` / `MsProjectCodec` / `MsProjectXmlDom` / `MsProjectCalendar` / `MsProjectValidate` に加え、`MsProjectValidateHelpers` / `MsProjectSamples` / `MsProjectCsv` / `MsProjectAiViews` / `MsProjectMermaid` まで Java 側へ実装済みである。
 
 したがって、現フェーズではこの文書を新規実装リストとして扱わない。
 不足を見つけた場合は、既存実装と upstream 対応表、test 対応表、差分確認ログのどこに反映するかを先に確認する。
+
+現在の正本:
+
+- `docs/miku-straight-conversion-guide.md`
+- `docs/step1-spec.md`
+- `docs/remaining-migration-items.md`
+- `docs/upstream-class-mapping.md`
+- `docs/upstream-test-mapping.md`
 
 ## 基本方針
 
@@ -43,9 +51,9 @@ upstream では、おおむね次の分担になっている。
 
 Java 版でも、この責務分割を基本的に踏襲する。
 
-## Java 側の初期移植 class 案
+## Java 側の初期移植 class 構成
 
-`jp.igapyon.mikuproject.msprojectxml` 配下の初期移植候補は次のとおり。
+`jp.igapyon.mikuproject.msprojectxml` 配下の基本構成は次のとおり。
 
 - `MsProjectXml`
   - facade
@@ -88,7 +96,7 @@ Java 版の `MS Project XML -> ProjectModel` は、少なくとも次の段階�
 
 `MsProjectXml` は、Java 側の facade とする。
 
-最低限、次の責務を持たせる候補とする。
+現在は、少なくとも次の責務を受ける facade として扱う。
 
 - `importFromXml`
 - `exportToXml`
@@ -102,7 +110,7 @@ Java 版の `MS Project XML -> ProjectModel` は、少なくとも次の段階�
 
 `MsProjectCodec` は、XML と `ProjectModel` の相互変換本体とする。
 
-最低限、次の責務を持たせる候補とする。
+現在は、少なくとも次の責務を受ける codec 本体として扱う。
 
 - `importMsProjectXml`
 - `exportMsProjectXml`
@@ -123,7 +131,7 @@ Java 側で private helper を増やすことは許容するが、上位の責�
 
 `MsProjectXmlDom` は、XML DOM 周辺の小さな helper を持つ class とする。
 
-最低限、次のような helper を持つ候補とする。
+現在は、少なくとも次のような helper 群を受ける class として扱う。
 
 - `textContent`
 - `parseBoolean`
@@ -142,7 +150,7 @@ Java では DOM 実装自体は標準 API を使う想定だが、helper の責�
 
 `MsProjectCalendar` は、既定 calendar を補完する責務を持つ class とする。
 
-最低限、次の責務を持たせる候補とする。
+現在は、少なくとも次の責務を受ける class として扱う。
 
 - `ensureDefaultProjectCalendar`
 
@@ -152,15 +160,15 @@ Node.js 版 upstream と同様に、`ProjectModel` に calendar がない場合�
 
 `MsProjectValidate` は、`ProjectModel` に対する妥当性検査を持つ class とする。
 
-最低限、次の責務を持たせる候補とする。
+現在は、少なくとも次の責務を受ける class として扱う。
 
 - `validateProjectModel`
 
 STEP1 の段階では、validation は import 完了後の確認用であり、import と強く結合させない。
 
-## package 案
+## package 方針
 
-初期移植では、次の package を基本候補とする。
+現在の基本 package は次のとおりである。
 
 - `jp.igapyon.mikuproject.model`
 - `jp.igapyon.mikuproject.msprojectxml`
@@ -172,7 +180,7 @@ STEP1 の段階では、validation は import 完了後の確認用であり、i
 - `msprojectxml`
   - XML import / export / helper / calendar / validate
 
-この段階では、Java 側独自都合でさらに細かい package へ分割しすぎない。
+この方針は current implementation でも維持しており、Java 側独自都合でさらに細かい package へ分割しすぎない。
 
 ## Java 1.8 前提での XML API 方針
 
