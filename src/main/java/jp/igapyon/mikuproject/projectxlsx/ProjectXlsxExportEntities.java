@@ -13,14 +13,16 @@ public class ProjectXlsxExportEntities {
     public XlsxSheetLike buildTabularSheet(String sheetName, String sectionTitle, String[] headers, List<Map<String, Object>> rows) {
         XlsxSheetLike sheet = new XlsxSheetLike();
         sheet.name = sheetName;
+        ProjectXlsxExportUtil.SheetTheme theme = util.themeForSheet(sheetName);
         addSheetColumns(sheet, sheetName);
-        sheet.rows.add(util.titleRow(sheetName));
-        sheet.rows.add(util.sectionTitleRow(sectionTitle));
-        sheet.rows.add(util.headerRow(headers));
-        for (Map<String, Object> row : rows) {
+        sheet.rows.add(util.sectionTitleRow(sheetName, headers.length, theme.section));
+        sheet.rows.add(util.sectionTitleRow(sectionTitle, headers.length, theme.section));
+        sheet.rows.add(util.headerRow(headers, theme.header));
+        for (int rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
+            Map<String, Object> row = rows.get(rowIndex);
             XlsxRowLike xlsxRow = new XlsxRowLike();
             for (String header : headers) {
-                xlsxRow.cells.add(util.cell(row.get(header)));
+                xlsxRow.cells.add(util.dataCell(sheetName, header, row.get(header), rowIndex));
             }
             sheet.rows.add(xlsxRow);
         }

@@ -146,6 +146,30 @@ public class MsProjectAiViewsTest {
     }
 
     @Test
+    public void importsProjectDraftViewWithoutTaskDatesUsingProjectStartFallback() {
+        MsProjectXml xml = new MsProjectXml();
+
+        Map<String, Object> draft = new LinkedHashMap<String, Object>();
+        draft.put("view_type", "project_draft_view");
+        Map<String, Object> project = new LinkedHashMap<String, Object>();
+        project.put("name", "Fallback Draft");
+        project.put("planned_start", "2026-04-01");
+        draft.put("project", project);
+        draft.put("tasks", Arrays.asList(task("draft-task-1", "Task without dates", null, Integer.valueOf(0), null, null, null,
+                null, null, null)));
+
+        ProjectModel model = xml.importProjectDraftView(draft);
+
+        assertEquals("2026-04-01", model.project.startDate);
+        assertEquals("2026-04-01T18:00:00", model.project.finishDate);
+        assertEquals(1, model.tasks.size());
+        assertEquals("2026-04-01T09:00:00", model.tasks.get(0).start);
+        assertEquals("2026-04-01T18:00:00", model.tasks.get(0).finish);
+        assertEquals("PT0H0M0S", model.tasks.get(0).duration);
+        assertTrue(model.tasks.get(0).predecessors.isEmpty());
+    }
+
+    @Test
     public void rejectsInvalidProjectDraftViewReferences() {
         MsProjectXml xml = new MsProjectXml();
 

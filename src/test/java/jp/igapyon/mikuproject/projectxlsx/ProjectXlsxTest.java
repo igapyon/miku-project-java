@@ -42,6 +42,13 @@ public class ProjectXlsxTest {
         assertEquals("Tasks", workbook.sheets.get(1).rows.get(0).cells.get(0).value);
         assertEquals(Double.valueOf(26d), workbook.sheets.get(0).columns.get(0).width);
         assertEquals(Double.valueOf(42d), workbook.sheets.get(0).columns.get(1).width);
+        assertEquals("Settings", workbook.sheets.get(0).rows.get(11).cells.get(0).value);
+        assertEquals("A11:B11", workbook.sheets.get(0).mergedRanges.get(0));
+        assertEquals("#BFD7EA", workbook.sheets.get(0).rows.get(0).cells.get(0).fillColor);
+        assertEquals("#D9EAF7", workbook.sheets.get(0).rows.get(2).cells.get(0).fillColor);
+        assertEquals("#FDE7C7", workbook.sheets.get(0).rows.get(3).cells.get(1).fillColor);
+        assertEquals("#E6EDF4", workbook.sheets.get(1).rows.get(2).cells.get(0).fillColor);
+        assertEquals("#FDE7C7", workbook.sheets.get(1).rows.get(3).cells.get(2).fillColor);
         assertEquals("Options!$A$2:$A$3", workbook.sheets.get(0).dataValidations.get(0).formula1);
         assertTrue(workbook.sheets.get(1).dataValidations.get(0).sqref.contains("L4:L"));
         assertEquals(Double.valueOf(28d), workbook.sheets.get(1).columns.get(2).width);

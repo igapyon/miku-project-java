@@ -283,6 +283,23 @@ public class ProjectPatchJsonEntities {
                 "name", calendar.name == null || calendar.name.isEmpty() ? calendar.uid : calendar.name, "(deleted)"));
     }
 
+    public void applyDeleteAssignmentOperation(PatchOperation operation, ProjectModel model, List<ImportChange> changes,
+            List<PatchWarning> warnings, int operationIndex) {
+        String uid = safe(operation.uid).trim();
+        if (uid.isEmpty()) {
+            warnings.add(warning("delete_assignment の uid がありません: operations[" + operationIndex + "]", null, null, null));
+            return;
+        }
+        AssignmentModel assignment = findAssignment(model, uid);
+        if (assignment == null) {
+            warnings.add(warning("delete_assignment の uid が既存 assignment を指していません: " + uid, "assignments", uid, uid));
+            return;
+        }
+        model.assignments.remove(assignment);
+        changes.add(change("assignments", uid, uid, "taskUid", assignment.taskUid, "(deleted)"));
+        changes.add(change("assignments", uid, uid, "resourceUid", assignment.resourceUid, "(deleted)"));
+    }
+
     private jp.igapyon.mikuproject.model.TaskModel findTask(ProjectModel model, String uid) {
         for (jp.igapyon.mikuproject.model.TaskModel task : model.tasks) {
             if (uid.equals(task.uid)) {

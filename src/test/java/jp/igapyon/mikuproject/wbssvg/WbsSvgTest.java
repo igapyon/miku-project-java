@@ -4,6 +4,7 @@
  */
 package jp.igapyon.mikuproject.wbssvg;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -152,6 +153,34 @@ public class WbsSvgTest {
         assertTrue(weeklySvg.contains(">2</text>"));
         assertTrue(archive.entries.get(0).svg.contains("#fce7ef"));
         assertTrue(archive.entries.get(0).svg.contains(">1</text>"));
+    }
+
+    @Test
+    public void exportsMonthlyCalendarArchiveForSampleAndFixtureRanges() throws IOException {
+        MsProjectXml xml = new MsProjectXml();
+
+        WbsSvg.MonthlyCalendarSvgArchive sampleArchive = xml
+                .exportMonthlyWbsCalendarSvgArchive(xml.importFromXml(new MsProjectSamples().buildSampleXml()));
+        WbsSvg.MonthlyCalendarSvgArchive dependencyArchive = xml.exportMonthlyWbsCalendarSvgArchive(
+                xml.importFromXml(readVendorTestdata("dependency.xml")));
+        WbsSvg.MonthlyCalendarSvgArchive hierarchyArchive = xml.exportMonthlyWbsCalendarSvgArchive(
+                xml.importFromXml(readVendorTestdata("hierarchy.xml")));
+
+        assertEquals(2, sampleArchive.entries.size());
+        assertEquals("2026-03.svg", sampleArchive.entries.get(0).fileName);
+        assertEquals("2026-04.svg", sampleArchive.entries.get(1).fileName);
+        assertTrue(sampleArchive.entries.get(0).svg.contains("<svg"));
+        assertTrue(sampleArchive.entries.get(1).svg.contains("<svg"));
+
+        assertEquals(1, dependencyArchive.entries.size());
+        assertEquals("2026-03.svg", dependencyArchive.entries.get(0).fileName);
+        assertTrue(dependencyArchive.entries.get(0).svg.contains("Dependency Project"));
+        assertTrue(dependencyArchive.entries.get(0).svg.contains("class=\"cellBorder\""));
+
+        assertEquals(1, hierarchyArchive.entries.size());
+        assertEquals("2026-03.svg", hierarchyArchive.entries.get(0).fileName);
+        assertTrue(hierarchyArchive.entries.get(0).svg.contains("Hierarchy Project"));
+        assertTrue(hierarchyArchive.entries.get(0).svg.contains("Child A"));
     }
 
     private String readVendorTestdata(String fileName) throws IOException {

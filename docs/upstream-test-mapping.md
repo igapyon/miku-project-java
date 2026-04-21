@@ -89,6 +89,12 @@ upstream 更新追随で差分を見たときは、まず変更された upstrea
   - Java 側対応:
     - `MsProjectAiViewsTest.buildsProjectDraftRequestAndImportsPredecessorMappingFromProjectDraftView`
 
+- `zero duration input stays inside the viewBox even on a late date`
+  - Java 側対応:
+    - `WbsSvgTest.exportsDependencyFixtureIntoSvgOutputs`
+  - 補足:
+    - SVG 描画側の viewBox 保持に加えて、入力品質 warning 側は `MsProjectXmlTest.validateProjectModelWarnsWhenTasksCollapseIntoSameZeroDurationRange` で固定する
+
 ## fixture 対応
 
 - `vendor/mikuproject/testdata/minimal.xml`
@@ -165,6 +171,12 @@ Java 側テスト名は、次の基準で付ける。
 
 - `MsProjectAiViewsTest.buildsProjectDraftRequestAndImportsPredecessorMappingFromProjectDraftView`
   - upstream の project_draft_request / project_draft_view import に対応
+
+- `MsProjectAiViewsTest.importsProjectDraftViewWithoutTaskDatesUsingProjectStartFallback`
+  - upstream の `project_draft_view` import が task ごとの `planned_start` / `planned_finish` を必須にしておらず、project 起点 fallback を使うことを固定
+
+- `MsProjectXmlTest.validateProjectModelWarnsWhenTasksCollapseIntoSameZeroDurationRange`
+  - Java 側 validation で、複数 task が同一 `start` / `finish` かつ zero duration に潰れている入力品質 warning を返すことを固定
 
 - `MsProjectAiViewsTest.rejectsInvalidProjectDraftViewReferences`
   - upstream の invalid project_draft_view reference 異常系に対応
@@ -311,6 +323,9 @@ Java 側テスト名は、次の基準で付ける。
 - `MikuprojectCliTest.validatesXmlBatchAndExportsReportDirBatch`
   - Java CLI から validate batch と report bundle / report directory batch export を呼べることを確認
 
+- `MikuprojectCliTest.validateXmlReportsCollapsedZeroDurationTaskWarning`
+  - Java CLI の `validate-xml` で zero duration cluster warning が見えることを確認
+
 - `MikuprojectCliTest.exportsWorkbookJsonBatch`
   - Java CLI から workbook JSON batch export を呼べることを確認
 
@@ -349,6 +364,9 @@ Java 側テスト名は、次の基準で付ける。
 
 - `MikuprojectCliTest.appliesWbsOptionArgumentsToReportBundleAndWbsXlsx`
   - Java CLI から report bundle / WBS xlsx export に display range / progress / holiday / label option を渡せることを確認
+
+- `MikuprojectCliTest.keepsReportBundleAndReportDirOutputsEquivalentToStandaloneWbsXlsx`
+  - Java CLI から dependency fixture の report bundle / report dir / standalone `export-wbs-xlsx` を出力し、entry 名 / entry bytes と `wbs.xlsx` bytes の一致を確認
 
 - `MikuprojectCliTest.appliesSvgOptionArgumentsToSvgExports`
   - Java CLI から daily / weekly SVG の label mode と monthly SVG zip の holiday / label option を渡せることを確認
@@ -457,6 +475,9 @@ Java 側テスト名は、次の基準で付ける。
 
 - `WbsSvgTest.exportsMonthlyCalendarArchive`
   - upstream の monthly calendar SVG archive export に対応
+
+- `WbsSvgTest.exportsMonthlyCalendarArchiveForSampleAndFixtureRanges`
+  - monthly calendar が sample / dependency / hierarchy の 3 系統で project range に含まれる月数を出し、`YYYY-MM.svg` file 名と各 SVG 非空を保つことを確認
 
 - `WbsSvgTest.exportsDependencyFixtureIntoSvgOutputs`
   - dependency fixture を daily / weekly SVG 出力へ落としたときの主要内容を確認

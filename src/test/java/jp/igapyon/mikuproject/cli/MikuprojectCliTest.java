@@ -4,6 +4,7 @@
  */
 package jp.igapyon.mikuproject.cli;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -17,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,8 +77,7 @@ public class MikuprojectCliTest {
 
     @Test
     public void validatesXmlAndExportsFormats() throws IOException {
-        Path xmlFile = Files.createTempFile("mikuproject-cli", ".xml");
-        Files.write(xmlFile, new MsProjectSamples().buildSampleXml().getBytes(StandardCharsets.UTF_8));
+        Path xmlFile = writeTempUtf8File("mikuproject-cli", ".xml", new MsProjectSamples().buildSampleXml());
         Path monthlyZipFile = Files.createTempFile("mikuproject-monthly", ".zip");
         Path bundleZipFile = Files.createTempFile("mikuproject-bundle", ".zip");
         Path reportDir = Files.createTempDirectory("mikuproject-report-dir");
@@ -131,12 +132,10 @@ public class MikuprojectCliTest {
 
     @Test
     public void validatesXmlBatchAndExportsReportDirBatch() throws IOException {
-        Path minimalXmlFile = Files.createTempFile("mikuproject-cli-batch-minimal", ".xml");
-        Path dependencyXmlFile = Files.createTempFile("mikuproject-cli-batch-dependency", ".xml");
+        Path minimalXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-minimal", "minimal.xml");
+        Path dependencyXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-dependency", "dependency.xml");
         Path outputRoot = Files.createTempDirectory("mikuproject-cli-batch-report");
         Path bundleOutputRoot = Files.createTempDirectory("mikuproject-cli-batch-report-bundle");
-        Files.write(minimalXmlFile, readVendorTestdata("minimal.xml").getBytes(StandardCharsets.UTF_8));
-        Files.write(dependencyXmlFile, readVendorTestdata("dependency.xml").getBytes(StandardCharsets.UTF_8));
         try {
             MikuprojectCli cli = new MikuprojectCli();
             ByteArrayOutputStream validateOut = new ByteArrayOutputStream();
@@ -173,12 +172,36 @@ public class MikuprojectCliTest {
     }
 
     @Test
+    public void validateXmlReportsCollapsedZeroDurationTaskWarning() throws IOException {
+        Path xmlFile = Files.createTempFile("mikuproject-cli-collapsed-zero-duration", ".xml");
+        Files.write(xmlFile, ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                + "<Project>"
+                + "<Name>Collapsed Draft</Name>"
+                + "<StartDate>2026-04-01</StartDate>"
+                + "<FinishDate>2026-04-01T18:00:00</FinishDate>"
+                + "<ScheduleFromStart>1</ScheduleFromStart>"
+                + "<Tasks>"
+                + "<Task><UID>1</UID><ID>1</ID><Name>Task A</Name><OutlineLevel>1</OutlineLevel><OutlineNumber>1</OutlineNumber><Start>2026-04-01T09:00:00</Start><Finish>2026-04-01T18:00:00</Finish><Duration>PT0H0M0S</Duration><Milestone>0</Milestone><Summary>0</Summary></Task>"
+                + "<Task><UID>2</UID><ID>2</ID><Name>Task B</Name><OutlineLevel>1</OutlineLevel><OutlineNumber>2</OutlineNumber><Start>2026-04-01T09:00:00</Start><Finish>2026-04-01T18:00:00</Finish><Duration>PT0H0M0S</Duration><Milestone>0</Milestone><Summary>0</Summary></Task>"
+                + "</Tasks>"
+                + "</Project>").getBytes(StandardCharsets.UTF_8));
+        try {
+            MikuprojectCli cli = new MikuprojectCli();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+            assertEquals(0, cli.run(new String[] { "validate-xml", xmlFile.toString() }, stream(out), stream(new ByteArrayOutputStream())));
+
+            assertTrue(text(out).contains("複数 task が同一の start / finish に寄った zero duration 入力です"));
+        } finally {
+            Files.deleteIfExists(xmlFile);
+        }
+    }
+
+    @Test
     public void exportsWorkbookJsonBatch() throws IOException {
-        Path minimalXmlFile = Files.createTempFile("mikuproject-cli-batch-workbook-minimal", ".xml");
-        Path hierarchyXmlFile = Files.createTempFile("mikuproject-cli-batch-workbook-hierarchy", ".xml");
+        Path minimalXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-workbook-minimal", "minimal.xml");
+        Path hierarchyXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-workbook-hierarchy", "hierarchy.xml");
         Path outputRoot = Files.createTempDirectory("mikuproject-cli-batch-workbook");
-        Files.write(minimalXmlFile, readVendorTestdata("minimal.xml").getBytes(StandardCharsets.UTF_8));
-        Files.write(hierarchyXmlFile, readVendorTestdata("hierarchy.xml").getBytes(StandardCharsets.UTF_8));
         try {
             MikuprojectCli cli = new MikuprojectCli();
             ByteArrayOutputStream batchOut = new ByteArrayOutputStream();
@@ -201,11 +224,9 @@ public class MikuprojectCliTest {
 
     @Test
     public void exportsXlsxBatch() throws IOException {
-        Path minimalXmlFile = Files.createTempFile("mikuproject-cli-batch-xlsx-minimal", ".xml");
-        Path hierarchyXmlFile = Files.createTempFile("mikuproject-cli-batch-xlsx-hierarchy", ".xml");
+        Path minimalXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-xlsx-minimal", "minimal.xml");
+        Path hierarchyXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-xlsx-hierarchy", "hierarchy.xml");
         Path outputRoot = Files.createTempDirectory("mikuproject-cli-batch-xlsx");
-        Files.write(minimalXmlFile, readVendorTestdata("minimal.xml").getBytes(StandardCharsets.UTF_8));
-        Files.write(hierarchyXmlFile, readVendorTestdata("hierarchy.xml").getBytes(StandardCharsets.UTF_8));
         try {
             MikuprojectCli cli = new MikuprojectCli();
             ByteArrayOutputStream batchOut = new ByteArrayOutputStream();
@@ -228,11 +249,9 @@ public class MikuprojectCliTest {
 
     @Test
     public void exportsMermaidBatch() throws IOException {
-        Path minimalXmlFile = Files.createTempFile("mikuproject-cli-batch-mermaid-minimal", ".xml");
-        Path hierarchyXmlFile = Files.createTempFile("mikuproject-cli-batch-mermaid-hierarchy", ".xml");
+        Path minimalXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-mermaid-minimal", "minimal.xml");
+        Path hierarchyXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-mermaid-hierarchy", "hierarchy.xml");
         Path outputRoot = Files.createTempDirectory("mikuproject-cli-batch-mermaid");
-        Files.write(minimalXmlFile, readVendorTestdata("minimal.xml").getBytes(StandardCharsets.UTF_8));
-        Files.write(hierarchyXmlFile, readVendorTestdata("hierarchy.xml").getBytes(StandardCharsets.UTF_8));
         try {
             MikuprojectCli cli = new MikuprojectCli();
             ByteArrayOutputStream batchOut = new ByteArrayOutputStream();
@@ -255,11 +274,9 @@ public class MikuprojectCliTest {
 
     @Test
     public void exportsWbsXlsxBatch() throws IOException {
-        Path minimalXmlFile = Files.createTempFile("mikuproject-cli-batch-wbs-xlsx-minimal", ".xml");
-        Path dependencyXmlFile = Files.createTempFile("mikuproject-cli-batch-wbs-xlsx-dependency", ".xml");
+        Path minimalXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-wbs-xlsx-minimal", "minimal.xml");
+        Path dependencyXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-wbs-xlsx-dependency", "dependency.xml");
         Path outputRoot = Files.createTempDirectory("mikuproject-cli-batch-wbs-xlsx");
-        Files.write(minimalXmlFile, readVendorTestdata("minimal.xml").getBytes(StandardCharsets.UTF_8));
-        Files.write(dependencyXmlFile, readVendorTestdata("dependency.xml").getBytes(StandardCharsets.UTF_8));
         try {
             MikuprojectCli cli = new MikuprojectCli();
             ByteArrayOutputStream batchOut = new ByteArrayOutputStream();
@@ -290,11 +307,9 @@ public class MikuprojectCliTest {
 
     @Test
     public void exportsWbsMarkdownBatch() throws IOException {
-        Path minimalXmlFile = Files.createTempFile("mikuproject-cli-batch-wbs-markdown-minimal", ".xml");
-        Path dependencyXmlFile = Files.createTempFile("mikuproject-cli-batch-wbs-markdown-dependency", ".xml");
+        Path minimalXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-wbs-markdown-minimal", "minimal.xml");
+        Path dependencyXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-wbs-markdown-dependency", "dependency.xml");
         Path outputRoot = Files.createTempDirectory("mikuproject-cli-batch-wbs-markdown");
-        Files.write(minimalXmlFile, readVendorTestdata("minimal.xml").getBytes(StandardCharsets.UTF_8));
-        Files.write(dependencyXmlFile, readVendorTestdata("dependency.xml").getBytes(StandardCharsets.UTF_8));
         try {
             MikuprojectCli cli = new MikuprojectCli();
             ByteArrayOutputStream batchOut = new ByteArrayOutputStream();
@@ -321,11 +336,9 @@ public class MikuprojectCliTest {
 
     @Test
     public void exportsDailySvgBatch() throws IOException {
-        Path minimalXmlFile = Files.createTempFile("mikuproject-cli-batch-daily-svg-minimal", ".xml");
-        Path dependencyXmlFile = Files.createTempFile("mikuproject-cli-batch-daily-svg-dependency", ".xml");
+        Path minimalXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-daily-svg-minimal", "minimal.xml");
+        Path dependencyXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-daily-svg-dependency", "dependency.xml");
         Path outputRoot = Files.createTempDirectory("mikuproject-cli-batch-daily-svg");
-        Files.write(minimalXmlFile, readVendorTestdata("minimal.xml").getBytes(StandardCharsets.UTF_8));
-        Files.write(dependencyXmlFile, readVendorTestdata("dependency.xml").getBytes(StandardCharsets.UTF_8));
         try {
             MikuprojectCli cli = new MikuprojectCli();
             ByteArrayOutputStream batchOut = new ByteArrayOutputStream();
@@ -350,11 +363,9 @@ public class MikuprojectCliTest {
 
     @Test
     public void exportsWeeklySvgBatch() throws IOException {
-        Path minimalXmlFile = Files.createTempFile("mikuproject-cli-batch-weekly-svg-minimal", ".xml");
-        Path dependencyXmlFile = Files.createTempFile("mikuproject-cli-batch-weekly-svg-dependency", ".xml");
+        Path minimalXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-weekly-svg-minimal", "minimal.xml");
+        Path dependencyXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-weekly-svg-dependency", "dependency.xml");
         Path outputRoot = Files.createTempDirectory("mikuproject-cli-batch-weekly-svg");
-        Files.write(minimalXmlFile, readVendorTestdata("minimal.xml").getBytes(StandardCharsets.UTF_8));
-        Files.write(dependencyXmlFile, readVendorTestdata("dependency.xml").getBytes(StandardCharsets.UTF_8));
         try {
             MikuprojectCli cli = new MikuprojectCli();
             ByteArrayOutputStream batchOut = new ByteArrayOutputStream();
@@ -379,11 +390,9 @@ public class MikuprojectCliTest {
 
     @Test
     public void exportsMonthlySvgZipBatch() throws IOException {
-        Path minimalXmlFile = Files.createTempFile("mikuproject-cli-batch-monthly-svg-minimal", ".xml");
-        Path dependencyXmlFile = Files.createTempFile("mikuproject-cli-batch-monthly-svg-dependency", ".xml");
+        Path minimalXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-monthly-svg-minimal", "minimal.xml");
+        Path dependencyXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-monthly-svg-dependency", "dependency.xml");
         Path outputRoot = Files.createTempDirectory("mikuproject-cli-batch-monthly-svg");
-        Files.write(minimalXmlFile, readVendorTestdata("minimal.xml").getBytes(StandardCharsets.UTF_8));
-        Files.write(dependencyXmlFile, readVendorTestdata("dependency.xml").getBytes(StandardCharsets.UTF_8));
         try {
             MikuprojectCli cli = new MikuprojectCli();
             ByteArrayOutputStream batchOut = new ByteArrayOutputStream();
@@ -408,11 +417,9 @@ public class MikuprojectCliTest {
 
     @Test
     public void exportsProjectOverviewViewBatch() throws IOException {
-        Path minimalXmlFile = Files.createTempFile("mikuproject-cli-batch-overview-minimal", ".xml");
-        Path hierarchyXmlFile = Files.createTempFile("mikuproject-cli-batch-overview-hierarchy", ".xml");
+        Path minimalXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-overview-minimal", "minimal.xml");
+        Path hierarchyXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-overview-hierarchy", "hierarchy.xml");
         Path outputRoot = Files.createTempDirectory("mikuproject-cli-batch-overview");
-        Files.write(minimalXmlFile, readVendorTestdata("minimal.xml").getBytes(StandardCharsets.UTF_8));
-        Files.write(hierarchyXmlFile, readVendorTestdata("hierarchy.xml").getBytes(StandardCharsets.UTF_8));
         try {
             MikuprojectCli cli = new MikuprojectCli();
             ByteArrayOutputStream batchOut = new ByteArrayOutputStream();
@@ -435,9 +442,8 @@ public class MikuprojectCliTest {
 
     @Test
     public void exportsPhaseDetailViewBatch() throws IOException {
-        Path hierarchyXmlFile = Files.createTempFile("mikuproject-cli-batch-phase-hierarchy", ".xml");
+        Path hierarchyXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-phase-hierarchy", "hierarchy.xml");
         Path outputRoot = Files.createTempDirectory("mikuproject-cli-batch-phase");
-        Files.write(hierarchyXmlFile, readVendorTestdata("hierarchy.xml").getBytes(StandardCharsets.UTF_8));
         try {
             MikuprojectCli cli = new MikuprojectCli();
             ByteArrayOutputStream batchOut = new ByteArrayOutputStream();
@@ -459,9 +465,8 @@ public class MikuprojectCliTest {
 
     @Test
     public void exportsTaskEditViewBatch() throws IOException {
-        Path dependencyXmlFile = Files.createTempFile("mikuproject-cli-batch-task-edit-dependency", ".xml");
+        Path dependencyXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-batch-task-edit-dependency", "dependency.xml");
         Path outputRoot = Files.createTempDirectory("mikuproject-cli-batch-task-edit");
-        Files.write(dependencyXmlFile, readVendorTestdata("dependency.xml").getBytes(StandardCharsets.UTF_8));
         try {
             MikuprojectCli cli = new MikuprojectCli();
             ByteArrayOutputStream batchOut = new ByteArrayOutputStream();
@@ -516,9 +521,8 @@ public class MikuprojectCliTest {
 
     @Test
     public void appliesWbsOptionArgumentsToMarkdownAndReportDir() throws IOException {
-        Path xmlFile = Files.createTempFile("mikuproject-cli-wbs-options", ".xml");
+        Path xmlFile = writeTempUtf8File("mikuproject-cli-wbs-options", ".xml", new MsProjectSamples().buildSampleXml());
         Path reportDir = Files.createTempDirectory("mikuproject-cli-wbs-report-dir");
-        Files.write(xmlFile, new MsProjectSamples().buildSampleXml().getBytes(StandardCharsets.UTF_8));
         try {
             MikuprojectCli cli = new MikuprojectCli();
             ByteArrayOutputStream markdownOut = new ByteArrayOutputStream();
@@ -552,10 +556,9 @@ public class MikuprojectCliTest {
 
     @Test
     public void appliesWbsOptionArgumentsToReportBundleAndWbsXlsx() throws IOException {
-        Path xmlFile = Files.createTempFile("mikuproject-cli-wbs-bundle", ".xml");
+        Path xmlFile = writeTempUtf8File("mikuproject-cli-wbs-bundle", ".xml", new MsProjectSamples().buildSampleXml());
         Path bundleZipFile = Files.createTempFile("mikuproject-cli-wbs-bundle", ".zip");
         Path workbookBytesFile = Files.createTempFile("mikuproject-cli-wbs-options", ".xlsxbin");
-        Files.write(xmlFile, new MsProjectSamples().buildSampleXml().getBytes(StandardCharsets.UTF_8));
         try {
             MikuprojectCli cli = new MikuprojectCli();
             ByteArrayOutputStream bundleOut = new ByteArrayOutputStream();
@@ -599,10 +602,45 @@ public class MikuprojectCliTest {
     }
 
     @Test
+    public void keepsReportBundleAndReportDirOutputsEquivalentToStandaloneWbsXlsx() throws IOException {
+        Path xmlFile = Files.createTempFile("mikuproject-cli-report-equivalence", ".xml");
+        Path bundleZipFile = Files.createTempFile("mikuproject-cli-report-equivalence", ".zip");
+        Path reportDir = Files.createTempDirectory("mikuproject-cli-report-equivalence");
+        Path workbookBytesFile = Files.createTempFile("mikuproject-cli-report-equivalence", ".xlsxbin");
+        Files.write(xmlFile, readVendorTestdata("dependency.xml").getBytes(StandardCharsets.UTF_8));
+        try {
+            MikuprojectCli cli = new MikuprojectCli();
+
+            assertEquals(0, cli.run(new String[] { "export-report-bundle", xmlFile.toString(), bundleZipFile.toString() },
+                    stream(new ByteArrayOutputStream()), stream(new ByteArrayOutputStream())));
+            assertEquals(0, cli.run(new String[] { "export-report-dir", xmlFile.toString(), reportDir.toString() },
+                    stream(new ByteArrayOutputStream()), stream(new ByteArrayOutputStream())));
+            assertEquals(0, cli.run(new String[] { "export-wbs-xlsx", xmlFile.toString(), workbookBytesFile.toString() },
+                    stream(new ByteArrayOutputStream()), stream(new ByteArrayOutputStream())));
+
+            Map<String, byte[]> bundleEntries = readZipEntries(bundleZipFile);
+            Map<String, byte[]> reportDirEntries = readDirectoryEntries(reportDir);
+            byte[] standaloneWbsXlsx = Files.readAllBytes(workbookBytesFile);
+
+            assertEquals(sortedKeys(bundleEntries), sortedKeys(reportDirEntries));
+            for (Map.Entry<String, byte[]> entry : bundleEntries.entrySet()) {
+                assertTrue(reportDirEntries.containsKey(entry.getKey()), "missing report dir entry: " + entry.getKey());
+                assertArrayEquals(entry.getValue(), reportDirEntries.get(entry.getKey()), entry.getKey());
+            }
+            assertArrayEquals(standaloneWbsXlsx, bundleEntries.get("wbs.xlsx"));
+            assertArrayEquals(standaloneWbsXlsx, reportDirEntries.get("wbs.xlsx"));
+        } finally {
+            Files.deleteIfExists(xmlFile);
+            Files.deleteIfExists(bundleZipFile);
+            Files.deleteIfExists(workbookBytesFile);
+            deleteTree(reportDir);
+        }
+    }
+
+    @Test
     public void appliesSvgOptionArgumentsToSvgExports() throws IOException {
-        Path dependencyXmlFile = Files.createTempFile("mikuproject-cli-svg-options", ".xml");
+        Path dependencyXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-svg-options", "dependency.xml");
         Path monthlyZipFile = Files.createTempFile("mikuproject-cli-svg-monthly", ".zip");
-        Files.write(dependencyXmlFile, readVendorTestdata("dependency.xml").getBytes(StandardCharsets.UTF_8));
         try {
             MikuprojectCli cli = new MikuprojectCli();
             ByteArrayOutputStream dailyOut = new ByteArrayOutputStream();
@@ -933,8 +971,7 @@ public class MikuprojectCliTest {
 
     @Test
     public void exportsScopedPhaseDetailAndRejectsInvalidRootUidThroughCli() throws IOException {
-        Path hierarchyXmlFile = Files.createTempFile("mikuproject-cli-phase-scope", ".xml");
-        Files.write(hierarchyXmlFile, readVendorTestdata("hierarchy.xml").getBytes(StandardCharsets.UTF_8));
+        Path hierarchyXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-phase-scope", "hierarchy.xml");
         try {
             MikuprojectCli cli = new MikuprojectCli();
             ByteArrayOutputStream scopedOut = new ByteArrayOutputStream();
@@ -960,12 +997,10 @@ public class MikuprojectCliTest {
 
     @Test
     public void exportsReportBundleAndReportDirForFixturesThroughCli() throws IOException {
-        Path hierarchyXmlFile = Files.createTempFile("mikuproject-cli-report-hierarchy", ".xml");
-        Path dependencyXmlFile = Files.createTempFile("mikuproject-cli-report-dependency", ".xml");
+        Path hierarchyXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-report-hierarchy", "hierarchy.xml");
+        Path dependencyXmlFile = writeVendorTestdataToTempFile("mikuproject-cli-report-dependency", "dependency.xml");
         Path bundleZipFile = Files.createTempFile("mikuproject-cli-report-bundle", ".zip");
         Path reportDir = Files.createTempDirectory("mikuproject-cli-report-dir");
-        Files.write(hierarchyXmlFile, readVendorTestdata("hierarchy.xml").getBytes(StandardCharsets.UTF_8));
-        Files.write(dependencyXmlFile, readVendorTestdata("dependency.xml").getBytes(StandardCharsets.UTF_8));
         try {
             MikuprojectCli cli = new MikuprojectCli();
             ByteArrayOutputStream bundleOut = new ByteArrayOutputStream();
@@ -1522,6 +1557,16 @@ public class MikuprojectCliTest {
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
+    private Path writeVendorTestdataToTempFile(String prefix, String fileName) throws IOException {
+        return writeTempUtf8File(prefix, ".xml", readVendorTestdata(fileName));
+    }
+
+    private Path writeTempUtf8File(String prefix, String suffix, String text) throws IOException {
+        Path file = Files.createTempFile(prefix, suffix);
+        Files.write(file, text.getBytes(StandardCharsets.UTF_8));
+        return file;
+    }
+
     private String zipText(Path zipFile) throws IOException {
         StringBuilder builder = new StringBuilder();
         try (ZipInputStream input = new ZipInputStream(Files.newInputStream(zipFile), StandardCharsets.UTF_8)) {
@@ -1536,6 +1581,50 @@ public class MikuprojectCliTest {
             }
         }
         return builder.toString();
+    }
+
+    private Map<String, byte[]> readZipEntries(Path zipFile) throws IOException {
+        Map<String, byte[]> entries = new LinkedHashMap<String, byte[]>();
+        try (ZipInputStream input = new ZipInputStream(Files.newInputStream(zipFile), StandardCharsets.UTF_8)) {
+            byte[] buffer = new byte[2048];
+            java.util.zip.ZipEntry entry;
+            while ((entry = input.getNextEntry()) != null) {
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                int read;
+                while ((read = input.read(buffer)) >= 0) {
+                    out.write(buffer, 0, read);
+                }
+                entries.put(entry.getName(), out.toByteArray());
+            }
+        }
+        return entries;
+    }
+
+    private Map<String, byte[]> readDirectoryEntries(Path root) throws IOException {
+        Map<String, byte[]> entries = new LinkedHashMap<String, byte[]>();
+        readDirectoryEntries(root, root, entries);
+        return entries;
+    }
+
+    private void readDirectoryEntries(Path root, Path current, Map<String, byte[]> entries) throws IOException {
+        if (Files.isDirectory(current)) {
+            Path[] children;
+            try (Stream<Path> stream = Files.list(current)) {
+                children = stream.toArray(Path[]::new);
+            }
+            for (Path child : children) {
+                readDirectoryEntries(root, child, entries);
+            }
+            return;
+        }
+        String relative = root.relativize(current).toString().replace('\\', '/');
+        entries.put(relative, Files.readAllBytes(current));
+    }
+
+    private List<String> sortedKeys(Map<String, byte[]> map) {
+        List<String> keys = new ArrayList<String>(map.keySet());
+        Collections.sort(keys);
+        return keys;
     }
 
     private void deleteTree(Path root) throws IOException {

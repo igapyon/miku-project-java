@@ -46,8 +46,16 @@ repo top から入るときの入口は `README.md` の `Development Docs` 節�
   - `vendor/mikuproject/src/ts/core-api-report.ts`
 - unified import / external import:
   - `vendor/mikuproject/src/ts/core-api-import.ts`
+- XML public entry:
+  - `vendor/mikuproject/src/ts/msproject-xml.ts`
+- XML codec:
+  - `vendor/mikuproject/src/ts/msproject-codec.ts`
+- model validation:
+  - `vendor/mikuproject/src/ts/msproject-validate.ts`
 - AI view export / import:
   - `vendor/mikuproject/src/ts/msproject-ai-views.ts`
+- Mermaid export:
+  - `vendor/mikuproject/src/ts/msproject-mermaid.ts`
 - workbook JSON / workbook wrapper:
   - `vendor/mikuproject/src/ts/project-workbook-json.ts`
   - `vendor/mikuproject/src/ts/core-api-workbook.ts`
@@ -67,6 +75,165 @@ report / workbook / import / AI view の主要導線は sample 記録がある�
 
 ## 記録サンプル
 
+### 2026-04-21 `vendor/mikuproject/src/ts/msproject-validate.ts`
+
+```text
+upstream file:
+  vendor/mikuproject/src/ts/msproject-validate.ts
+
+java classes:
+  jp.igapyon.mikuproject.msprojectxml.MsProjectValidate
+  jp.igapyon.mikuproject.msprojectxml.MsProjectValidateHelpers
+
+tests:
+  MsProjectXmlTest.validateProjectModelReturnsWarningsForMissingCoreFields
+  MsProjectXmlTest.validateProjectModelChecksProjectRanges
+  MsProjectXmlTest.validateProjectModelChecksCalendarStructures
+  MsProjectXmlTest.validateProjectModelChecksFirstCutEntityReferences
+  MsProjectXmlTest.validateProjectModelChecksTaskOrderIssueAndUnassignedResource
+  MsProjectXmlTest.validateProjectModelWarnsWhenTasksCollapseIntoSameZeroDurationRange
+
+diff summary:
+  挙動差分:
+    Java 側では project / calendars / tasks / resources / assignments の整合 warning / error、task order、unassigned resource UID の扱い、zero duration cluster warning を validation で確認している。現時点で upstream 追随上の大きな差分は記録していない。
+  命名差分:
+    upstream の validate 本体と helper 群に対して、Java 側は `MsProjectValidate` と `MsProjectValidateHelpers` に分割しているが、validation 本体と describe / parse helper の責務対応は追跡可能である。
+  未移植差分:
+    現時点で顕在化している未移植差分は記録していない。今後 upstream で validation rule や severity 分類が変わった場合は再確認が必要である。
+  Java 側独自拡張:
+    Java 側の zero duration cluster warning は runtime docs に沿った補助 validation として扱う。
+
+follow-up:
+  - 実施した確認:
+    `mvn test -Dtest=MsProjectXmlTest`
+  - fixture:
+    validation focused tests は手組み model が中心
+  - 次回の確認観点:
+    upstream 側で validation rule、warning / error の文言、placeholder / unassigned resource の扱いが変わった場合は再確認する
+  - `docs/remaining-migration-items.md` への反映:
+    2026-04-21 時点で validation の upstream follow-up 実例を追加
+```
+
+### 2026-04-21 `vendor/mikuproject/src/ts/msproject-codec.ts`
+
+```text
+upstream file:
+  vendor/mikuproject/src/ts/msproject-codec.ts
+
+java classes:
+  jp.igapyon.mikuproject.msprojectxml.MsProjectCodec
+  jp.igapyon.mikuproject.msprojectxml.MsProjectXmlDom
+
+tests:
+  MsProjectXmlTest.importFromXmlReadsProjectCoreFields
+  MsProjectXmlTest.importFromXmlReadsFirstCutEntities
+  MsProjectXmlTest.exportToXmlWritesProjectCoreFields
+  MsProjectXmlTest.exportToXmlWritesFirstCutEntities
+  MsProjectXmlTest.roundTripsUpstreamMinimalXmlFixture
+  MsProjectXmlTest.roundTripsUpstreamHierarchyXmlFixture
+  MsProjectXmlTest.roundTripsUpstreamDependencyXmlFixture
+
+diff summary:
+  挙動差分:
+    現時点で大きな差分は見当たらない。Java 側でも project core fields、Calendars / Tasks / Resources / Assignments の first cut entity、upstream fixture の round-trip を確認済みである。
+  命名差分:
+    upstream の `msproject-codec.ts` に対して、Java 側は `MsProjectCodec` を主体にし、下位 parse helper を `MsProjectXmlDom` に分けているが、codec 境界との対応は追跡可能である。
+  未移植差分:
+    現時点で顕在化している未移植差分は記録していない。今後 upstream で XML field coverage や serialize 順が変わった場合は再確認が必要である。
+  Java 側独自拡張:
+    `MsProjectXml` 公開面から codec を呼ぶ構成や validation / calendar 補完の連携は wrapper 側として扱う。
+
+follow-up:
+  - 実施した確認:
+    `mvn test -Dtest=MsProjectXmlTest`
+  - fixture:
+    `vendor/mikuproject/testdata/minimal.xml`
+    `vendor/mikuproject/testdata/hierarchy.xml`
+    `vendor/mikuproject/testdata/dependency.xml`
+  - 次回の確認観点:
+    upstream 側で XML field coverage、boolean / number parse、predecessor / baseline / timephasedData の codec 契約が変わった場合は再確認する
+  - `docs/remaining-migration-items.md` への反映:
+    2026-04-21 時点で XML codec の upstream follow-up 実例を追加
+```
+
+### 2026-04-21 `vendor/mikuproject/src/ts/msproject-xml.ts`
+
+```text
+upstream file:
+  vendor/mikuproject/src/ts/msproject-xml.ts
+
+java classes:
+  jp.igapyon.mikuproject.msprojectxml.MsProjectXml
+  jp.igapyon.mikuproject.msprojectxml.MsProjectCodec
+  jp.igapyon.mikuproject.msprojectxml.MsProjectCalendar
+  jp.igapyon.mikuproject.msprojectxml.MsProjectValidate
+
+tests:
+  MsProjectXmlTest.roundTripsUpstreamMinimalXmlFixture
+  MsProjectXmlTest.importsUpstreamHierarchyXmlFixture
+  MsProjectXmlTest.roundTripsUpstreamHierarchyXmlFixture
+  MsProjectXmlTest.importsUpstreamDependencyXmlFixture
+  MsProjectXmlTest.roundTripsUpstreamDependencyXmlFixture
+  MsProjectXmlTest.ensureDefaultProjectCalendarBuildsJapaneseHolidayExceptions
+
+diff summary:
+  挙動差分:
+    現時点で大きな差分は見当たらない。Java 側でも `MsProjectXml` を入口に minimal / hierarchy / dependency fixture の import / round-trip と、project date range に応じた default calendar 補完を確認済みである。
+  命名差分:
+    upstream の公開入口 `msproject-xml.ts` に対して、Java 側は `MsProjectXml` を公開面にし、codec / calendar / validate を補助 class に分けているが、責務対応は追跡可能である。
+  未移植差分:
+    現時点で顕在化している未移植差分は記録していない。今後 upstream で `MsProjectXml` 公開導線や normalize / validate 呼び出し順が変わった場合は再確認が必要である。
+  Java 側独自拡張:
+    Java 側 validation の補助 warning や CLI / Core API からの利用導線は wrapper 側の運用拡張として扱う。
+
+follow-up:
+  - 実施した確認:
+    `mvn test -Dtest=MsProjectXmlTest`
+  - fixture:
+    `vendor/mikuproject/testdata/minimal.xml`
+    `vendor/mikuproject/testdata/hierarchy.xml`
+    `vendor/mikuproject/testdata/dependency.xml`
+  - 次回の確認観点:
+    upstream 側で public entry の normalize / ensureDefaultProjectCalendar / validate 契約、または round-trip fixture の期待が変わった場合は再確認する
+  - `docs/remaining-migration-items.md` への反映:
+    2026-04-21 時点で XML public entry の upstream follow-up 実例を追加
+```
+
+### 2026-04-21 `vendor/mikuproject/src/ts/msproject-mermaid.ts`
+
+```text
+upstream file:
+  vendor/mikuproject/src/ts/msproject-mermaid.ts
+
+java classes:
+  jp.igapyon.mikuproject.msprojectxml.MsProjectMermaid
+
+tests:
+  MsProjectMermaidTest.exportsMermaidFromSampleProject
+  MsProjectMermaidTest.keepsComplexMermaidDependenciesAsComments
+  MsProjectMermaidTest.sanitizesDateLeadingMermaidGanttLabels
+
+diff summary:
+  挙動差分:
+    現時点で大きな差分は見当たらない。Java 側でも gantt title / section の正規化、single predecessor の native dependency 化、複雑依存の comment 化、date-leading label sanitize を確認済みである。
+  命名差分:
+    Java 側は `MsProjectMermaid` 単独 class で保持しているが、upstream file の責務境界との対応は追跡可能である。
+  未移植差分:
+    現時点で顕在化している未移植差分は記録していない。今後 upstream で Mermaid tag や dependency comment 形式が変わった場合は再確認が必要である。
+  Java 側独自拡張:
+    `MsProjectXml.exportMermaidGantt(...)` からの公開導線は Java 側 wrapper として扱う。
+
+follow-up:
+  - 実施した確認:
+    `mvn test -Dtest=MsProjectMermaidTest`
+  - fixture:
+    `vendor/mikuproject/testdata/hierarchy.xml`
+  - 次回の確認観点:
+    upstream 側で native dependency 判定条件、`dependency(note)` / `dependency(pseudo)` comment 文言、label sanitize 規則が変わった場合は再確認する
+  - `docs/remaining-migration-items.md` への反映:
+    2026-04-21 時点で Mermaid export の upstream follow-up 実例を追加
+```
+
 ### 2026-04-20 `vendor/mikuproject/src/ts/core-api-report.ts`
 
 ```text
@@ -85,10 +252,11 @@ tests:
   MikuprojectNodeParityTest.comparesReportBundleZipBytesWithNodeUpstreamWhenEnabled
   MikuprojectCliTest.exportsReportBundleAndReportDirForFixturesThroughCli
   MikuprojectCliTest.appliesWbsOptionArgumentsToReportBundleAndWbsXlsx
+  MikuprojectCliTest.keepsReportBundleAndReportDirOutputsEquivalentToStandaloneWbsXlsx
 
 diff summary:
   挙動差分:
-    現時点で大きな差分は見当たらない。Java 側では report bundle の entry 構成と entry 順、dependency / hierarchy fixture の主要内容、bundle 内 `wbs.xlsx` decode、`dependency.xml` の Node upstream bundle ZIP byte-level parity を確認済みである。
+    現時点で大きな差分は見当たらない。Java 側では report bundle の entry 構成と entry 順、dependency / hierarchy fixture の主要内容、bundle 内 `wbs.xlsx` decode、`dependency.xml` の Node upstream bundle ZIP byte-level parity を確認済みである。加えて CLI 保守回帰で、dependency fixture に対する report bundle zip と report dir の entry 名 / entry bytes、および standalone `export-wbs-xlsx` と report 同梱 `wbs.xlsx` の byte 一致を固定した。
   命名差分:
     Java 側は `CoreApiReport` / `CoreApiReportAdapters` / `CoreApiReportPublic` に分割しているが、`report` 公開面との対応は追跡可能である。
   未移植差分:
@@ -104,9 +272,9 @@ follow-up:
     `vendor/mikuproject/testdata/dependency.xml`
     `vendor/mikuproject/testdata/hierarchy.xml`
   - 次回の確認観点:
-    upstream 側で report bundle entry や option 契約が変わった場合は、Core API と CLI の両方を見直す
+    upstream 側で report bundle entry や option 契約が変わった場合は、Core API と CLI の両方を見直す。特に report dir / bundle / standalone `wbs.xlsx` の同等性が崩れていないかを再確認する
   - `docs/remaining-migration-items.md` への反映:
-    2026-04-20 時点では追加反映なし
+    2026-04-21 時点で report bundle / report dir / standalone `wbs.xlsx` の同等性回帰を反映
 ```
 
 ### 2026-04-20 `vendor/mikuproject/src/ts/core-api-import.ts`
@@ -171,13 +339,14 @@ tests:
   MsProjectAiViewsTest.exportsTaskEditViewWithPredecessorsSuccessorsAndAssignments
   MsProjectAiViewsTest.exportsScopedPhaseDetailAndRejectsInvalidRootUid
   MsProjectAiViewsTest.buildsProjectDraftRequestAndImportsPredecessorMappingFromProjectDraftView
+  MsProjectAiViewsTest.importsProjectDraftViewWithoutTaskDatesUsingProjectStartFallback
   MsProjectAiViewsTest.rejectsInvalidProjectDraftViewReferences
   MikuprojectCliTest.exportsWorkbookJsonAndAiViews
   MikuprojectCliTest.exportsScopedPhaseDetailAndRejectsInvalidRootUidThroughCli
 
 diff summary:
   挙動差分:
-    現時点で大きな差分は見当たらない。Java 側では `project_overview_view` / `phase_detail_view` / `task_edit_view` / `project_draft_request` と scoped phase detail の正常系 / 異常系を確認済みである。
+    現時点で大きな差分は見当たらない。Java 側では `project_overview_view` / `phase_detail_view` / `task_edit_view` / `project_draft_request` と scoped phase detail の正常系 / 異常系を確認済みである。あわせて upstream / Java とも `project_draft_view` import では task ごとの `planned_start` / `planned_finish` を必須にしておらず、欠けた場合は `project.planned_start` / `planned_finish` / current time fallback を使うことを確認した。
   命名差分:
     Java 側は `MsProjectAiViews` と Core API / CLI 導線に分かれるが、view kind と command 名の対応は追跡可能である。
   未移植差分:
@@ -187,13 +356,14 @@ diff summary:
 
 follow-up:
   - 実施した確認:
+    `mvn test -Dtest=MsProjectAiViewsTest`
     `mvn test -Dtest=MsProjectAiViewsTest,MikuprojectCliTest`
   - fixture:
     `vendor/mikuproject/testdata/hierarchy.xml`
   - 次回の確認観点:
-    upstream 側で scoped option や view field が変わった場合は、unit test と CLI export の両方を見直す
+    upstream 側で Agent Skills 向け `project_draft_view` の生成規約が task 日付必須へ変わる、または zero duration 入力への warning 方針が追加された場合は、unit test と CLI export / runtime docs を見直す
   - `docs/remaining-migration-items.md` への反映:
-    2026-04-20 時点では追加反映なし
+    2026-04-21 時点で `project_draft_view` の task 日付 fallback 契約確認を TODO / test mapping に反映
 ```
 
 ### 2026-04-20 `vendor/mikuproject/src/ts/wbs-svg.ts`
@@ -213,6 +383,7 @@ tests:
   WbsSvgTest.exportsDailyAndWeeklySvg
   WbsSvgTest.rendersDependencyConnectorsInDailyAndWeeklySvg
   WbsSvgTest.exportsMonthlyCalendarArchive
+  WbsSvgTest.exportsMonthlyCalendarArchiveForSampleAndFixtureRanges
   WbsSvgTest.exportsDependencyFixtureIntoSvgOutputs
   WbsSvgTest.exportsHierarchyFixtureIntoSvgOutputs
   WbsSvgTest.appliesLabelAndHolidayOptionsToSvgOutputs
@@ -223,7 +394,7 @@ tests:
 
 diff summary:
   挙動差分:
-    現時点で大きな差分は見当たらない。Java 側では daily / weekly / monthly SVG の出力、dependency connector、hierarchy / dependency fixture の主要内容、label / holiday option を確認済みである。
+    現時点で大きな差分は見当たらない。Java 側では daily / weekly / monthly SVG の出力、dependency connector、hierarchy / dependency fixture の主要内容、label / holiday option を確認済みである。加えて monthly calendar が sample / dependency / hierarchy の 3 系統で project range に含まれる月数を出し、`YYYY-MM.svg` file 名と各 SVG 非空を保つことを固定した。
   命名差分:
     Java 側は render / calendar / zip helper に分割しているが、`WbsSvg` 公開面との対応は追跡可能である。
   未移植差分:
@@ -235,12 +406,13 @@ follow-up:
   - 実施した確認:
     `mvn test -Dtest=WbsSvgTest,CoreApiPublicTest,MikuprojectCliTest`
   - fixture:
+    sample project
     `vendor/mikuproject/testdata/dependency.xml`
     `vendor/mikuproject/testdata/hierarchy.xml`
   - 次回の確認観点:
-    upstream 側で label mode、holiday 表示、monthly archive entry 構成が変わった場合は、unit / core API / CLI の 3 層を見直す
+    upstream 側で label mode、holiday 表示、monthly archive entry 構成が変わった場合は、unit / core API / CLI の 3 層を見直す。特に month span と `YYYY-MM.svg` 命名規則が変わっていないかを再確認する
   - `docs/remaining-migration-items.md` への反映:
-    2026-04-20 時点では追加反映なし
+    2026-04-21 時点で monthly calendar の 3 系統 coverage と file 名 / 非空確認を反映
 ```
 
 ### 2026-04-20 `vendor/mikuproject/src/ts/wbs-markdown.ts`
@@ -418,6 +590,47 @@ follow-up:
     2026-04-20 時点では追加反映なし
 ```
 
+### 2026-04-21 `vendor/mikuproject/src/ts/project-patch-json-entities.ts`
+
+```text
+upstream file:
+  vendor/mikuproject/src/ts/project-patch-json-entities.ts
+  vendor/mikuproject/src/ts/project-patch-json-tasks.ts
+
+java classes:
+  jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonEntities
+  jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonTasks
+  jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonCore
+
+tests:
+  ProjectPatchJsonTest.reportsPatchJsonWarningDetailsWithoutMainUi
+  ProjectPatchJsonTasksTest.rejectsDeleteTaskWhenReferencesRemain
+  CoreApiWorkbookTest
+  MikuprojectCliTest
+
+diff summary:
+  挙動差分:
+    `delete_task`, `delete_resource`, `delete_calendar` は Java 側でも upstream と同じく first cut 制限の blocker details を warning message に含めていた。`delete_assignment` は upstream 側に存在するが Java 側 dispatch / 実装が欠けていたため、assignment 削除と `taskUid` / `resourceUid` の changes を追加した。
+  命名差分:
+    Java 側は entity delete 系を `ProjectPatchJsonEntities`、task delete 系を `ProjectPatchJsonTasks` に分けているが、upstream file の責務境界との対応は追跡可能である。
+  未移植差分:
+    現時点で delete 系 warning / changes の顕在差分は記録していない。今後 upstream で blocker detail の形式や delete operation が増えた場合は再確認が必要である。
+  Java 側独自拡張:
+    CLI / Core API 経由の patch JSON 実行は Java 側 wrapper 層として扱う。
+
+follow-up:
+  - 実施した確認:
+    `mvn test -Dtest=ProjectPatchJsonTest,ProjectPatchJsonTasksTest`
+    `mvn test -Dtest=ProjectPatchJsonTest,ProjectPatchJsonTasksTest,CoreApiWorkbookTest,MikuprojectCliTest`
+  - fixture:
+    `vendor/mikuproject/testdata/dependency.xml`
+    `vendor/mikuproject/testdata/hierarchy.xml`
+  - 次回の確認観点:
+    upstream 側で delete 系 operation、warning scope / uid / label、changes の field 名が変わった場合は unit と CLI / Core API wrapper の両方を見直す
+  - `docs/remaining-migration-items.md` への反映:
+    2026-04-21 時点で Project Patch JSON delete 系 warning / changes 補強の確認結果を反映
+```
+
 ### 2026-04-20 `vendor/mikuproject/src/ts/project-xlsx.ts`
 
 ```text
@@ -440,23 +653,25 @@ tests:
 
 diff summary:
   挙動差分:
-    以前は列幅、boolean data validation、boolean option sheet、formula / freezePane 対応が薄かった。Java 側では `formula` / `freezePane` を workbook-like model と OOXML build / parse に追加し、Project XLSX export へ列幅、boolean data validation、boolean option sheet を反映した。
+    以前は列幅、boolean data validation、boolean option sheet、formula / freezePane 対応、editable cell styling、sheet theme、Project sheet の Settings section / merged range が薄かった。Java 側では `formula` / `freezePane` を workbook-like model と OOXML build / parse に追加し、Project XLSX export へ列幅、boolean data validation、boolean option sheet、editable cell styling、sheet theme、Project sheet の Settings section / merged range を反映した。さらに `ExcelIoTest` / `ProjectXlsxTest` で OOXML zip entry、worksheet XML、data validation、freeze pane、主要セル style を確認し、簡略実装へ戻っていないことを保守回帰で固定した。
   命名差分:
     Java 側は export / import に分割しているが、`ProjectXlsx` 公開面との対応は追跡可能である。
   未移植差分:
-    editable cell styling、sheet theme、Project sheet の Settings section / merged range はまだ upstream より薄い。今後 upstream で workbook sheet 構成や import 契約が変わった場合は再確認が必要である。
+    現時点で顕在化している Project XLSX layout の未移植差分は記録していない。今後 upstream で workbook sheet 構成や import 契約が変わった場合は再確認が必要である。
   Java 側独自拡張:
     Core API wrapper や encode/decode 導線は upstream 本体の `project-xlsx.ts` ではなく、Java 側の wrapper 層として扱う。
 
 follow-up:
   - 実施した確認:
-    `mvn test -Dtest=ProjectXlsxTest,ExcelIoTest,MikuprojectNodeParityTest`
+    `mvn test -Dtest=ProjectXlsxTest,ExcelIoTest`
+    `mvn test -Dtest=ProjectWorkbookJsonTest,ProjectXlsxTest,CoreApiWorkbookTest`
+    `mvn test`
   - fixture:
     `vendor/mikuproject/testdata/hierarchy.xml`
   - 次回の確認観点:
-    upstream 側で workbook sheet 構成、editable field styling、sheet theme、round-trip 契約が変わった場合は、unit と Core API wrapper の両方を見直す
+    upstream 側で workbook sheet 構成、editable field styling、sheet theme、round-trip 契約が変わった場合は、unit と Core API wrapper の両方を見直す。特に OOXML entry 構成、worksheet XML、style / validation / freezePane 契約が崩れていないかを再確認する
   - `docs/remaining-migration-items.md` への反映:
-    2026-04-21 時点で report directory byte-level parity と Project XLSX layout 補強の現在地を反映
+    2026-04-21 時点で report directory byte-level parity、Project XLSX layout 補強、OOXML 回帰テスト根拠を反映
 ```
 
 ### 2026-04-20 `vendor/mikuproject/src/ts/core-api-workbook-xlsx.ts`
