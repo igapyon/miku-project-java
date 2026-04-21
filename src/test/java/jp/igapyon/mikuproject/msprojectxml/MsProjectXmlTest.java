@@ -1142,6 +1142,42 @@ public class MsProjectXmlTest {
     }
 
     @Test
+    public void validateProjectModelWarnsWhenTasksCollapseIntoSameZeroDurationRange() {
+        MsProjectXml xml = new MsProjectXml();
+        ProjectModel model = new ProjectModel();
+
+        model.project.name = "Collapsed Draft";
+        model.project.startDate = "2026-04-01";
+        model.project.finishDate = "2026-04-01T18:00:00";
+
+        jp.igapyon.mikuproject.model.TaskModel task1 = new jp.igapyon.mikuproject.model.TaskModel();
+        task1.uid = "1";
+        task1.id = "1";
+        task1.name = "Task A";
+        task1.outlineLevel = Integer.valueOf(1);
+        task1.outlineNumber = "1";
+        task1.start = "2026-04-01T09:00:00";
+        task1.finish = "2026-04-01T18:00:00";
+        task1.duration = "PT0H0M0S";
+        model.tasks.add(task1);
+
+        jp.igapyon.mikuproject.model.TaskModel task2 = new jp.igapyon.mikuproject.model.TaskModel();
+        task2.uid = "2";
+        task2.id = "2";
+        task2.name = "Task B";
+        task2.outlineLevel = Integer.valueOf(1);
+        task2.outlineNumber = "2";
+        task2.start = "2026-04-01T09:00:00";
+        task2.finish = "2026-04-01T18:00:00";
+        task2.duration = "PT0H0M0S";
+        model.tasks.add(task2);
+
+        List<ValidationIssue> issues = xml.validateProjectModel(model);
+
+        assertTrue(containsMessage(issues, "複数 task が同一の start / finish に寄った zero duration 入力です"));
+    }
+
+    @Test
     public void ensureDefaultProjectCalendarBuildsJapaneseHolidayExceptions() {
         MsProjectCalendar calendarService = new MsProjectCalendar();
         ProjectModel model = new ProjectModel();

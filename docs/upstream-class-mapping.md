@@ -60,8 +60,16 @@ follow-up:
   - `vendor/mikuproject/src/ts/core-api-report.ts`
 - unified import / external import:
   - `vendor/mikuproject/src/ts/core-api-import.ts`
+- XML public entry:
+  - `vendor/mikuproject/src/ts/msproject-xml.ts`
+- XML codec:
+  - `vendor/mikuproject/src/ts/msproject-codec.ts`
+- model validation:
+  - `vendor/mikuproject/src/ts/msproject-validate.ts`
 - AI view export / import:
   - `vendor/mikuproject/src/ts/msproject-ai-views.ts`
+- Mermaid export:
+  - `vendor/mikuproject/src/ts/msproject-mermaid.ts`
 - workbook JSON:
   - `vendor/mikuproject/src/ts/project-workbook-json.ts`
 - project xlsx:

@@ -32,61 +32,38 @@ public class MsProjectValidate {
             return issues;
         }
 
-        if (isBlank(model.project.name)) {
-            issues.add(issue("warning", "project", "Project Name が空です"));
-        }
-        if (model.project.saveVersion != null && model.project.saveVersion.intValue() < 0) {
-            issues.add(issue("warning", "project", "Project SaveVersion は 0 以上が望ましいです"));
-        }
-        if (isBlank(model.project.startDate)) {
-            issues.add(issue("warning", "project", "Project StartDate が空です"));
-        }
-        if (isBlank(model.project.finishDate)) {
-            issues.add(issue("warning", "project", "Project FinishDate が空です"));
-        }
-        if (model.project.minutesPerDay != null && model.project.minutesPerDay.intValue() <= 0) {
-            issues.add(issue("warning", "project", "Project MinutesPerDay は正の値が望ましいです"));
-        }
-        if (model.project.minutesPerWeek != null && model.project.minutesPerWeek.intValue() <= 0) {
-            issues.add(issue("warning", "project", "Project MinutesPerWeek は正の値が望ましいです"));
-        }
-        if (model.project.daysPerMonth != null && model.project.daysPerMonth.intValue() <= 0) {
-            issues.add(issue("warning", "project", "Project DaysPerMonth は正の値が望ましいです"));
-        }
-        if (model.project.weekStartDay != null
-                && (model.project.weekStartDay.intValue() < 1 || model.project.weekStartDay.intValue() > 7)) {
-            issues.add(issue("warning", "project", "Project WeekStartDay は 1..7 が望ましいです"));
-        }
-        if (model.project.workFormat != null && model.project.workFormat.intValue() < 0) {
-            issues.add(issue("warning", "project", "Project WorkFormat は 0 以上が望ましいです"));
-        }
-        if (model.project.durationFormat != null && model.project.durationFormat.intValue() < 0) {
-            issues.add(issue("warning", "project", "Project DurationFormat は 0 以上が望ましいです"));
-        }
-        if (model.project.currencyDigits != null && model.project.currencyDigits.intValue() < 0) {
-            issues.add(issue("warning", "project", "Project CurrencyDigits は 0 以上が望ましいです"));
-        }
-        if (model.project.currencySymbolPosition != null && model.project.currencySymbolPosition.intValue() < 0) {
-            issues.add(issue("warning", "project", "Project CurrencySymbolPosition は 0 以上が望ましいです"));
-        }
+        addWarningIfBlank(issues, "project", model.project.name, "Project Name が空です");
+        addWarningIfNegativeInteger(issues, "project", model.project.saveVersion, "Project SaveVersion は 0 以上が望ましいです");
+        addWarningIfBlank(issues, "project", model.project.startDate, "Project StartDate が空です");
+        addWarningIfBlank(issues, "project", model.project.finishDate, "Project FinishDate が空です");
+        addWarningIfNonPositiveInteger(issues, "project", model.project.minutesPerDay,
+                "Project MinutesPerDay は正の値が望ましいです");
+        addWarningIfNonPositiveInteger(issues, "project", model.project.minutesPerWeek,
+                "Project MinutesPerWeek は正の値が望ましいです");
+        addWarningIfNonPositiveInteger(issues, "project", model.project.daysPerMonth,
+                "Project DaysPerMonth は正の値が望ましいです");
+        addWarningIfOutOfRangeInteger(issues, "project", model.project.weekStartDay, 1, 7,
+                "Project WeekStartDay は 1..7 が望ましいです");
+        addWarningIfNegativeInteger(issues, "project", model.project.workFormat, "Project WorkFormat は 0 以上が望ましいです");
+        addWarningIfNegativeInteger(issues, "project", model.project.durationFormat,
+                "Project DurationFormat は 0 以上が望ましいです");
+        addWarningIfNegativeInteger(issues, "project", model.project.currencyDigits,
+                "Project CurrencyDigits は 0 以上が望ましいです");
+        addWarningIfNegativeInteger(issues, "project", model.project.currencySymbolPosition,
+                "Project CurrencySymbolPosition は 0 以上が望ましいです");
         if (!isBlank(model.project.fyStartDate) && helpers.parseDateValue(model.project.fyStartDate) == null) {
             issues.add(issue("warning", "project", "Project FYStartDate の日付形式が解釈できません"));
         }
-        if (model.project.criticalSlackLimit != null && model.project.criticalSlackLimit.intValue() < 0) {
-            issues.add(issue("warning", "project", "Project CriticalSlackLimit は 0 以上が望ましいです"));
-        }
-        if (model.project.defaultTaskType != null && model.project.defaultTaskType.intValue() < 0) {
-            issues.add(issue("warning", "project", "Project DefaultTaskType は 0 以上が望ましいです"));
-        }
-        if (model.project.defaultFixedCostAccrual != null && model.project.defaultFixedCostAccrual.intValue() < 0) {
-            issues.add(issue("warning", "project", "Project DefaultFixedCostAccrual は 0 以上が望ましいです"));
-        }
-        if (model.project.defaultTaskEVMethod != null && model.project.defaultTaskEVMethod.intValue() < 0) {
-            issues.add(issue("warning", "project", "Project DefaultTaskEVMethod は 0 以上が望ましいです"));
-        }
-        if (model.project.newTaskStartDate != null && model.project.newTaskStartDate.intValue() < 0) {
-            issues.add(issue("warning", "project", "Project NewTaskStartDate は 0 以上が望ましいです"));
-        }
+        addWarningIfNegativeInteger(issues, "project", model.project.criticalSlackLimit,
+                "Project CriticalSlackLimit は 0 以上が望ましいです");
+        addWarningIfNegativeInteger(issues, "project", model.project.defaultTaskType,
+                "Project DefaultTaskType は 0 以上が望ましいです");
+        addWarningIfNegativeInteger(issues, "project", model.project.defaultFixedCostAccrual,
+                "Project DefaultFixedCostAccrual は 0 以上が望ましいです");
+        addWarningIfNegativeInteger(issues, "project", model.project.defaultTaskEVMethod,
+                "Project DefaultTaskEVMethod は 0 以上が望ましいです");
+        addWarningIfNegativeInteger(issues, "project", model.project.newTaskStartDate,
+                "Project NewTaskStartDate は 0 以上が望ましいです");
         for (jp.igapyon.mikuproject.model.OutlineCodeModel outlineCode : model.project.outlineCodes) {
             if (isBlank(outlineCode.fieldID) && isBlank(outlineCode.fieldName)) {
                 issues.add(issue("warning", "project", "Project OutlineCode は FieldID または FieldName を持つことが望ましいです"));
@@ -224,79 +201,31 @@ public class MsProjectValidate {
                                         + helpers.describeTask(task)));
                     }
                 }
-                if (task.percentComplete != null && (task.percentComplete.intValue() < 0 || task.percentComplete.intValue() > 100)) {
-                    issues.add(issue("warning", "tasks",
-                            "Task PercentComplete が 0..100 の範囲外です: " + helpers.describeTask(task)));
-                }
-                if (task.percentWorkComplete != null
-                        && (task.percentWorkComplete.intValue() < 0 || task.percentWorkComplete.intValue() > 100)) {
-                    issues.add(issue("warning", "tasks",
-                            "Task PercentWorkComplete が 0..100 の範囲外です: " + helpers.describeTask(task)));
-                }
-                if (task.type != null && task.type.intValue() < 0) {
-                    issues.add(issue("warning", "tasks", "Task Type は 0 以上が望ましいです: " + helpers.describeTask(task)));
-                }
-                if (task.priority != null
-                        && (task.priority.intValue() < 0 || task.priority.intValue() > 1000)) {
-                    issues.add(issue("warning", "tasks",
-                            "Task Priority が 0..1000 の範囲外です: " + helpers.describeTask(task)));
-                }
-                if (task.constraintType != null && task.constraintType.intValue() < 0) {
-                    issues.add(issue("warning", "tasks",
-                            "Task ConstraintType は 0 以上が望ましいです: " + helpers.describeTask(task)));
-                }
-                if (task.cost != null && task.cost.doubleValue() < 0.0d) {
-                    issues.add(issue("warning", "tasks", "Task Cost が負値です: " + helpers.describeTask(task)));
-                }
-                if (task.actualCost != null && task.actualCost.doubleValue() < 0.0d) {
-                    issues.add(issue("warning", "tasks", "Task ActualCost が負値です: " + helpers.describeTask(task)));
-                }
-                if (task.remainingCost != null && task.remainingCost.doubleValue() < 0.0d) {
-                    issues.add(issue("warning", "tasks", "Task RemainingCost が負値です: " + helpers.describeTask(task)));
-                }
-                if (compareDateTime(task.start, task.finish) > 0) {
-                    issues.add(issue("warning", "tasks", "Task Start が Finish より後です: " + helpers.describeTask(task)));
-                }
-                if (compareDateTime(task.finish, task.deadline) > 0) {
-                    issues.add(issue("warning", "tasks", "Task Finish が Deadline より後です: " + helpers.describeTask(task)));
-                }
-                if (compareDateTime(task.actualStart, task.actualFinish) > 0) {
-                    issues.add(issue("warning", "tasks",
-                            "Task ActualStart が ActualFinish より後です: " + helpers.describeTask(task)));
-                }
+                String taskLabel = helpers.describeTask(task);
+                addWarningIfOutOfRangeInteger(issues, "tasks", task.percentComplete, 0, 100,
+                        "Task PercentComplete が 0..100 の範囲外です: " + taskLabel);
+                addWarningIfOutOfRangeInteger(issues, "tasks", task.percentWorkComplete, 0, 100,
+                        "Task PercentWorkComplete が 0..100 の範囲外です: " + taskLabel);
+                addWarningIfNegativeInteger(issues, "tasks", task.type, "Task Type は 0 以上が望ましいです: " + taskLabel);
+                addWarningIfOutOfRangeInteger(issues, "tasks", task.priority, 0, 1000,
+                        "Task Priority が 0..1000 の範囲外です: " + taskLabel);
+                addWarningIfNegativeInteger(issues, "tasks", task.constraintType,
+                        "Task ConstraintType は 0 以上が望ましいです: " + taskLabel);
+                addWarningIfNegativeDouble(issues, "tasks", task.cost, "Task Cost が負値です: " + taskLabel);
+                addWarningIfNegativeDouble(issues, "tasks", task.actualCost, "Task ActualCost が負値です: " + taskLabel);
+                addWarningIfNegativeDouble(issues, "tasks", task.remainingCost, "Task RemainingCost が負値です: " + taskLabel);
+                addWarningIfDateAfter(issues, "tasks", task.start, task.finish, "Task Start が Finish より後です: " + taskLabel);
+                addWarningIfDateAfter(issues, "tasks", task.finish, task.deadline, "Task Finish が Deadline より後です: " + taskLabel);
+                addWarningIfDateAfter(issues, "tasks", task.actualStart, task.actualFinish,
+                        "Task ActualStart が ActualFinish より後です: " + taskLabel);
                 for (jp.igapyon.mikuproject.model.TaskExtendedAttributeModel attribute : task.extendedAttributes) {
                     if (isBlank(attribute.fieldID)) {
                         issues.add(issue("warning", "tasks",
                                 "Task ExtendedAttribute に FieldID がありません: " + helpers.describeTask(task)));
                     }
                 }
-                for (jp.igapyon.mikuproject.model.TaskBaselineModel baseline : task.baselines) {
-                    if (baseline.number != null && baseline.number.intValue() < 0) {
-                        issues.add(issue("warning", "tasks",
-                                "Task Baseline Number は 0 以上が望ましいです: " + helpers.describeTask(task)));
-                    }
-                    if (baseline.cost != null && baseline.cost.doubleValue() < 0.0d) {
-                        issues.add(issue("warning", "tasks",
-                                "Task Baseline Cost が負値です: " + helpers.describeTask(task)));
-                    }
-                    if (compareDateTime(baseline.start, baseline.finish) > 0) {
-                        issues.add(issue("warning", "tasks",
-                                "Task Baseline Start が Finish より後です: " + helpers.describeTask(task)));
-                    }
-                }
-                for (jp.igapyon.mikuproject.model.TaskTimephasedDataModel timephasedData : task.timephasedData) {
-                    if (timephasedData.type != null && timephasedData.type.intValue() < 0) {
-                        issues.add(issue("warning", "tasks",
-                                "Task TimephasedData Type は 0 以上が望ましいです: " + helpers.describeTask(task)));
-                    }
-                    if (timephasedData.unit != null && timephasedData.unit.intValue() < 0) {
-                        issues.add(issue("warning", "tasks", "Task TimephasedData Unit は 0 以上が望ましいです: " + blankSafe(task.uid)));
-                    }
-                    if (compareDateTime(timephasedData.start, timephasedData.finish) > 0) {
-                        issues.add(issue("warning", "tasks",
-                                "Task TimephasedData Start が Finish より後です: " + blankSafe(task.uid)));
-                    }
-                }
+                validateTaskBaselines(issues, task, taskLabel);
+                validateTaskTimephasedData(issues, task);
                 if (!isBlank(task.calendarUID) && !calendarUids.contains(task.calendarUID)) {
                     issues.add(issue("warning", "tasks",
                             "Task CalendarUID が既存 Calendar を指していません: " + helpers.describeTask(task)));
@@ -316,6 +245,13 @@ public class MsProjectValidate {
                                 + helpers.describeTask(taskOrderIssue.current) + " (直前: "
                                 + helpers.describeTask(taskOrderIssue.previous) + ")"));
             }
+            ZeroDurationClusterIssue zeroDurationClusterIssue = detectZeroDurationClusterIssue(model.tasks);
+            if (zeroDurationClusterIssue != null) {
+                issues.add(issue("warning", "tasks",
+                        "複数 task が同一の start / finish に寄った zero duration 入力です。工程が横方向に展開されない可能性があります: tasks="
+                                + zeroDurationClusterIssue.taskCount + ", start=" + blankSafe(zeroDurationClusterIssue.start)
+                                + ", finish=" + blankSafe(zeroDurationClusterIssue.finish)));
+            }
         }
 
         if (model.resources != null) {
@@ -333,79 +269,34 @@ public class MsProjectValidate {
                     issues.add(issue("warning", "resources",
                             "Resource Name が空です: " + helpers.describeResource(resource)));
                 }
-                if (resource.maxUnits != null && resource.maxUnits.doubleValue() < 0.0d) {
-                    issues.add(issue("warning", "resources",
-                            "Resource MaxUnits は 0 以上が望ましいです: " + helpers.describeResource(resource)));
-                }
-                if (resource.type != null && resource.type.intValue() < 0) {
-                    issues.add(issue("warning", "resources",
-                            "Resource Type は 0 以上が望ましいです: " + helpers.describeResource(resource)));
-                }
-                if (resource.workGroup != null && resource.workGroup.intValue() < 0) {
-                    issues.add(issue("warning", "resources",
-                            "Resource WorkGroup は 0 以上が望ましいです: " + helpers.describeResource(resource)));
-                }
-                if (resource.standardRateFormat != null && resource.standardRateFormat.intValue() < 0) {
-                    issues.add(issue("warning", "resources",
-                            "Resource StandardRateFormat は 0 以上が望ましいです: " + helpers.describeResource(resource)));
-                }
-                if (resource.overtimeRateFormat != null && resource.overtimeRateFormat.intValue() < 0) {
-                    issues.add(issue("warning", "resources",
-                            "Resource OvertimeRateFormat は 0 以上が望ましいです: " + helpers.describeResource(resource)));
-                }
-                if (resource.costPerUse != null && resource.costPerUse.doubleValue() < 0.0d) {
-                    issues.add(issue("warning", "resources",
-                            "Resource CostPerUse は 0 以上が望ましいです: " + helpers.describeResource(resource)));
-                }
-                if (resource.cost != null && resource.cost.doubleValue() < 0.0d) {
-                    issues.add(issue("warning", "resources", "Resource Cost が負値です: " + helpers.describeResource(resource)));
-                }
-                if (resource.actualCost != null && resource.actualCost.doubleValue() < 0.0d) {
-                    issues.add(issue("warning", "resources",
-                            "Resource ActualCost が負値です: " + helpers.describeResource(resource)));
-                }
-                if (resource.remainingCost != null && resource.remainingCost.doubleValue() < 0.0d) {
-                    issues.add(issue("warning", "resources",
-                            "Resource RemainingCost が負値です: " + helpers.describeResource(resource)));
-                }
-                if (resource.percentWorkComplete != null
-                        && (resource.percentWorkComplete.intValue() < 0 || resource.percentWorkComplete.intValue() > 100)) {
-                    issues.add(issue("warning", "resources",
-                            "Resource PercentWorkComplete が 0..100 の範囲外です: " + helpers.describeResource(resource)));
-                }
+                String resourceLabel = helpers.describeResource(resource);
+                addWarningIfNegativeDouble(issues, "resources", resource.maxUnits,
+                        "Resource MaxUnits は 0 以上が望ましいです: " + resourceLabel);
+                addWarningIfNegativeInteger(issues, "resources", resource.type,
+                        "Resource Type は 0 以上が望ましいです: " + resourceLabel);
+                addWarningIfNegativeInteger(issues, "resources", resource.workGroup,
+                        "Resource WorkGroup は 0 以上が望ましいです: " + resourceLabel);
+                addWarningIfNegativeInteger(issues, "resources", resource.standardRateFormat,
+                        "Resource StandardRateFormat は 0 以上が望ましいです: " + resourceLabel);
+                addWarningIfNegativeInteger(issues, "resources", resource.overtimeRateFormat,
+                        "Resource OvertimeRateFormat は 0 以上が望ましいです: " + resourceLabel);
+                addWarningIfNegativeDouble(issues, "resources", resource.costPerUse,
+                        "Resource CostPerUse は 0 以上が望ましいです: " + resourceLabel);
+                addWarningIfNegativeDouble(issues, "resources", resource.cost, "Resource Cost が負値です: " + resourceLabel);
+                addWarningIfNegativeDouble(issues, "resources", resource.actualCost,
+                        "Resource ActualCost が負値です: " + resourceLabel);
+                addWarningIfNegativeDouble(issues, "resources", resource.remainingCost,
+                        "Resource RemainingCost が負値です: " + resourceLabel);
+                addWarningIfOutOfRangeInteger(issues, "resources", resource.percentWorkComplete, 0, 100,
+                        "Resource PercentWorkComplete が 0..100 の範囲外です: " + resourceLabel);
                 for (jp.igapyon.mikuproject.model.ResourceExtendedAttributeModel attribute : resource.extendedAttributes) {
                     if (isBlank(attribute.fieldID)) {
                         issues.add(issue("warning", "resources",
                                 "Resource ExtendedAttribute に FieldID がありません: " + helpers.describeResource(resource)));
                     }
                 }
-                for (jp.igapyon.mikuproject.model.ResourceBaselineModel baseline : resource.baselines) {
-                    if (baseline.number != null && baseline.number.intValue() < 0) {
-                        issues.add(issue("warning", "resources",
-                                "Resource Baseline Number は 0 以上が望ましいです: " + helpers.describeResource(resource)));
-                    }
-                    if (baseline.cost != null && baseline.cost.doubleValue() < 0.0d) {
-                        issues.add(issue("warning", "resources",
-                                "Resource Baseline Cost が負値です: " + helpers.describeResource(resource)));
-                    }
-                    if (compareDateTime(baseline.start, baseline.finish) > 0) {
-                        issues.add(issue("warning", "resources",
-                                "Resource Baseline Start が Finish より後です: " + helpers.describeResource(resource)));
-                    }
-                }
-                for (jp.igapyon.mikuproject.model.ResourceTimephasedDataModel timephasedData : resource.timephasedData) {
-                    if (timephasedData.type != null && timephasedData.type.intValue() < 0) {
-                        issues.add(issue("warning", "resources",
-                                "Resource TimephasedData Type は 0 以上が望ましいです: " + helpers.describeResource(resource)));
-                    }
-                    if (timephasedData.unit != null && timephasedData.unit.intValue() < 0) {
-                        issues.add(issue("warning", "resources", "Resource TimephasedData Unit は 0 以上が望ましいです: " + blankSafe(resource.uid)));
-                    }
-                    if (compareDateTime(timephasedData.start, timephasedData.finish) > 0) {
-                        issues.add(issue("warning", "resources",
-                                "Resource TimephasedData Start が Finish より後です: " + blankSafe(resource.uid)));
-                    }
-                }
+                validateResourceBaselines(issues, resource, resourceLabel);
+                validateResourceTimephasedData(issues, resource);
                 if (!isBlank(resource.calendarUID) && !calendarUids.contains(resource.calendarUID)) {
                     issues.add(issue("warning", "resources",
                             "Resource CalendarUID が既存 Calendar を指していません: " + helpers.describeResource(resource)));
@@ -444,53 +335,30 @@ public class MsProjectValidate {
                     issues.add(issue("warning", "assignments",
                             "Assignment Finish が空です: " + helpers.describeAssignment(assignment)));
                 }
-                if (compareDateTime(assignment.start, assignment.finish) > 0) {
-                    issues.add(issue("warning", "assignments",
-                            "Assignment Start が Finish より後です: " + helpers.describeAssignment(assignment)));
-                }
+                String assignmentLabel = helpers.describeAssignment(assignment);
+                addWarningIfDateAfter(issues, "assignments", assignment.start, assignment.finish,
+                        "Assignment Start が Finish より後です: " + assignmentLabel);
 
-                if (assignment.units != null && assignment.units.doubleValue() < 0.0d) {
-                    issues.add(issue("warning", "assignments",
-                            "Assignment Units が負値です: " + helpers.describeAssignment(assignment)));
-                }
-                if (assignment.workContour != null && assignment.workContour.intValue() < 0) {
-                    issues.add(issue("warning", "assignments",
-                            "Assignment WorkContour は 0 以上が望ましいです: " + helpers.describeAssignment(assignment)));
-                }
-                if (assignment.cost != null && assignment.cost.doubleValue() < 0.0d) {
-                    issues.add(issue("warning", "assignments",
-                            "Assignment Cost が負値です: " + helpers.describeAssignment(assignment)));
-                }
-                if (assignment.actualCost != null && assignment.actualCost.doubleValue() < 0.0d) {
-                    issues.add(issue("warning", "assignments",
-                            "Assignment ActualCost が負値です: " + helpers.describeAssignment(assignment)));
-                }
-                if (assignment.remainingCost != null && assignment.remainingCost.doubleValue() < 0.0d) {
-                    issues.add(issue("warning", "assignments",
-                            "Assignment RemainingCost が負値です: " + helpers.describeAssignment(assignment)));
-                }
-                if (assignment.percentWorkComplete != null
-                        && (assignment.percentWorkComplete.intValue() < 0 || assignment.percentWorkComplete.intValue() > 100)) {
-                    issues.add(issue("warning", "assignments",
-                            "Assignment PercentWorkComplete が 0..100 の範囲外です: "
-                                    + helpers.describeAssignment(assignment)));
-                }
-                if (assignment.overtimeWork != null && assignment.overtimeWork.isEmpty()) {
-                    issues.add(issue("warning", "assignments",
-                            "Assignment OvertimeWork が空です: " + helpers.describeAssignment(assignment)));
-                }
-                if (assignment.actualOvertimeWork != null && assignment.actualOvertimeWork.isEmpty()) {
-                    issues.add(issue("warning", "assignments",
-                            "Assignment ActualOvertimeWork が空です: " + helpers.describeAssignment(assignment)));
-                }
-                if (assignment.startVariance != null && assignment.startVariance.isEmpty()) {
-                    issues.add(issue("warning", "assignments",
-                            "Assignment StartVariance が空です: " + helpers.describeAssignment(assignment)));
-                }
-                if (assignment.finishVariance != null && assignment.finishVariance.isEmpty()) {
-                    issues.add(issue("warning", "assignments",
-                            "Assignment FinishVariance が空です: " + helpers.describeAssignment(assignment)));
-                }
+                addWarningIfNegativeDouble(issues, "assignments", assignment.units,
+                        "Assignment Units が負値です: " + assignmentLabel);
+                addWarningIfNegativeInteger(issues, "assignments", assignment.workContour,
+                        "Assignment WorkContour は 0 以上が望ましいです: " + assignmentLabel);
+                addWarningIfNegativeDouble(issues, "assignments", assignment.cost,
+                        "Assignment Cost が負値です: " + assignmentLabel);
+                addWarningIfNegativeDouble(issues, "assignments", assignment.actualCost,
+                        "Assignment ActualCost が負値です: " + assignmentLabel);
+                addWarningIfNegativeDouble(issues, "assignments", assignment.remainingCost,
+                        "Assignment RemainingCost が負値です: " + assignmentLabel);
+                addWarningIfOutOfRangeInteger(issues, "assignments", assignment.percentWorkComplete, 0, 100,
+                        "Assignment PercentWorkComplete が 0..100 の範囲外です: " + assignmentLabel);
+                addWarningIfEmptyPresent(issues, "assignments", assignment.overtimeWork,
+                        "Assignment OvertimeWork が空です: " + assignmentLabel);
+                addWarningIfEmptyPresent(issues, "assignments", assignment.actualOvertimeWork,
+                        "Assignment ActualOvertimeWork が空です: " + assignmentLabel);
+                addWarningIfEmptyPresent(issues, "assignments", assignment.startVariance,
+                        "Assignment StartVariance が空です: " + assignmentLabel);
+                addWarningIfEmptyPresent(issues, "assignments", assignment.finishVariance,
+                        "Assignment FinishVariance が空です: " + assignmentLabel);
                 for (jp.igapyon.mikuproject.model.AssignmentExtendedAttributeModel attribute : assignment.extendedAttributes) {
                     if (isBlank(attribute.fieldID)) {
                         issues.add(issue("warning", "assignments",
@@ -498,36 +366,8 @@ public class MsProjectValidate {
                                         + helpers.describeAssignment(assignment)));
                     }
                 }
-                for (jp.igapyon.mikuproject.model.AssignmentBaselineModel baseline : assignment.baselines) {
-                    if (baseline.number != null && baseline.number.intValue() < 0) {
-                        issues.add(issue("warning", "assignments",
-                                "Assignment Baseline Number は 0 以上が望ましいです: "
-                                        + helpers.describeAssignment(assignment)));
-                    }
-                    if (baseline.cost != null && baseline.cost.doubleValue() < 0.0d) {
-                        issues.add(issue("warning", "assignments",
-                                "Assignment Baseline Cost が負値です: " + helpers.describeAssignment(assignment)));
-                    }
-                    if (compareDateTime(baseline.start, baseline.finish) > 0) {
-                        issues.add(issue("warning", "assignments",
-                                "Assignment Baseline Start が Finish より後です: "
-                                        + helpers.describeAssignment(assignment)));
-                    }
-                }
-                for (jp.igapyon.mikuproject.model.AssignmentTimephasedDataModel timephasedData : assignment.timephasedData) {
-                    if (timephasedData.type != null && timephasedData.type.intValue() < 0) {
-                        issues.add(issue("warning", "assignments",
-                                "Assignment TimephasedData Type は 0 以上が望ましいです: "
-                                        + helpers.describeAssignment(assignment)));
-                    }
-                    if (timephasedData.unit != null && timephasedData.unit.intValue() < 0) {
-                        issues.add(issue("warning", "assignments", "Assignment TimephasedData Unit は 0 以上が望ましいです: " + blankSafe(assignment.uid)));
-                    }
-                    if (compareDateTime(timephasedData.start, timephasedData.finish) > 0) {
-                        issues.add(issue("warning", "assignments",
-                                "Assignment TimephasedData Start が Finish より後です: " + blankSafe(assignment.uid)));
-                    }
-                }
+                validateAssignmentBaselines(issues, assignment, assignmentLabel);
+                validateAssignmentTimephasedData(issues, assignment);
             }
         }
 
@@ -540,6 +380,49 @@ public class MsProjectValidate {
         issue.scope = scope;
         issue.message = message;
         return issue;
+    }
+
+    private void addWarningIfBlank(List<ValidationIssue> issues, String scope, String value, String message) {
+        if (isBlank(value)) {
+            issues.add(issue("warning", scope, message));
+        }
+    }
+
+    private void addWarningIfNegativeInteger(List<ValidationIssue> issues, String scope, Integer value, String message) {
+        if (value != null && value.intValue() < 0) {
+            issues.add(issue("warning", scope, message));
+        }
+    }
+
+    private void addWarningIfNonPositiveInteger(List<ValidationIssue> issues, String scope, Integer value, String message) {
+        if (value != null && value.intValue() <= 0) {
+            issues.add(issue("warning", scope, message));
+        }
+    }
+
+    private void addWarningIfOutOfRangeInteger(List<ValidationIssue> issues, String scope, Integer value, int min, int max,
+            String message) {
+        if (value != null && (value.intValue() < min || value.intValue() > max)) {
+            issues.add(issue("warning", scope, message));
+        }
+    }
+
+    private void addWarningIfNegativeDouble(List<ValidationIssue> issues, String scope, Double value, String message) {
+        if (value != null && value.doubleValue() < 0.0d) {
+            issues.add(issue("warning", scope, message));
+        }
+    }
+
+    private void addWarningIfDateAfter(List<ValidationIssue> issues, String scope, String left, String right, String message) {
+        if (compareDateTime(left, right) > 0) {
+            issues.add(issue("warning", scope, message));
+        }
+    }
+
+    private void addWarningIfEmptyPresent(List<ValidationIssue> issues, String scope, String value, String message) {
+        if (value != null && value.isEmpty()) {
+            issues.add(issue("warning", scope, message));
+        }
     }
 
     private boolean isBlank(String value) {
@@ -570,8 +453,109 @@ public class MsProjectValidate {
         return issue;
     }
 
+    private ZeroDurationClusterIssue detectZeroDurationClusterIssue(List<TaskModel> tasks) {
+        ZeroDurationClusterIssue issue = new ZeroDurationClusterIssue();
+        for (TaskModel task : tasks) {
+            if (task == null || helpers.isPlaceholderUid(task.uid) || task.summary || task.milestone) {
+                continue;
+            }
+            if (!isZeroDuration(task.duration) || isBlank(task.start) || isBlank(task.finish)) {
+                return null;
+            }
+            if (issue.taskCount == 0) {
+                issue.start = task.start;
+                issue.finish = task.finish;
+            } else if (!issue.start.equals(task.start) || !issue.finish.equals(task.finish)) {
+                return null;
+            }
+            issue.taskCount++;
+        }
+        return issue.taskCount >= 2 ? issue : null;
+    }
+
+    private boolean isZeroDuration(String duration) {
+        if (isBlank(duration)) {
+            return false;
+        }
+        String text = duration.trim();
+        return "PT0H0M0S".equals(text) || "PT0S".equals(text) || "PT0M0S".equals(text) || "PT0H".equals(text)
+                || "PT0H0M".equals(text);
+    }
+
+    private void validateTaskBaselines(List<ValidationIssue> issues, TaskModel task, String taskLabel) {
+        for (jp.igapyon.mikuproject.model.TaskBaselineModel baseline : task.baselines) {
+            addWarningIfNegativeInteger(issues, "tasks", baseline.number,
+                    "Task Baseline Number は 0 以上が望ましいです: " + taskLabel);
+            addWarningIfNegativeDouble(issues, "tasks", baseline.cost,
+                    "Task Baseline Cost が負値です: " + taskLabel);
+            addWarningIfDateAfter(issues, "tasks", baseline.start, baseline.finish,
+                    "Task Baseline Start が Finish より後です: " + taskLabel);
+        }
+    }
+
+    private void validateTaskTimephasedData(List<ValidationIssue> issues, TaskModel task) {
+        for (jp.igapyon.mikuproject.model.TaskTimephasedDataModel timephasedData : task.timephasedData) {
+            addWarningIfNegativeInteger(issues, "tasks", timephasedData.type,
+                    "Task TimephasedData Type は 0 以上が望ましいです: " + helpers.describeTask(task));
+            addWarningIfNegativeInteger(issues, "tasks", timephasedData.unit,
+                    "Task TimephasedData Unit は 0 以上が望ましいです: " + blankSafe(task.uid));
+            addWarningIfDateAfter(issues, "tasks", timephasedData.start, timephasedData.finish,
+                    "Task TimephasedData Start が Finish より後です: " + blankSafe(task.uid));
+        }
+    }
+
+    private void validateResourceBaselines(List<ValidationIssue> issues, ResourceModel resource, String resourceLabel) {
+        for (jp.igapyon.mikuproject.model.ResourceBaselineModel baseline : resource.baselines) {
+            addWarningIfNegativeInteger(issues, "resources", baseline.number,
+                    "Resource Baseline Number は 0 以上が望ましいです: " + resourceLabel);
+            addWarningIfNegativeDouble(issues, "resources", baseline.cost,
+                    "Resource Baseline Cost が負値です: " + resourceLabel);
+            addWarningIfDateAfter(issues, "resources", baseline.start, baseline.finish,
+                    "Resource Baseline Start が Finish より後です: " + resourceLabel);
+        }
+    }
+
+    private void validateResourceTimephasedData(List<ValidationIssue> issues, ResourceModel resource) {
+        for (jp.igapyon.mikuproject.model.ResourceTimephasedDataModel timephasedData : resource.timephasedData) {
+            addWarningIfNegativeInteger(issues, "resources", timephasedData.type,
+                    "Resource TimephasedData Type は 0 以上が望ましいです: " + helpers.describeResource(resource));
+            addWarningIfNegativeInteger(issues, "resources", timephasedData.unit,
+                    "Resource TimephasedData Unit は 0 以上が望ましいです: " + blankSafe(resource.uid));
+            addWarningIfDateAfter(issues, "resources", timephasedData.start, timephasedData.finish,
+                    "Resource TimephasedData Start が Finish より後です: " + blankSafe(resource.uid));
+        }
+    }
+
+    private void validateAssignmentBaselines(List<ValidationIssue> issues, AssignmentModel assignment, String assignmentLabel) {
+        for (jp.igapyon.mikuproject.model.AssignmentBaselineModel baseline : assignment.baselines) {
+            addWarningIfNegativeInteger(issues, "assignments", baseline.number,
+                    "Assignment Baseline Number は 0 以上が望ましいです: " + assignmentLabel);
+            addWarningIfNegativeDouble(issues, "assignments", baseline.cost,
+                    "Assignment Baseline Cost が負値です: " + assignmentLabel);
+            addWarningIfDateAfter(issues, "assignments", baseline.start, baseline.finish,
+                    "Assignment Baseline Start が Finish より後です: " + assignmentLabel);
+        }
+    }
+
+    private void validateAssignmentTimephasedData(List<ValidationIssue> issues, AssignmentModel assignment) {
+        for (jp.igapyon.mikuproject.model.AssignmentTimephasedDataModel timephasedData : assignment.timephasedData) {
+            addWarningIfNegativeInteger(issues, "assignments", timephasedData.type,
+                    "Assignment TimephasedData Type は 0 以上が望ましいです: " + helpers.describeAssignment(assignment));
+            addWarningIfNegativeInteger(issues, "assignments", timephasedData.unit,
+                    "Assignment TimephasedData Unit は 0 以上が望ましいです: " + blankSafe(assignment.uid));
+            addWarningIfDateAfter(issues, "assignments", timephasedData.start, timephasedData.finish,
+                    "Assignment TimephasedData Start が Finish より後です: " + blankSafe(assignment.uid));
+        }
+    }
+
     private static class TaskOrderIssue {
         private TaskModel previous;
         private TaskModel current;
+    }
+
+    private static class ZeroDurationClusterIssue {
+        private int taskCount;
+        private String start;
+        private String finish;
     }
 }

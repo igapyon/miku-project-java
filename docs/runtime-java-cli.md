@@ -82,6 +82,8 @@ daily / weekly SVG は、モデル内の最も早い task 開始日を timeline 
 ただし、入力 model の全 task が同一日時かつ zero duration の場合、出力 SVG は有効でも全 task bar が同じ日付位置へ縦に並ぶ。
 2泊3日など期間を持つ計画として見せたい場合は、AI JSON / workbook JSON / XML の段階で task の `Start` / `Finish` または `planned_start` / `planned_finish` に実日程を入れる。
 
+`validate-xml` では、placeholder / summary / milestone を除く複数 task が同一 `start` / `finish` かつ zero duration に潰れている場合、この入力品質リスクを warning として報告する。
+
 ## 最小 entrypoint から全機能 entrypoint への段取り
 
 Java CLI は、`validate-xml` と主要 export だけを持つ最小 entrypoint から開始したが、現在は workbook / patch / AI JSON / xlsx / batch command まで含む実用的な entrypoint へ広がっている。

@@ -6,6 +6,8 @@
 
 ここでの整理は、実装量の厳密な測定ではなく、upstream file 単位での進捗把握を目的とする。
 
+運用上は、この文書を「確認結果と通過ログの正本」とし、`TODO.md` 側は今後の判断や完了条件を短く持つ。
+
 前提として、Java 版は Java-first の再設計を先に行うのではなく、Node.js 版をできるだけ追跡可能な形で移す `straight conversion` を原則とする。
 構造改善や Java 向け再整理は、その対応 upstream 機能が Java 側へ移されたあとに扱う。
 
@@ -203,6 +205,18 @@ upstream 更新追随では、カテゴリ単位ではなく `upstream file -> J
 - 2026-04-20 時点では `mvn test -Dtest=ProjectWorkbookJsonTest,ProjectXlsxTest,CoreApiWorkbookTest` も `20` tests, `0` failures で通っている
 - 2026-04-20 時点では `mvn test -Dtest=CoreApiImportTest,MsProjectAiViewsTest` も `16` tests, `0` failures で通っている
 - 2026-04-20 時点では、保守回帰の旧単位として `mvn test -Dtest=WbsMarkdownTest,WbsSvgTest,WbsXlsxTest,CoreApiPublicTest,CoreApiImportTest,MsProjectAiViewsTest,MikuprojectCliTest` が `74` tests, `0` failures で通っている
+- 2026-04-21 時点では、Project XLSX layout 補強後に `mvn test -Dtest=ProjectXlsxTest,ExcelIoTest` が `12` tests, `0` failures、`mvn test -Dtest=ProjectWorkbookJsonTest,ProjectXlsxTest,CoreApiWorkbookTest` が `20` tests, `0` failures、`mvn test` が `143` tests, `0` failures, `3` skipped で通っている
+- 2026-04-21 時点では、XLSX / OOXML の保守回帰根拠として `ExcelIoTest` が OOXML zip entry / worksheet XML / data validation / freeze pane / formula を確認し、`ProjectXlsxTest` が主要セル style、sheet theme、Settings section / merged range、boolean data validation を確認しているため、TODO 上の XLSX / OOXML 簡略実装戻し節は完了扱いに寄せた
+- 2026-04-21 時点では、straight conversion が薄かった report / XLSX / patch 周辺の補強は TODO 上で完了扱いに寄せた。Node parity 方針も、現フェーズでは report 系出力の opt-in parity を完了ラインとし、JSON view / XML / diagnostics / project XLSX を含む「全出力」への拡張は次段の保守論点として切り分ける方針に整理した
+- 2026-04-21 時点では、Project Patch JSON の delete 系 warning / changes 補強後に `mvn test -Dtest=ProjectPatchJsonTest,ProjectPatchJsonTasksTest` が `8` tests, `0` failures、`mvn test -Dtest=ProjectPatchJsonTest,ProjectPatchJsonTasksTest,CoreApiWorkbookTest,MikuprojectCliTest` が `49` tests, `0` failures で通っている
+- 2026-04-21 時点では、`project_draft_view` import の task 日付 fallback 契約確認として `mvn test -Dtest=MsProjectAiViewsTest` が `6` tests, `0` failures で通っている。upstream / Java とも task ごとの `planned_start` / `planned_finish` は必須ではなく、欠けた場合は project 起点 fallback を使う
+- 2026-04-21 時点では、zero duration cluster warning 方針を `validateProjectModel(...)` / `validate-xml` に固定し、`mvn test -Dtest=MsProjectXmlTest,MikuprojectCliTest` の対象追加分で確認する
+- 2026-04-21 時点では、report 出力同等性の保守回帰として `MikuprojectCliTest.keepsReportBundleAndReportDirOutputsEquivalentToStandaloneWbsXlsx` を追加し、`dependency.xml` で report bundle zip と report dir の entry 名 / entry bytes、および standalone `export-wbs-xlsx` と report 同梱 `wbs.xlsx` の byte 一致を固定した
+- 2026-04-21 時点では、monthly calendar coverage を `WbsSvgTest.exportsMonthlyCalendarArchiveForSampleAndFixtureRanges` で sample / dependency / hierarchy の 3 系統へ広げ、プロジェクト期間に含まれる月数、`YYYY-MM.svg` file 名、各 SVG 非空を固定した。CLI 側の zip path は既存 test で `monthly-calendar/YYYY-MM.svg` を確認済みである
+- 2026-04-21 時点では、`vendor/mikuproject/src/ts/msproject-mermaid.ts` を題材にした upstream follow-up 実例を追加し、`mvn test -Dtest=MsProjectMermaidTest` が `3` tests, `0` failures で通っている
+- 2026-04-21 時点では、`vendor/mikuproject/src/ts/msproject-xml.ts` を題材にした upstream follow-up 実例も追加し、`mvn test -Dtest=MsProjectXmlTest` が `18` tests, `0` failures で通っている
+- 2026-04-21 時点では、`vendor/mikuproject/src/ts/msproject-codec.ts` を題材にした upstream follow-up 実例も追加し、同じく `mvn test -Dtest=MsProjectXmlTest` の fixture / round-trip 確認を根拠に記録した
+- 2026-04-21 時点では、`vendor/mikuproject/src/ts/msproject-validate.ts` を題材にした upstream follow-up 実例も追加し、同じく `mvn test -Dtest=MsProjectXmlTest` の validation focused tests を根拠に記録した
 - workbook を含む新しい保守回帰コマンドは `docs/development.md` / `docs/upstream-test-mapping.md` 側の正本に合わせて更新済みであり、次回のコード変更時にその単位で確認する
 - 残る論点は、これらの文書を使って upstream 更新 1 回分の実例を積み、過不足を詰めることである
 

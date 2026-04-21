@@ -115,6 +115,10 @@ public class ProjectPatchJsonCore {
                 entities.applyDeleteCalendarOperation(operation, nextModel, changes, warnings, index);
                 continue;
             }
+            if ("delete_assignment".equals(op)) {
+                entities.applyDeleteAssignmentOperation(operation, nextModel, changes, warnings, index);
+                continue;
+            }
             if ("link_tasks".equals(op)) {
                 links.applyLinkTasksOperation(operation, taskByUid, changes, warnings, index);
                 continue;

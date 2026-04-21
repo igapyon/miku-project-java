@@ -127,8 +127,12 @@ public class ProjectPatchJsonTest {
                                 mapOf("op", "add_resource", "uid", "2", "name", "", "calendar_uid", "999", "max_units",
                                         Integer.valueOf(-1), "cost_per_use", Integer.valueOf(-1), "percent_work_complete",
                                         Integer.valueOf(120)),
+                                mapOf("op", "delete_assignment", "uid", "404"),
                                 mapOf("op", "delete_calendar", "uid", "1"),
                                 mapOf("op", "delete_resource", "uid", "1"))),
+                xml.importFromXml(readVendorTestdata("dependency.xml")));
+        ProjectPatchJsonCore.ImportResult deleteAssignment = patch.importProjectPatchJson(
+                mapOf("operations", Arrays.asList(mapOf("op", "delete_assignment", "uid", "1"))),
                 xml.importFromXml(readVendorTestdata("dependency.xml")));
 
         assertTrue(joinWarnings(duplicate).contains("link_tasks の依存関係は既に存在します: 2 -> 3 (SS, lag=PT4H0M0S)"));
@@ -145,8 +149,21 @@ public class ProjectPatchJsonTest {
         assertTrue(modelWarnings.contains("update_calendar.base_calendar_uid は自身を指せません"));
         assertTrue(modelWarnings.contains("add_calendar.name は空でない文字列が必要です"));
         assertTrue(modelWarnings.contains("add_resource.name は空でない文字列が必要です"));
-        assertTrue(modelWarnings.contains("delete_calendar first cut では参照が残っている calendar は削除できません"));
-        assertTrue(modelWarnings.contains("delete_resource first cut では assignment がある resource は削除できません"));
+        assertTrue(modelWarnings.contains("delete_assignment の uid が既存 assignment を指していません: 404"));
+        assertTrue(modelWarnings.contains(
+                "delete_calendar first cut では参照が残っている calendar は削除できません: 1 (project=1)"));
+        assertTrue(modelWarnings.contains(
+                "delete_resource first cut では assignment がある resource は削除できません: 1 (assignments=1)"));
+
+        assertEquals(2, deleteAssignment.changes.size());
+        assertEquals(0, deleteAssignment.warnings.size());
+        assertEquals(0, deleteAssignment.model.assignments.size());
+        assertEquals("taskUid", deleteAssignment.changes.get(0).field);
+        assertEquals("2", deleteAssignment.changes.get(0).before);
+        assertEquals("(deleted)", deleteAssignment.changes.get(0).after);
+        assertEquals("resourceUid", deleteAssignment.changes.get(1).field);
+        assertEquals("1", deleteAssignment.changes.get(1).before);
+        assertEquals("(deleted)", deleteAssignment.changes.get(1).after);
     }
 
     private String joinWarnings(ProjectPatchJsonCore.ImportResult result) {

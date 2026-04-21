@@ -3,6 +3,7 @@
 ## 使い分け
 
 - この `TODO.md` は Java 版 CLI 中心の移植計画を扱う
+- ここでは「今後の判断」や「完了条件」を優先して残し、個々の確認結果や通過ログの正本は `docs/remaining-migration-items.md` に寄せる
 - `vendor/mikuproject/docs/TODO.md` は upstream 機能差分、仕様制約、入出力の未整理事項を扱う
 
 ## 最重要
@@ -18,27 +19,29 @@
 - 再開ポイント:
   - ここまでで `dependency.xml` の report directory / report bundle ZIP / monthly SVG ZIP は Node upstream と byte-level parity 済み
   - ここまでで WBS XLSX / SVG / report ZIP 系の大きな簡略化は潰し、`mvn package` と opt-in Node parity が通っている
-  - 次に再開するなら、report 系より `projectxlsx` の残差分を優先する
-  - 具体的には `ProjectXlsxExport*` の editable cell styling、sheet theme、Project sheet の Settings section / merged range を upstream TypeScript と照合して実装へ反映する
-  - その次の候補は `projectpatchjson` の warning / blocker details を upstream と構造比較すること
+  - `ProjectXlsxExport*` の editable cell styling、sheet theme、Project sheet の Settings section / merged range は upstream TypeScript と照合して Java 側へ反映済み
+  - `projectpatchjson` の warning / blocker details は `delete_task`, `delete_resource`, `delete_calendar`, `delete_assignment` を upstream と構造比較し、Java 側へ `delete_assignment` を反映済み
+  - 次に再開するなら、Agent Skills 側の `project_draft_view` 生成契約確認、または zero duration task warning 方針の整理へ進む
 - [x] 残作業を新規機能追加ではなく、既存範囲の確認 / docs 整理 / upstream 差分確認へ絞る
 - [x] `README.md`, `docs/remaining-migration-items.md`, `docs/upstream-class-mapping.md`, `docs/upstream-followup-log.md`, `docs/msprojectxml-import-design.md` の現在フェーズ表現を揃える
-- [ ] Agent Skills 側で `project_draft_view` 生成時に `planned_start` / `planned_finish` を入れる前提になっているか確認する
-  - 2泊3日など期間を持つ計画で全 task が同一日時 / zero duration になると、daily SVG は有効でも工程として横方向に展開されない
-  - まず downstream 側の draft 生成契約を確認し、Java 側で補完すべきかは別途判断する
-- [ ] mikuproject-java 側で zero duration task が大量に来たときの warning 方針を検討する
-  - workbook JSON / AI JSON / XML import のどこで警告するかを決める
-  - 現時点では実装せず、report SVG の見た目不良を生む入力品質観点として保留する
-- [ ] Node 版に比べて Java 版の straight conversion が薄い箇所を解消する
+- [x] Agent Skills 側で `project_draft_view` 生成時に `planned_start` / `planned_finish` を入れる前提になっているか確認する
+  - `mikuproject-skills` 紹介記事や upstream sample では `planned_start` / `planned_finish` を含む例があるが、現時点で task ごとの日付を必須とする契約までは固定されていない
+  - upstream `msproject-ai-views.ts` と Java `MsProjectAiViews` はどちらも task 日付未指定を許容し、`project.planned_start` または `project.planned_finish` を起点に import する
+  - そのため 2泊3日など期間を持つ計画でも Agent Skills 側が task 日付を落とすと、全 task が同一日時 / zero duration に寄り得る。Java 側で自動補完する話とは分けて、warning 方針の論点として残す
+- [x] mikuproject-java 側で zero duration task が大量に来たときの warning 方針を検討する
+  - 方針は import 導線ごとの個別 warning ではなく、共通 `ProjectModel` validation warning として扱う
+  - 現時点では `validate-xml` / `validateProjectModel(...)` で、placeholder / summary / milestone を除く複数 task が同一 `start` / `finish` かつ zero duration に潰れている場合に warning を返す
+  - workbook JSON / AI JSON / XML import 自体の戻り warning へ混ぜるのは見送り、既存の validation 導線と runtime docs に揃える
+- [x] Node 版に比べて Java 版の straight conversion が薄い箇所を解消する
   - 優先度 A: `excelio` / `XlsxWorkbookCodec`
     - [x] `exportWorkbook(...)` が実 Excel OOXML zip ではなく独自 `mikuproject_xlsx_workbook_v1` 形式を返している問題を修正し、主要導線を OOXML ZIP へ切り替える
-    - `exportWorkbookArchive(...)` / `importWorkbookArchive(...)` はあるが、report / CLI / Core API の主要導線から使われていない
+    - [x] `exportWorkbookArchive(...)` / `importWorkbookArchive(...)` は report / CLI / Core API の主要導線から使う形へ寄せた
     - [x] upstream の `dataValidations` と style descriptor の主要部を Java 側の OOXML build / parse に反映する
     - [x] `formula`, `freezePane` を Java 側 model / OOXML build / parse に反映する
   - 優先度 A: `projectxlsx`
     - [x] `ProjectXlsxExport*` の列幅、boolean data validation、boolean option sheet を upstream 寄りに補強する
-    - `ProjectXlsxExport*` の editable cell styling、sheet theme、Project sheet の Settings section / merged range はまだ薄い
-    - import 側も upstream の workbook validation / editable cell 前提とズレがないか、fixture round-trip だけでなく sheet 構造で確認する
+    - [x] `ProjectXlsxExport*` の editable cell styling、sheet theme、Project sheet の Settings section / merged range を upstream 寄りに補強する
+    - [x] import 側も upstream の workbook validation / editable cell 前提とズレがないか、fixture round-trip と sheet 構造で確認する
   - 優先度 A: `wbsxlsx`
     - [x] WBS workbook の主要導線が独自 workbook bytes を出しており、`wbs.xlsx` というファイル名と実体が合っていない問題を修正する
     - [x] upstream 相当の row height、hidden columns、style、date band cell、progress band、summary / legend へ寄せる
@@ -46,16 +49,16 @@
     - `freeze` / `formula` は Java 側 model / OOXML build / parse へ反映済み。WBS workbook 自体は現時点でこれらを使っていない
   - 優先度 B: `wbssvg`
     - [x] `dependency.xml` の Node parity で `daily.svg` / `weekly.svg` / `monthly-calendar/*.svg` が byte-level 一致するところまで寄せる
-    - 週次 SVG は viewport trim / label placement / dependency connector routing の主要部を Java 側へ反映済み
-    - daily / weekly / monthly について、見た目の目視だけでなく class / shape / path 構造比較テストを追加する
+    - [x] 週次 SVG は viewport trim / label placement / dependency connector routing の主要部を Java 側へ反映済み
+    - [x] daily / weekly / monthly について、見た目の目視だけでなく class / shape / path 構造比較テストを追加する
   - 優先度 B: `projectpatchjson`
-    - `first cut` 制限自体は upstream 由来だが、Java 側の warning 詳細や参照 blocker が薄くなりやすい
-    - `delete_task`, `delete_resource`, `delete_calendar`, `delete_assignment` の warning / changes を upstream と構造比較する
+    - [x] `first cut` 制限自体は upstream 由来だが、Java 側の warning 詳細や参照 blocker が薄くなりやすい箇所を確認する
+    - [x] `delete_task`, `delete_resource`, `delete_calendar`, `delete_assignment` の warning / changes を upstream と構造比較する
   - 優先度 C: docs / follow-up log
-    - `docs/upstream-followup-log.md` の「大きな差分は見当たらない」という過去記録を、今回見つかった薄い箇所で更新する
-    - `docs/remaining-migration-items.md` の CLI/report 完了率表現を、XLSX / SVG の再点検が終わるまで保守的に戻す
-- [ ] 同一入力に対する Node 版 / Java 版の全出力 byte-level parity 方針を決め、比較テストへ分解する
-  - 方針: straight conversion の検証軸として、CLI / Core API が返す「出力という出力」は原則 Node 版 upstream とバイト一致を目標に置く
+    - [x] `docs/upstream-followup-log.md` の「大きな差分は見当たらない」という過去記録を、今回見つかった薄い箇所で更新する
+    - [x] `docs/remaining-migration-items.md` の CLI/report 完了率表現を、XLSX / SVG の再点検が終わるまで保守的に戻す
+- [x] 同一入力に対する Node 版 / Java 版の全出力 byte-level parity 方針を決め、比較テストへ分解する
+  - 方針: straight conversion の検証軸として、CLI / Core API が返す「出力という出力」は原則 Node 版 upstream とバイト一致を目標に置く。ただし現フェーズでは report 系出力を優先して parity を固定し、JSON view / XML / diagnostics / project XLSX など非 report 全出力への拡張は次段の保守対象として明示的に切り分ける
   - 対象 A: report 派生出力の `wbs.md`, `mermaid.mmd`, `daily.svg`, `weekly.svg`, `monthly-calendar/*.svg`, `wbs.xlsx`, report bundle ZIP, report directory
   - 対象 B: workbook / project 交換出力の workbook JSON, project overview view JSON, phase detail view JSON, task edit view JSON, project draft request JSON, exported XML, project XLSX
   - 対象 C: validation / detection / import / merge 系の stdout text / JSON diagnostics / generated XML / generated workbook bytes
@@ -65,7 +68,9 @@
   - upstream 確認: `excel-io-zip.ts` の OOXML workbook ZIP は手書き ZIP だが mod time / mod date は `0` を書いており、report/monthly ZIP の `2025-01-01` 固定とは異なる
   - [x] Java 側の `ExcelIoZip.packZip`, `CoreApiReport.packZipEntries`, `WbsSvgZip.packMonthlyEntries` を deterministic stored ZIP writer に寄せ、report / monthly ZIP は `2025-01-01 00:00:00`、OOXML workbook ZIP は mod fields `0` を使う
   - 段階 1: `md` / `mmd` / standalone SVG / JSON view / XML など単体 text 出力を fixture ごとに Node 版出力とバイト比較する
+    - 現時点では report 系 text 出力は `dependency.xml` の opt-in Node parity に含まれている。JSON view / XML / diagnostics まで広げるかは、現フェーズでは未着手のまま保留する
   - 段階 2: ZIP を展開した entry-level parity として、report bundle / monthly SVG ZIP / `.xlsx` の entry 名、entry 順、entry bytes を比較する
+    - 現時点では report bundle / monthly SVG ZIP / `wbs.xlsx` の report 系 parity を確認済みであり、project XLSX や非 report 出力全体への拡張は今後の保守対象として残す
   - [x] 段階 3 の前提として Java 側に upstream と同じ stored ZIP writer を移植する
   - [x] `.xlsx` の主要導線を独自 `mikuproject_xlsx_workbook_v1` 出力から OOXML ZIP 出力へ切り替える
   - [x] `styles.xml` を固定 2 スタイルから upstream 相当の動的 style book 生成へ寄せる
@@ -74,28 +79,35 @@
     - 現状: `dependency.xml` の opt-in Node parity は report directory 出力一式で一致する
   - [x] `dependency.xml` の opt-in Node parity で report bundle ZIP / monthly SVG ZIP の byte-level parity を確認する
     - `CoreApiReport` の bundle entry 順も upstream と同じ `wbs.xlsx`, `wbs.md`, `mermaid.mmd`, `daily.svg`, `weekly.svg`, `monthly-calendar/*.svg` に揃える
-    - 残差分: Project XLSX 側の editable styling / sheet theme / Settings section などの workbook layout 差分は継続する
+    - Project XLSX 側の editable styling / sheet theme / Settings section などの workbook layout 差分は 2026-04-21 時点で補強済み
   - parity が難しい場合の例外は、差分理由を固定値、entry 順、JSON key order、XML serialization、数値丸め、locale / timezone、CLI diagnostics のどれかへ分類し、正規化比較へ逃げる箇所を TODO ではなく明示的な仕様として記録する
-- [ ] report 生成物全体の品質を再点検する
+    - 2026-04-21 時点では report 系 parity を現フェーズの完了ラインとし、非 report 出力への拡張は `docs/remaining-migration-items.md` の保守論点として残す
+- [x] report 生成物全体の品質を再点検する
   - SVG の日付軸 / 月次カレンダーが簡略実装へ退化していたため、同じ report 系の XLSX / ZIP / directory export も信用しすぎない
   - [x] `dependency.xml` の report directory 出力で、SVG / XLSX / MD / MMD の Node 版 byte-level parity を確認する
   - [x] `dependency.xml` の report bundle ZIP / monthly SVG ZIP 出力で Node 版 byte-level parity を確認する
   - SVG は既存 TypeScript 版に寄せ、title 位置、style class、bar / milestone / phase の形状、dependency connector、weekly meta、monthly calendar の見た目を構造比較する
   - `export-report-dir`, `export-report-bundle`, `export-monthly-svg-zip`, `export-wbs-xlsx` を同一 fixture で出力し、entry 名、0 バイト有無、主要シート / 主要セル / SVG 構造を確認する
-  - `wbs.xlsx` と standalone `export-wbs-xlsx` の内容が同等か確認する
-  - report bundle zip と report dir の entry 構成が同等か確認する
-  - monthly calendar はプロジェクト期間に含まれる月がすべて出ること、各 SVG が空でないこと、zip 内 path が `monthly-calendar/YYYY-MM.svg` になることを確認する
-  - dependency / hierarchy / 実利用サンプルの 3 系統で fixture を分け、サンプルだけで通る状態を避ける
-  - upstream TypeScript 版との目視または構造比較が必要な項目を `docs/upstream-followup-log.md` へ記録する
-- [ ] XLSX / OOXML 系の簡略実装を upstream 相当へ戻す
+  - [x] `wbs.xlsx` と standalone `export-wbs-xlsx` の内容が同等か確認する
+    - 2026-04-21 時点で `MikuprojectCliTest` に bundle / report dir / standalone `wbs.xlsx` の byte 一致確認を追加済み
+  - [x] report bundle zip と report dir の entry 構成が同等か確認する
+    - 2026-04-21 時点で `MikuprojectCliTest` に entry 名と各 entry bytes の一致確認を追加済み
+  - [x] monthly calendar はプロジェクト期間に含まれる月がすべて出ること、各 SVG が空でないこと、zip 内 path が `monthly-calendar/YYYY-MM.svg` になることを確認する
+    - 2026-04-21 時点で `WbsSvgTest` に sample / dependency / hierarchy の月数・file 名・非空確認を追加し、CLI 側では zip path を `monthly-calendar/YYYY-MM.svg` で固定済み
+  - [x] dependency / hierarchy / 実利用サンプルの 3 系統で fixture を分け、サンプルだけで通る状態を避ける
+    - 2026-04-21 時点で monthly calendar の fixture coverage を sample / dependency / hierarchy に拡張済み
+  - [x] upstream TypeScript 版との目視または構造比較が必要な項目を `docs/upstream-followup-log.md` へ記録する
+    - 2026-04-21 時点で `core-api-report.ts` と `wbs-svg.ts` の follow-up 記録へ、report 同等性回帰と monthly calendar の 3 系統 coverage を追記済み
+- [x] XLSX / OOXML 系の簡略実装を upstream 相当へ戻す
   - [x] `CoreApiReport` の `wbs.xlsx` entry と `export-wbs-xlsx` が `XlsxWorkbookCodec.exportWorkbook(...)` の独自 `mikuproject_xlsx_workbook_v1` 形式を出しており、実 Excel workbook zip ではない問題を修正する
   - [x] `XlsxWorkbookCodec.exportWorkbookArchive(...)` / `importWorkbookArchive(...)` を report / CLI の主要導線から使う
   - [x] `XlsxSheetLike` に upstream の `freezePane`、`XlsxCellLike` に upstream の `formula` を追加する
   - [x] `ExcelIoWorksheetBuild` が `dataValidations` を OOXML へ出していない問題を修正する
   - [x] `ExcelIoWorksheetBuild` / parse が `freezePane` と formula cell を OOXML へ出し入れできるようにする
   - [x] `ExcelIoStylesBuild` が実際の `fillColor` / alignment / number format / wrap / border の組み合わせを十分に反映せず、ほぼ固定 style へ潰している問題を修正する
-  - `ProjectXlsxExport*` は列幅、boolean data validation、boolean option sheet を補強済み。editable cell styling、sheet theme、Project sheet の Settings section / merged range は継続
-  - テストは byte size / decode だけでなく、zip entry、worksheet XML、styles XML、data validation、freeze pane、主要セル style を確認する
+  - [x] `ProjectXlsxExport*` は列幅、boolean data validation、boolean option sheet、editable cell styling、sheet theme、Project sheet の Settings section / merged range を補強済み
+  - [x] テストは byte size / decode だけでなく、zip entry、worksheet XML、styles XML、data validation、freeze pane、主要セル style を確認する
+    - 2026-04-21 時点で `ExcelIoTest` が OOXML zip entry / worksheet XML / data validation / freeze pane / formula を確認し、`ProjectXlsxTest` が主要セル style、data validation、sheet theme、Settings section / merged range を確認済み
 
 ### 今週
 

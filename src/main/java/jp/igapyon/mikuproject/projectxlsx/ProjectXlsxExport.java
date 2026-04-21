@@ -39,13 +39,13 @@ public class ProjectXlsxExport {
         XlsxSheetLike sheet = new XlsxSheetLike();
         sheet.name = ProjectXlsxExportUtil.OPTIONS_SHEET_NAME;
         util.addColumns(sheet, new double[] { 18d, 14d });
-        sheet.rows.add(util.headerRow(new String[] { "BooleanChoice", "Meaning" }));
+        sheet.rows.add(util.headerRow(new String[] { "BooleanChoice", "Meaning" }, ProjectXlsxExportUtil.HEADER_FILL));
         XlsxRowLike trueRow = new XlsxRowLike();
-        trueRow.cells.add(util.cell("○"));
+        trueRow.cells.add(util.styledCell(ProjectXlsxExportUtil.BOOLEAN_TRUE_LABEL, 0));
         trueRow.cells.add(util.cell("true"));
         sheet.rows.add(trueRow);
         XlsxRowLike falseRow = new XlsxRowLike();
-        falseRow.cells.add(util.cell("ー"));
+        falseRow.cells.add(util.styledCell(ProjectXlsxExportUtil.BOOLEAN_FALSE_LABEL, 1));
         falseRow.cells.add(util.cell("false"));
         sheet.rows.add(falseRow);
         return sheet;
