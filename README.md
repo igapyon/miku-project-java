@@ -68,10 +68,11 @@ Use this section as the repo-top entrypoint for upstream tracking and migration 
 Suggested order:
 
 1. `docs/remaining-migration-items.md`
-2. `docs/upstream-class-mapping.md`
-3. `docs/upstream-test-mapping.md`
-4. `docs/development.md`
-5. `docs/upstream-followup-log.md`
+2. `docs/miku-straight-conversion-guide.md`
+3. `docs/upstream-class-mapping.md`
+4. `docs/upstream-test-mapping.md`
+5. `docs/development.md`
+6. `docs/upstream-followup-log.md`
 
 Suggested tracking flow:
 
@@ -90,6 +91,8 @@ Operational note:
 
 - `docs/remaining-migration-items.md`
   - Current migration status, remaining items, and recent verification state
+- `docs/miku-straight-conversion-guide.md`
+  - Why this repository treats the Java port as a straight conversion first
 - `docs/upstream-class-mapping.md`
   - `upstream file -> Java class` mapping and diff-check samples
 - `docs/upstream-test-mapping.md`
