@@ -110,8 +110,9 @@ The distributable runtime artifact is a single fat jar produced by `mvn package`
 
 - `target/mikuproject.jar`
 
-`mvn package` also produces a distribution archive.
+`mvn package` also produces a sources jar and distribution archive.
 
+- `target/mikuproject-sources.jar`
 - `target/mikuproject-dist.zip`
 
 The expected execution path is:
@@ -121,12 +122,14 @@ The expected execution path is:
 The distribution zip contains:
 
 - `mikuproject.jar`
+- `mikuproject-sources.jar`
 - `README.md`
 - `LICENSE`
 - `docs/runtime-java-cli.md`
 
 Supported commands:
 
+- `--version`
 - `validate-xml <input.xml>`
 - `validate-xml-batch <input.xml>...`
 - `export-mermaid <input.xml>`

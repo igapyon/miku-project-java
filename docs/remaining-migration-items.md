@@ -354,4 +354,5 @@ Java 版では、Node.js 版 upstream の仕様を次の 2 つに分けて扱う
 - これらは移植本体そのものではなく、CLI 運用上の利便性向上を目的にした後付け拡張として扱う
 - 現フェーズでは、未追加の `*-batch` command を増やすことは優先しない
 - Java CLI の正式配布成果物は `mvn package` で生成される単一 fat jar とし、想定パスは `target/mikuproject.jar` とする
-- 利用側向けの配布パッケージとして `target/mikuproject-dist.zip` を生成し、`mikuproject.jar`, `README.md`, `LICENSE`, `docs/runtime-java-cli.md` を同梱する
+- `mvn package` で追跡・レビュー用の `target/mikuproject-sources.jar` も生成する
+- 利用側向けの配布パッケージとして `target/mikuproject-dist.zip` を生成し、`mikuproject.jar`, `mikuproject-sources.jar`, `README.md`, `LICENSE`, `docs/runtime-java-cli.md` を同梱する

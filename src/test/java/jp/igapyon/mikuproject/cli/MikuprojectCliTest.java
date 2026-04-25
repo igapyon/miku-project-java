@@ -63,6 +63,19 @@ public class MikuprojectCliTest {
     }
 
     @Test
+    public void printsVersion() throws IOException {
+        MikuprojectCli cli = new MikuprojectCli();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        int exitCode = cli.run(new String[] { "--version" }, stream(out), stream(err));
+
+        assertEquals(0, exitCode);
+        assertEquals("mikuproject-java 0.8.0\n", text(out));
+        assertEquals("", text(err));
+    }
+
+    @Test
     public void keepsReadmeCliCommandListInSyncWithHelpOutput() throws IOException {
         MikuprojectCli cli = new MikuprojectCli();
         ByteArrayOutputStream helpOut = new ByteArrayOutputStream();
@@ -1334,7 +1347,7 @@ public class MikuprojectCliTest {
         boolean inCliList = false;
         String[] lines = readmeText.split("\\R");
         for (String line : lines) {
-            if ("- `validate-xml <input.xml>`".equals(line)) {
+            if ("- `--version`".equals(line)) {
                 inCliList = true;
             }
             if (!inCliList) {

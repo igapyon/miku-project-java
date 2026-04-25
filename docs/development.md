@@ -21,7 +21,8 @@ Java 版では内部モデル、MS Project XML、関連ロジック、CLI、テ�
 Java CLI の正式配布成果物は、`mvn package` で生成される単一 jar とする。
 想定パスは `target/mikuproject.jar` とし、`java -jar` を正規実行経路として扱う。
 この成果物は downstream 連携を考慮し、fat jar 前提で維持する。
-配布パッケージとしては、`target/mikuproject-dist.zip` も生成し、利用側向け文書として `docs/runtime-java-cli.md` を同梱する。
+`mvn package` では追跡・レビュー用の `target/mikuproject-sources.jar` も生成する。
+配布パッケージとしては、`target/mikuproject-dist.zip` も生成し、`mikuproject-sources.jar` と利用側向け文書 `docs/runtime-java-cli.md` を同梱する。
 
 AI JSON 仕様 Markdown は、実行時には classpath / JAR 内リソースとして扱う。
 元ファイルは `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` に置き、Maven の `process-resources` で `target/classes/jp/igapyon/mikuproject/coreapi/mikuproject-ai-json-spec.md` へコピーする。

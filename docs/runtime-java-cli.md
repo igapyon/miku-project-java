@@ -9,6 +9,7 @@
 `mikuproject-java` は、`mvn package` により次の配布成果物を生成する。
 
 - `target/mikuproject.jar`
+- `target/mikuproject-sources.jar`
 - `target/mikuproject-dist.zip`
 
 このうち runtime の正式成果物は次である。
@@ -22,6 +23,7 @@
 現在の `dist.zip` には次を含める。
 
 - `mikuproject.jar`
+- `mikuproject-sources.jar`
 - `README.md`
 - `LICENSE`
 - `docs/runtime-java-cli.md`
@@ -31,6 +33,8 @@
 正式成果物は、`java -jar` で直接起動できる単一 jar を前提とする。
 
 将来 runtime dependency が増えた場合でも、downstream 側の受け取り物がぶれないよう、この成果物は fat jar として維持する。
+
+`mikuproject-sources.jar` は追跡・レビュー用の同伴成果物であり、通常の CLI 実行には使用しない。
 
 ## downstream 連携
 
