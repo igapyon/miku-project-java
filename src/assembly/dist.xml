@@ -13,6 +13,11 @@
       <destName>mikuproject.jar</destName>
     </file>
     <file>
+      <source>${project.build.directory}/mikuproject-sources.jar</source>
+      <outputDirectory>/</outputDirectory>
+      <destName>mikuproject-sources.jar</destName>
+    </file>
+    <file>
       <source>${project.basedir}/README.md</source>
       <outputDirectory>/</outputDirectory>
       <destName>README.md</destName>

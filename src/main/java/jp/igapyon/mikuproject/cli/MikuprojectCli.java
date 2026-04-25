@@ -36,6 +36,8 @@ import jp.igapyon.mikuproject.wbssvg.WbsSvg.MonthlyCalendarSvgArchive;
 import jp.igapyon.mikuproject.wbsxlsx.WbsXlsx.WbsExportOptions;
 
 public class MikuprojectCli {
+    public static final String VERSION = "0.8.0";
+
     private final MsProjectXml msProjectXml = new MsProjectXml();
     private final CoreApiReportAdapters reportAdapters = new CoreApiReportAdapters();
     private final CoreApiAiJsonUtil jsonUtil = new CoreApiAiJsonUtil();
@@ -58,6 +60,10 @@ public class MikuprojectCli {
             return 0;
         }
         String command = args[0];
+        if (isVersion(command)) {
+            printVersion(out);
+            return 0;
+        }
         try {
             if ("validate-xml".equals(command)) {
                 return validateXml(args, out, err);
@@ -1102,6 +1108,19 @@ public class MikuprojectCli {
         return "--help".equals(command) || "-h".equals(command) || "help".equals(command);
     }
 
+    private boolean isVersion(String command) {
+        return "--version".equals(command) || "version".equals(command);
+    }
+
+    private void printVersion(PrintStream out) {
+        out.println("mikuproject-java " + runtimeVersion());
+    }
+
+    private String runtimeVersion() {
+        String implementationVersion = MikuprojectCli.class.getPackage().getImplementationVersion();
+        return implementationVersion == null || implementationVersion.length() == 0 ? VERSION : implementationVersion;
+    }
+
     private int usageError(PrintStream err, String message) {
         return usageError(err, message, false);
     }
@@ -1216,6 +1235,7 @@ public class MikuprojectCli {
     private void printUsage(PrintStream out) {
         out.println("mikuproject-java CLI");
         out.println("usage:");
+        out.println("  --version");
         out.println("  validate-xml <input.xml>");
         out.println("  validate-xml-batch <input.xml>...");
         out.println("  export-mermaid <input.xml>");

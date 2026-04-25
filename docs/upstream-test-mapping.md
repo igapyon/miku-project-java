@@ -314,6 +314,9 @@ Java 側テスト名は、次の基準で付ける。
 - `MikuprojectCliTest.printsUsageForHelpAliases`
   - Java CLI の `-h` / `--help` alias 表示に対応
 
+- `MikuprojectCliTest.printsVersion`
+  - Java CLI の `--version` 表示に対応
+
 - `MikuprojectCliTest.keepsReadmeCliCommandListInSyncWithHelpOutput`
   - Java CLI help と `README.md` の command 一覧同期を固定
 
