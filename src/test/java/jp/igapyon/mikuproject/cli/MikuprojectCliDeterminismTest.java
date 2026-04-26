@@ -13,7 +13,6 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -26,30 +25,23 @@ import org.junit.jupiter.api.Test;
 
 public class MikuprojectCliDeterminismTest {
     @Test
-    public void keepsCliOutputsDeterministicForSameInput() throws IOException {
-        Path xmlFile = Files.createTempFile("mikuproject-cli-determinism", ".xml");
-        Files.write(xmlFile, readVendorTestdata("dependency.xml"));
-        Path hierarchyXmlFile = Files.createTempFile("mikuproject-cli-determinism-hierarchy", ".xml");
-        Files.write(hierarchyXmlFile, readVendorTestdata("hierarchy.xml"));
+    public void keepsGroupedCliOutputsDeterministicForSameInput() throws IOException {
+        Path draftFile = Files.createTempFile("mikuproject-cli-determinism-draft", ".editjson");
+        Path workbookFile = Files.createTempFile("mikuproject-cli-determinism-workbook", ".json");
+        Files.write(draftFile, draftJson());
+        run(new String[] { "state", "from-draft", "--in", draftFile.toString(), "--out", workbookFile.toString() });
 
-        assertStdoutDeterministic("validate-xml", xmlFile.toString());
-        assertStdoutDeterministic("export-mermaid", xmlFile.toString());
-        assertStdoutDeterministic("export-wbs-markdown", xmlFile.toString());
-        assertStdoutDeterministic("export-daily-svg", xmlFile.toString());
-        assertStdoutDeterministic("export-weekly-svg", xmlFile.toString());
-        assertStdoutDeterministic("export-workbook-json", xmlFile.toString());
-        assertStdoutDeterministic("export-project-overview-view", xmlFile.toString());
-        assertStdoutDeterministic("export-phase-detail-view", hierarchyXmlFile.toString(), "1", "scoped", "2", "1");
-        assertStdoutDeterministic("export-task-edit-view", xmlFile.toString(), "2");
-        assertStdoutDeterministic("export-project-draft-request", "Draft Request", "2026-04-01", "Goal", "3", "Plan,Build",
-                "Kickoff");
-        assertStdoutDeterministic("export-ai-json-spec");
+        assertStdoutDeterministic("ai", "spec");
+        assertStdoutDeterministic("state", "validate", "--in", workbookFile.toString());
+        assertStdoutDeterministic("state", "summarize", "--in", workbookFile.toString());
+        assertStdoutDeterministic("report", "wbs-markdown", "--in", workbookFile.toString());
+        assertStdoutDeterministic("report", "mermaid", "--in", workbookFile.toString());
+        assertStdoutDeterministic("ai", "export", "project-overview", "--in", workbookFile.toString());
 
-        assertFileOutputDeterministic("export-monthly-svg-zip", ".zip", xmlFile.toString());
-        assertFileOutputDeterministic("export-report-bundle", ".zip", xmlFile.toString());
-        assertFileOutputDeterministic("export-xlsx", ".xlsx", xmlFile.toString());
-        assertFileOutputDeterministic("export-wbs-xlsx", ".xlsx", xmlFile.toString());
-        assertReportDirOutputDeterministic(xmlFile);
+        assertFileOutputDeterministic(".zip", "report", "all", "--in", workbookFile.toString(), "--out");
+        assertFileOutputDeterministic(".xlsx", "export", "xlsx", "--in", workbookFile.toString(), "--out");
+        assertFileOutputDeterministic(".xlsx", "report", "wbs-xlsx", "--in", workbookFile.toString(), "--out");
+        assertReportDirOutputDeterministic(workbookFile);
     }
 
     private void assertStdoutDeterministic(String... args) throws IOException {
@@ -58,22 +50,22 @@ public class MikuprojectCliDeterminismTest {
         assertArrayEquals(first, second, args[0]);
     }
 
-    private void assertFileOutputDeterministic(String command, String suffix, String inputFile) throws IOException {
+    private void assertFileOutputDeterministic(String suffix, String... commandPrefix) throws IOException {
         Path first = Files.createTempFile("mikuproject-determinism-first", suffix);
         Path second = Files.createTempFile("mikuproject-determinism-second", suffix);
 
-        runFileCommand(command, inputFile, first);
-        runFileCommand(command, inputFile, second);
+        run(withOutput(commandPrefix, first));
+        run(withOutput(commandPrefix, second));
 
-        assertArrayEquals(Files.readAllBytes(first), Files.readAllBytes(second), command);
+        assertArrayEquals(Files.readAllBytes(first), Files.readAllBytes(second), commandPrefix[0] + " " + commandPrefix[1]);
     }
 
-    private void assertReportDirOutputDeterministic(Path inputFile) throws IOException {
+    private void assertReportDirOutputDeterministic(Path workbookFile) throws IOException {
         Path first = Files.createTempDirectory("mikuproject-determinism-report-first");
         Path second = Files.createTempDirectory("mikuproject-determinism-report-second");
 
-        runFileCommand("export-report-dir", inputFile.toString(), first);
-        runFileCommand("export-report-dir", inputFile.toString(), second);
+        run(new String[] { "report", "dir", "--in", workbookFile.toString(), "--out", first.toString() });
+        run(new String[] { "report", "dir", "--in", workbookFile.toString(), "--out", second.toString() });
 
         assertEquals(snapshotDirectory(first), snapshotDirectory(second));
     }
@@ -90,15 +82,21 @@ public class MikuprojectCliDeterminismTest {
         return out.toByteArray();
     }
 
-    private void runFileCommand(String command, String inputFile, Path outputPath) throws IOException {
+    private void run(String[] args) throws IOException {
         MikuprojectCli cli = new MikuprojectCli();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        int exitCode = cli.run(new String[] { command, inputFile, outputPath.toString() }, stream(new ByteArrayOutputStream()),
-                stream(err));
+        int exitCode = cli.run(args, stream(new ByteArrayOutputStream()), stream(err));
 
         assertEquals(0, exitCode, new String(err.toByteArray(), StandardCharsets.UTF_8));
-        assertArrayEquals(new byte[0], err.toByteArray(), command);
+        assertArrayEquals(new byte[0], err.toByteArray(), args[0]);
+    }
+
+    private String[] withOutput(String[] commandPrefix, Path outputPath) {
+        String[] args = new String[commandPrefix.length + 1];
+        System.arraycopy(commandPrefix, 0, args, 0, commandPrefix.length);
+        args[args.length - 1] = outputPath.toString();
+        return args;
     }
 
     private Map<String, String> snapshotDirectory(Path root) throws IOException {
@@ -117,8 +115,17 @@ public class MikuprojectCliDeterminismTest {
         return snapshot;
     }
 
-    private byte[] readVendorTestdata(String fileName) throws IOException {
-        return Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", fileName));
+    private byte[] draftJson() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("{\"view_type\":\"project_draft_view\",");
+        builder.append("\"project\":{\"name\":\"Determinism Project\",\"planned_start\":\"2026-04-01\"},");
+        builder.append("\"tasks\":[");
+        builder.append("{\"uid\":\"t1\",\"name\":\"Task 1\",\"planned_start\":\"2026-04-01\",\"planned_finish\":\"2026-04-02\"}");
+        builder.append("],");
+        builder.append("\"resources\":[],");
+        builder.append("\"assignments\":[]");
+        builder.append("}");
+        return builder.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     private PrintStream stream(ByteArrayOutputStream output) {

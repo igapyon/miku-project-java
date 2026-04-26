@@ -256,7 +256,7 @@ tests:
 
 diff summary:
   挙動差分:
-    現時点で大きな差分は見当たらない。Java 側では report bundle の entry 構成と entry 順、dependency / hierarchy fixture の主要内容、bundle 内 `wbs.xlsx` decode、`dependency.xml` の Node upstream bundle ZIP byte-level parity を確認済みである。加えて CLI 保守回帰で、dependency fixture に対する report bundle zip と report dir の entry 名 / entry bytes、および standalone `export-wbs-xlsx` と report 同梱 `wbs.xlsx` の byte 一致を固定した。
+    現時点で大きな差分は見当たらない。Java 側では report bundle の entry 構成と entry 順、dependency / hierarchy fixture の主要内容、bundle 内 `wbs.xlsx` decode、`dependency.xml` の Node upstream bundle ZIP byte-level parity を確認済みである。加えて CLI 保守回帰で、dependency fixture に対する report bundle zip と report dir の entry 名 / entry bytes、および standalone WBS XLSX report と report 同梱 `wbs.xlsx` の byte 一致を固定した。
   命名差分:
     Java 側は `CoreApiReport` / `CoreApiReportAdapters` / `CoreApiReportPublic` に分割しているが、`report` 公開面との対応は追跡可能である。
   未移植差分:
