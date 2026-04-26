@@ -49,6 +49,7 @@ public class MikuprojectCliTest {
         assertEquals(0, cli.run(new String[] { "--help" }, stream(longHelpOut), stream(new ByteArrayOutputStream())));
 
         assertTrue(text(shortHelpOut).contains("report dir --in workbook.json --out report.dir"));
+        assertTrue(text(shortHelpOut).contains("ai export bundle --in workbook.json"));
         assertTrue(text(longHelpOut).contains("ai export phase-detail --in workbook.json"));
     }
 
@@ -101,6 +102,7 @@ public class MikuprojectCliTest {
             ByteArrayOutputStream summaryOut = new ByteArrayOutputStream();
             ByteArrayOutputStream diffOut = new ByteArrayOutputStream();
             ByteArrayOutputStream overviewOut = new ByteArrayOutputStream();
+            ByteArrayOutputStream bundleOut = new ByteArrayOutputStream();
             ByteArrayOutputStream taskEditOut = new ByteArrayOutputStream();
             ByteArrayOutputStream phaseOut = new ByteArrayOutputStream();
             ByteArrayOutputStream markdownOut = new ByteArrayOutputStream();
@@ -119,6 +121,8 @@ public class MikuprojectCliTest {
             assertEquals(0, cli.run(new String[] { "state", "diff", "--before", workbookFile.toString(), "--after", nextWorkbookFile.toString() },
                     stream(diffOut), stream(new ByteArrayOutputStream())));
             assertEquals(0, cli.run(new String[] { "ai", "export", "project-overview", "--in", nextWorkbookFile.toString() }, stream(overviewOut),
+                    stream(new ByteArrayOutputStream())));
+            assertEquals(0, cli.run(new String[] { "ai", "export", "bundle", "--in", nextWorkbookFile.toString() }, stream(bundleOut),
                     stream(new ByteArrayOutputStream())));
             assertEquals(0, cli.run(new String[] { "ai", "export", "task-edit", "--in", nextWorkbookFile.toString(), "--task-uid", "2" },
                     stream(taskEditOut), stream(new ByteArrayOutputStream())));
@@ -155,6 +159,10 @@ public class MikuprojectCliTest {
             assertTrue(text(summaryOut).contains("\"kind\":\"state_summary\""));
             assertTrue(text(diffOut).contains("\"kind\":\"state_diff_summary\""));
             assertTrue(text(overviewOut).contains("\"view_type\":\"project_overview_view\""));
+            assertTrue(text(bundleOut).contains("\"view_type\":\"ai_projection_bundle\""));
+            assertTrue(text(bundleOut).contains("\"project_overview_view\""));
+            assertTrue(text(bundleOut).contains("\"phase_detail_views_full\":["));
+            assertTrue(text(bundleOut).contains("\"task_edit_views_full\":["));
             assertTrue(text(taskEditOut).contains("\"view_type\":\"task_edit_view\""));
             assertTrue(text(phaseOut).contains("\"view_type\":\"phase_detail_view\""));
             assertTrue(Files.readString(exportedXmlFile, StandardCharsets.UTF_8).contains("Patched Project"));
@@ -174,6 +182,66 @@ public class MikuprojectCliTest {
             Files.deleteIfExists(structuralXlsxFile);
             Files.deleteIfExists(importedWorkbookFile);
             Files.deleteIfExists(exportedXmlFile);
+        }
+    }
+
+    @Test
+    public void writesAiProjectionBundleToFile() throws IOException {
+        MikuprojectCli cli = new MikuprojectCli();
+        Path draftFile = Files.createTempFile("mikuproject-cli-bundle-draft", ".editjson");
+        Path workbookFile = Files.createTempFile("mikuproject-cli-bundle-workbook", ".json");
+        Path bundleFile = Files.createTempFile("mikuproject-cli-bundle", ".editjson");
+        Files.write(draftFile, aiJsonText());
+        try {
+            assertEquals(0, cli.run(new String[] { "state", "from-draft", "--in", draftFile.toString(), "--out", workbookFile.toString() },
+                    stream(new ByteArrayOutputStream()), stream(new ByteArrayOutputStream())));
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            ByteArrayOutputStream err = new ByteArrayOutputStream();
+            int exitCode = cli.run(new String[] { "ai", "export", "bundle", "--in", workbookFile.toString(), "--out", bundleFile.toString() },
+                    stream(out), stream(err));
+
+            String bundleText = Files.readString(bundleFile, StandardCharsets.UTF_8);
+            assertEquals(0, exitCode);
+            assertTrue(text(out).contains("wrote " + bundleFile.toString()));
+            assertEquals("", text(err));
+            assertTrue(bundleText.contains("\"view_type\":\"ai_projection_bundle\""));
+            assertTrue(bundleText.contains("\"project_overview_view\""));
+            assertTrue(bundleText.contains("\"phase_detail_views_full\":["));
+            assertTrue(bundleText.contains("\"task_edit_views_full\":["));
+        } finally {
+            Files.deleteIfExists(draftFile);
+            Files.deleteIfExists(workbookFile);
+            Files.deleteIfExists(bundleFile);
+        }
+    }
+
+    @Test
+    public void writesAiExportBundleDiagnosticsToStderr() throws IOException {
+        MikuprojectCli cli = new MikuprojectCli();
+        Path draftFile = Files.createTempFile("mikuproject-cli-bundle-diag-draft", ".editjson");
+        Path workbookFile = Files.createTempFile("mikuproject-cli-bundle-diag-workbook", ".json");
+        Files.write(draftFile, aiJsonText());
+        try {
+            assertEquals(0, cli.run(new String[] { "state", "from-draft", "--in", draftFile.toString(), "--out", workbookFile.toString() },
+                    stream(new ByteArrayOutputStream()), stream(new ByteArrayOutputStream())));
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            ByteArrayOutputStream err = new ByteArrayOutputStream();
+            int exitCode = cli.run(new String[] { "ai", "export", "bundle", "--in", workbookFile.toString(),
+                    "--diagnostics", "json" }, stream(out), stream(err));
+
+            assertEquals(0, exitCode);
+            assertTrue(text(out).contains("\"view_type\":\"ai_projection_bundle\""));
+            assertFalse(text(out).contains("\"diagnostics_version\""));
+            assertTrue(text(err).contains("\"diagnostics_version\":\"1\""));
+            assertTrue(text(err).contains("\"command\":\"ai export bundle\""));
+            assertTrue(text(err).contains("\"output_kind\":\"ai_projection_bundle\""));
+            assertTrue(text(err).contains("\"phase_count\":1"));
+            assertTrue(text(err).contains("\"task_count\":1"));
+        } finally {
+            Files.deleteIfExists(draftFile);
+            Files.deleteIfExists(workbookFile);
         }
     }
 
