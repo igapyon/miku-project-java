@@ -16,10 +16,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
+
+import jp.igapyon.mikuproject.coreapi.CoreApiAiJsonUtil;
+import jp.igapyon.mikuproject.model.ProjectModel;
+import jp.igapyon.mikuproject.msprojectxml.MsProjectXml;
+import jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJson;
 
 public class MikuprojectNodeParityTest {
     @Test
@@ -28,11 +35,12 @@ public class MikuprojectNodeParityTest {
 
         Path xmlFile = Files.createTempFile("mikuproject-node-parity", ".xml");
         Files.write(xmlFile, Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", "dependency.xml")));
+        Path workbookFile = writeWorkbookJson(xmlFile);
         Path javaDir = Files.createTempDirectory("mikuproject-node-parity-java");
         Path nodeDir = Files.createTempDirectory("mikuproject-node-parity-node");
 
         MikuprojectCli cli = new MikuprojectCli();
-        assertEquals(0, cli.run(new String[] { "export-report-dir", xmlFile.toString(), javaDir.toString() },
+        assertEquals(0, cli.run(new String[] { "report", "dir", "--in", workbookFile.toString(), "--out", javaDir.toString() },
                 new java.io.PrintStream(new java.io.ByteArrayOutputStream(), true, StandardCharsets.UTF_8.name()),
                 new java.io.PrintStream(new java.io.ByteArrayOutputStream(), true, StandardCharsets.UTF_8.name())));
 
@@ -52,11 +60,12 @@ public class MikuprojectNodeParityTest {
 
         Path xmlFile = Files.createTempFile("mikuproject-node-parity-bundle", ".xml");
         Files.write(xmlFile, Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", "dependency.xml")));
+        Path workbookFile = writeWorkbookJson(xmlFile);
         Path javaZip = Files.createTempFile("mikuproject-node-parity-bundle-java", ".zip");
         Path nodeZip = Files.createTempFile("mikuproject-node-parity-bundle-node", ".zip");
 
         MikuprojectCli cli = new MikuprojectCli();
-        assertEquals(0, cli.run(new String[] { "export-report-bundle", xmlFile.toString(), javaZip.toString() },
+        assertEquals(0, cli.run(new String[] { "report", "all", "--in", workbookFile.toString(), "--out", javaZip.toString() },
                 new java.io.PrintStream(new java.io.ByteArrayOutputStream(), true, StandardCharsets.UTF_8.name()),
                 new java.io.PrintStream(new java.io.ByteArrayOutputStream(), true, StandardCharsets.UTF_8.name())));
 
@@ -71,11 +80,12 @@ public class MikuprojectNodeParityTest {
 
         Path xmlFile = Files.createTempFile("mikuproject-node-parity-monthly", ".xml");
         Files.write(xmlFile, Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", "dependency.xml")));
+        Path workbookFile = writeWorkbookJson(xmlFile);
         Path javaZip = Files.createTempFile("mikuproject-node-parity-monthly-java", ".zip");
         Path nodeZip = Files.createTempFile("mikuproject-node-parity-monthly-node", ".zip");
 
         MikuprojectCli cli = new MikuprojectCli();
-        assertEquals(0, cli.run(new String[] { "export-monthly-svg-zip", xmlFile.toString(), javaZip.toString() },
+        assertEquals(0, cli.run(new String[] { "report", "monthly-calendar-svg", "--in", workbookFile.toString(), "--out", javaZip.toString() },
                 new java.io.PrintStream(new java.io.ByteArrayOutputStream(), true, StandardCharsets.UTF_8.name()),
                 new java.io.PrintStream(new java.io.ByteArrayOutputStream(), true, StandardCharsets.UTF_8.name())));
 
@@ -99,6 +109,21 @@ public class MikuprojectNodeParityTest {
         byte[] processOutput = readAll(process.getInputStream());
         int exitCode = process.waitFor();
         assertEquals(0, exitCode, new String(processOutput, StandardCharsets.UTF_8));
+    }
+
+    private Path writeWorkbookJson(Path xmlFile) throws IOException {
+        MsProjectXml msProjectXml = new MsProjectXml();
+        ProjectWorkbookJson workbookJson = new ProjectWorkbookJson();
+        CoreApiAiJsonUtil jsonUtil = new CoreApiAiJsonUtil();
+        ProjectModel model = msProjectXml.importFromXml(Files.readString(xmlFile, StandardCharsets.UTF_8));
+        jp.igapyon.mikuproject.projectworkbookjson.WorkbookJsonDocument document = workbookJson.exportProjectWorkbookJson(model);
+        Map<String, Object> json = new LinkedHashMap<String, Object>();
+        json.put("format", document.format);
+        json.put("version", document.version);
+        json.put("sheets", document.sheets);
+        Path output = Files.createTempFile("mikuproject-node-parity-workbook", ".json");
+        Files.write(output, jsonUtil.stringifyJson(json).getBytes(StandardCharsets.UTF_8));
+        return output;
     }
 
     private List<String> listRelativeFiles(Path root) throws IOException {

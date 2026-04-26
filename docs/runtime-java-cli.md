@@ -91,7 +91,7 @@ daily / weekly SVG は、モデル内の最も早い task 開始日を timeline 
 
 ## 最小 entrypoint から全機能 entrypoint への段取り
 
-Java CLI は、`validate-xml` と主要 export だけを持つ最小 entrypoint から開始したが、現在は Agent Skills から呼びやすい command group / named option 体系へ整理している。
+Java CLI は、初期の最小 entrypoint から、Agent Skills から呼びやすい command group / named option 体系へ整理している。
 
 今後の整理は、次の 4 段階で進める。
 
