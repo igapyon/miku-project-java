@@ -68,7 +68,7 @@ Use this section as the repo-top entrypoint for upstream tracking and migration 
 Suggested order:
 
 1. `docs/remaining-migration-items.md`
-2. `docs/miku-straight-conversion-guide.md`
+2. `docs/miku-soft-30-straight-conversion-v20260425.md`
 3. `docs/upstream-class-mapping.md`
 4. `docs/upstream-test-mapping.md`
 5. `docs/development.md`
@@ -91,7 +91,7 @@ Operational note:
 
 - `docs/remaining-migration-items.md`
   - Current migration status, remaining items, and recent verification state
-- `docs/miku-straight-conversion-guide.md`
+- `docs/miku-soft-30-straight-conversion-v20260425.md`
   - Why this repository treats the Java port as a straight conversion first
 - `docs/upstream-class-mapping.md`
   - `upstream file -> Java class` mapping and diff-check samples
@@ -130,58 +130,36 @@ The distribution zip contains:
 Supported commands:
 
 - `--version`
-- `validate-xml <input.xml>`
-- `validate-xml-batch <input.xml>...`
-- `export-mermaid <input.xml>`
-- `export-mermaid-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]...`
-- `export-wbs-markdown <input.xml> [<beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv>]]]]]`
-- `export-wbs-markdown-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv>]]]]]`
-- `export-daily-svg <input.xml> [<labelMode>]`
-- `export-daily-svg-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <labelMode>]`
-- `export-weekly-svg <input.xml> [<labelMode>]`
-- `export-weekly-svg-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <labelMode>]`
-- `export-monthly-svg-zip <input.xml> <output.zip> [<holidayDatesCsv> [<labelMode>]]`
-- `export-monthly-svg-zip-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <holidayDatesCsv> [<labelMode>]]`
-- `export-report-bundle <input.xml> <output.zip> [<beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv> [<labelMode>]]]]]]`
-- `export-report-bundle-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv> [<labelMode>]]]]]]`
-- `export-report-dir <input.xml> <output.dir> [<beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv> [<labelMode>]]]]]]`
-- `export-report-dir-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv> [<labelMode>]]]]]]`
-- `export-wbs-xlsx <input.xml> <output.xlsxbin> [<beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv>]]]]]`
-- `export-wbs-xlsx-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <beforeDays> [<afterDays> [<displayMode> [<progressMode> [<holidayDatesCsv>]]]]]`
-- `export-workbook-json <input.xml>`
-- `export-workbook-json-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]...`
-- `export-project-overview-view <input.xml>`
-- `export-project-overview-view-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]...`
-- `export-phase-detail-view <input.xml> [<phaseUid> [<mode> [<rootUid> [<maxDepth>]]]]`
-- `export-phase-detail-view-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]... [-- <phaseUid> [<mode> [<rootUid> [<maxDepth>]]]]`
-- `export-task-edit-view <input.xml> <taskUid>`
-- `export-task-edit-view-batch <outputRoot.dir> <taskUid> <input.xml> <name> [<input.xml> <name>]...`
-- `export-project-draft-request <name> <plannedStart> [<goal> [<teamCount> [<mustHavePhasesCsv> [<mustHaveMilestonesCsv>]]]]`
-- `validate-workbook-json <input.json>`
-- `validate-workbook-json-batch <input.json>...`
-- `import-workbook-json <input.json> <output.xml>`
-- `import-workbook-json-batch <outputRoot.dir> <input.json> <name> [<input.json> <name>]...`
-- `merge-workbook-json <base.xml> <input.json> <output.xml>`
-- `merge-workbook-json-batch <base.xml> <outputRoot.dir> <input.json> <name> [<input.json> <name>]...`
-- `validate-patch-json <input.json>`
-- `validate-patch-json-batch <input.json>...`
-- `apply-patch-json <base.xml> <patch.json> <output.xml>`
-- `apply-patch-json-batch <base.xml> <outputRoot.dir> <patch.json> <name> [<patch.json> <name>]...`
-- `export-ai-json-spec`
-- `detect-ai-json-kind <input.txt>`
-- `detect-ai-json-kind-batch <input.txt>...`
-- `import-ai-json <input.txt> <output.xml> [<base.xml>]`
-- `import-external <format> <mode> <input> <output.xml> [<base.xml>]`
-- `export-xlsx <input.xml> <output.xlsxbin>`
-- `export-xlsx-batch <outputRoot.dir> <input.xml> <name> [<input.xml> <name>]...`
-- `validate-xlsx <input.xlsxbin>`
-- `validate-xlsx-batch <input.xlsxbin>...`
-- `import-xlsx <input.xlsxbin> <output.xml>`
-- `import-xlsx-batch <outputRoot.dir> <input.xlsxbin> <name> [<input.xlsxbin> <name>]...`
-- `merge-xlsx <base.xml> <input.xlsxbin> <output.xml>`
-- `merge-xlsx-batch <base.xml> <outputRoot.dir> <input.xlsxbin> <name> [<input.xlsxbin> <name>]...`
+- `ai spec`
+- `ai detect-kind --in document.json`
+- `ai export project-overview --in workbook.json [--out overview.editjson]`
+- `ai export task-edit --in workbook.json --task-uid taskUid [--out task.editjson]`
+- `ai export phase-detail --in workbook.json [--phase-uid phaseUid] [--mode mode] [--root-uid rootUid] [--max-depth n] [--out phase.editjson]`
+- `ai validate-patch --state workbook.json --in patch.editjson`
+- `state from-draft --in draft.editjson [--out workbook.json]`
+- `state validate --in workbook.json`
+- `state import --in workbook.json [--out workbook.normalized.json]`
+- `state merge --state workbook.json --in workbook.patch.json [--out workbook.next.json]`
+- `state apply-patch --state workbook.json --in patch.editjson [--out workbook.next.json]`
+- `state summarize --in workbook.json [--out summary.json]`
+- `state diff --before workbook.before.json --after workbook.after.json [--out diff.json]`
+- `validate xml --in project.xml`
+- `validate xlsx --in workbook.xlsx`
+- `export workbook-json --in workbook.json [--out workbook.normalized.json]`
+- `export xml --in workbook.json --out project.xml`
+- `export xlsx --in workbook.json --out workbook.xlsx`
+- `import xlsx --in workbook.xlsx [--out workbook.json]`
+- `merge xlsx --state workbook.json --in workbook.xlsx [--out workbook.next.json]`
+- `report all --in workbook.json --out report-bundle.zip`
+- `report dir --in workbook.json --out report.dir`
+- `report wbs-xlsx --in workbook.json --out wbs.xlsx`
+- `report daily-svg --in workbook.json [--out daily.svg]`
+- `report weekly-svg --in workbook.json [--out weekly.svg]`
+- `report monthly-calendar-svg --in workbook.json --out monthly-calendar.zip`
+- `report wbs-markdown --in workbook.json [--out wbs.md]`
+- `report mermaid --in workbook.json [--out mermaid.mmd]`
 
 Notes:
 
-- `export-ai-json-spec` returns the Markdown spec embedded in the built classpath / JAR. Runtime execution does not read `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` by relative path.
+- `ai spec` returns the Markdown spec embedded in the built classpath / JAR. Runtime execution does not read `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` by relative path.
 - `export-daily-svg` and report directory daily SVG output place the timeline origin at the earliest task start date in the model, so projects outside the historical sample month still render inside the SVG viewBox. If every task has the same zero-duration date, the output is valid but all bars will naturally stack on the same day.

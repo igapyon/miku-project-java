@@ -6,6 +6,7 @@ package jp.igapyon.mikuproject.cli;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
@@ -45,7 +46,9 @@ public class MikuprojectCliTest {
         int exitCode = cli.run(new String[] { "help" }, stream(out), stream(err));
 
         assertEquals(0, exitCode);
-        assertTrue(text(out).contains("validate-xml"));
+        assertTrue(text(out).contains("ai spec"));
+        assertTrue(text(out).contains("state from-draft --in draft.editjson"));
+        assertFalse(text(out).contains("xlsxbin"));
         assertEquals("", text(err));
     }
 
@@ -58,8 +61,8 @@ public class MikuprojectCliTest {
         assertEquals(0, cli.run(new String[] { "-h" }, stream(shortHelpOut), stream(new ByteArrayOutputStream())));
         assertEquals(0, cli.run(new String[] { "--help" }, stream(longHelpOut), stream(new ByteArrayOutputStream())));
 
-        assertTrue(text(shortHelpOut).contains("export-report-dir-batch"));
-        assertTrue(text(longHelpOut).contains("export-phase-detail-view-batch"));
+        assertTrue(text(shortHelpOut).contains("report dir --in workbook.json --out report.dir"));
+        assertTrue(text(longHelpOut).contains("ai export phase-detail --in workbook.json"));
     }
 
     @Test
@@ -73,6 +76,60 @@ public class MikuprojectCliTest {
         assertEquals(0, exitCode);
         assertEquals("mikuproject-java 0.8.0\n", text(out));
         assertEquals("", text(err));
+    }
+
+    @Test
+    public void supportsAgentFriendlyGroupedCommandsWithWorkbookJsonState() throws IOException {
+        MikuprojectCli cli = new MikuprojectCli();
+        Path draftFile = Files.createTempFile("mikuproject-cli-draft", ".editjson");
+        Path patchFile = Files.createTempFile("mikuproject-cli-patch", ".editjson");
+        Path workbookFile = Files.createTempFile("mikuproject-cli-state", ".json");
+        Path nextWorkbookFile = Files.createTempFile("mikuproject-cli-state-next", ".json");
+        Path reportZipFile = Files.createTempFile("mikuproject-cli-report", ".zip");
+        Path wbsXlsxFile = Files.createTempFile("mikuproject-cli-wbs", ".xlsx");
+        try {
+            Files.write(draftFile, aiJsonText());
+            Files.write(patchFile, patchJsonText());
+
+            ByteArrayOutputStream specOut = new ByteArrayOutputStream();
+            ByteArrayOutputStream kindOut = new ByteArrayOutputStream();
+            ByteArrayOutputStream summaryOut = new ByteArrayOutputStream();
+            ByteArrayOutputStream diffOut = new ByteArrayOutputStream();
+            ByteArrayOutputStream reportOut = new ByteArrayOutputStream();
+            ByteArrayOutputStream wbsXlsxOut = new ByteArrayOutputStream();
+
+            assertEquals(0, cli.run(new String[] { "ai", "spec" }, stream(specOut), stream(new ByteArrayOutputStream())));
+            assertEquals(0, cli.run(new String[] { "state", "from-draft", "--in", draftFile.toString(), "--out", workbookFile.toString() },
+                    stream(new ByteArrayOutputStream()), stream(new ByteArrayOutputStream())));
+            assertEquals(0, cli.run(new String[] { "ai", "detect-kind", "--in", patchFile.toString() }, stream(kindOut), stream(new ByteArrayOutputStream())));
+            assertEquals(0, cli.run(new String[] { "state", "apply-patch", "--state", workbookFile.toString(), "--in", patchFile.toString(),
+                    "--out", nextWorkbookFile.toString() }, stream(new ByteArrayOutputStream()), stream(new ByteArrayOutputStream())));
+            assertEquals(0, cli.run(new String[] { "state", "summarize", "--in", nextWorkbookFile.toString() }, stream(summaryOut),
+                    stream(new ByteArrayOutputStream())));
+            assertEquals(0, cli.run(new String[] { "state", "diff", "--before", workbookFile.toString(), "--after", nextWorkbookFile.toString() },
+                    stream(diffOut), stream(new ByteArrayOutputStream())));
+            assertEquals(0, cli.run(new String[] { "report", "all", "--in", nextWorkbookFile.toString(), "--out", reportZipFile.toString() },
+                    stream(reportOut), stream(new ByteArrayOutputStream())));
+            assertEquals(0, cli.run(new String[] { "report", "wbs-xlsx", "--in", nextWorkbookFile.toString(), "--out", wbsXlsxFile.toString() },
+                    stream(wbsXlsxOut), stream(new ByteArrayOutputStream())));
+
+            assertTrue(text(specOut).contains("project_draft_view"));
+            assertTrue(text(kindOut).contains("kind=patch_json"));
+            assertTrue(Files.readString(workbookFile, StandardCharsets.UTF_8).contains("\"format\":\"mikuproject_workbook_json\""));
+            assertTrue(Files.readString(nextWorkbookFile, StandardCharsets.UTF_8).contains("Patched Project"));
+            assertTrue(text(summaryOut).contains("\"kind\":\"state_summary\""));
+            assertTrue(text(diffOut).contains("\"kind\":\"state_diff_summary\""));
+            assertTrue(Files.size(reportZipFile) > 0);
+            assertTrue(Files.size(wbsXlsxFile) > 0);
+            assertFalse(text(wbsXlsxOut).contains("xlsxbin"));
+        } finally {
+            Files.deleteIfExists(draftFile);
+            Files.deleteIfExists(patchFile);
+            Files.deleteIfExists(workbookFile);
+            Files.deleteIfExists(nextWorkbookFile);
+            Files.deleteIfExists(reportZipFile);
+            Files.deleteIfExists(wbsXlsxFile);
+        }
     }
 
     @Test
@@ -1196,7 +1253,7 @@ public class MikuprojectCliTest {
         assertEquals("", text(out));
         assertTrue(text(err).contains("usage error:"));
         assertTrue(text(err).contains("unknown command: unknown-command"));
-        assertTrue(text(err).contains("export-wbs-markdown"));
+        assertTrue(text(err).contains("report wbs-markdown"));
     }
 
     @Test

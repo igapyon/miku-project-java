@@ -327,7 +327,7 @@ Java 側テスト名は、次の基準で付ける。
   - Java CLI から validate batch と report bundle / report directory batch export を呼べることを確認
 
 - `MikuprojectCliTest.validateXmlReportsCollapsedZeroDurationTaskWarning`
-  - Java CLI の `validate-xml` で zero duration cluster warning が見えることを確認
+  - Java CLI の `validate xml --in` で zero duration cluster warning が見えることを確認
 
 - `MikuprojectCliTest.exportsWorkbookJsonBatch`
   - Java CLI から workbook JSON batch export を呼べることを確認
@@ -369,7 +369,7 @@ Java 側テスト名は、次の基準で付ける。
   - Java CLI から report bundle / WBS xlsx export に display range / progress / holiday / label option を渡せることを確認
 
 - `MikuprojectCliTest.keepsReportBundleAndReportDirOutputsEquivalentToStandaloneWbsXlsx`
-  - Java CLI から dependency fixture の report bundle / report dir / standalone `export-wbs-xlsx` を出力し、entry 名 / entry bytes と `wbs.xlsx` bytes の一致を確認
+  - Java CLI から dependency fixture の report bundle / report dir / standalone `report wbs-xlsx` を出力し、entry 名 / entry bytes と `wbs.xlsx` bytes の一致を確認
 
 - `MikuprojectCliTest.appliesSvgOptionArgumentsToSvgExports`
   - Java CLI から daily / weekly SVG の label mode と monthly SVG zip の holiday / label option を渡せることを確認
@@ -396,7 +396,7 @@ Java 側テスト名は、次の基準で付ける。
   - Java CLI から AI JSON spec export と kind detect / kind detect batch を呼べることを確認
 
 - `MikuprojectCliTest.exportsAiJsonSpecFromClasspathWhenWorkingDirectoryHasNoVendor`
-  - `export-ai-json-spec` が repo 外の working directory でも classpath 内リソースから Markdown を返すことを確認
+  - `ai spec` が repo 外の working directory でも classpath 内リソースから Markdown を返すことを確認
 
 - `MikuprojectCliTest.exportsAndImportsXlsxWorkbookBytes`
   - Java CLI から workbook xlsx export / import / import batch / merge / merge batch を呼べることを確認
