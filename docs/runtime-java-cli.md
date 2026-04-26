@@ -57,6 +57,7 @@ CLI は `java -jar mikuproject.jar <command> ...` の形で実行する。
 代表的な command は次である。
 
 - `ai spec`
+- `ai export bundle --in workbook.json --diagnostics json --out bundle.editjson`
 - `state from-draft --in draft.editjson --out workbook.json`
 - `state apply-patch --state workbook.json --in patch.editjson --out workbook.next.json`
 - `state summarize --in workbook.json`

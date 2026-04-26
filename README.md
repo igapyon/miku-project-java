@@ -132,9 +132,10 @@ Supported commands:
 - `--version`
 - `ai spec`
 - `ai detect-kind --in document.json`
-- `ai export project-overview --in workbook.json [--out overview.editjson]`
-- `ai export task-edit --in workbook.json --task-uid taskUid [--out task.editjson]`
-- `ai export phase-detail --in workbook.json [--phase-uid phaseUid] [--mode mode] [--root-uid rootUid] [--max-depth n] [--out phase.editjson]`
+- `ai export project-overview --in workbook.json [--diagnostics text|json] [--out overview.editjson]`
+- `ai export bundle --in workbook.json [--diagnostics text|json] [--out bundle.editjson]`
+- `ai export task-edit --in workbook.json --task-uid taskUid [--diagnostics text|json] [--out task.editjson]`
+- `ai export phase-detail --in workbook.json [--phase-uid phaseUid] [--mode mode] [--root-uid rootUid] [--max-depth n] [--diagnostics text|json] [--out phase.editjson]`
 - `ai validate-patch --state workbook.json --in patch.editjson`
 - `state from-draft --in draft.editjson [--out workbook.json]`
 - `state validate --in workbook.json`

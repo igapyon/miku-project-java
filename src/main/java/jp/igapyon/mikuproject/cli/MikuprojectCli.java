@@ -4,6 +4,7 @@
  */
 package jp.igapyon.mikuproject.cli;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -21,6 +22,7 @@ import jp.igapyon.mikuproject.coreapi.CoreApiAiJsonUtil;
 import jp.igapyon.mikuproject.coreapi.CoreApiImport;
 import jp.igapyon.mikuproject.coreapi.CoreApiWorkbookXlsx;
 import jp.igapyon.mikuproject.model.ProjectModel;
+import jp.igapyon.mikuproject.model.TaskModel;
 import jp.igapyon.mikuproject.model.ValidationIssue;
 import jp.igapyon.mikuproject.msprojectxml.MsProjectXml;
 import jp.igapyon.mikuproject.projectpatchjson.PatchWarning;
@@ -138,10 +140,14 @@ public class MikuprojectCli {
 
     private int runAiExportCommand(String[] args, PrintStream out, PrintStream err) throws IOException {
         if (args.length < 3) {
-            return usageError(err, "ai export requires <project-overview|task-edit|phase-detail>");
+            return usageError(err, "ai export requires <project-overview|bundle|task-edit|phase-detail>");
         }
         String subject = args[2];
         CliOptions options = parseOptions(args, 3);
+        String diagnosticsFormat = options.get("diagnostics");
+        if (!isValidDiagnosticsFormat(diagnosticsFormat)) {
+            return usageError(err, "--diagnostics requires text or json");
+        }
         String input = requireOption(options, "in", err, "ai export " + subject + " requires --in <workbook.json>");
         if (input == null) {
             return 2;
@@ -150,6 +156,8 @@ public class MikuprojectCli {
         Object result;
         if ("project-overview".equals(subject)) {
             result = msProjectXml.exportProjectOverviewView(model);
+        } else if ("bundle".equals(subject)) {
+            result = buildAiProjectionBundle(model);
         } else if ("task-edit".equals(subject)) {
             String taskUid = options.get("task-uid");
             if (taskUid == null || taskUid.length() == 0) {
@@ -163,6 +171,7 @@ public class MikuprojectCli {
             return usageError(err, "unknown ai export command: " + subject, true);
         }
         writeTextOutput(options.get("out"), jsonUtil.stringifyJson(result) + "\n", out);
+        writeAiExportDiagnostics(diagnosticsFormat, subject, options, result, err);
         return 0;
     }
 
@@ -429,7 +438,13 @@ public class MikuprojectCli {
 
     private String readText(String path) throws IOException {
         if ("-".equals(path)) {
-            throw new IllegalArgumentException("stdin input is not supported by this Java embedding API; use a file path");
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] chunk = new byte[8192];
+            int read;
+            while ((read = System.in.read(chunk)) != -1) {
+                buffer.write(chunk, 0, read);
+            }
+            return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
         }
         byte[] bytes = Files.readAllBytes(Paths.get(path));
         return new String(bytes, StandardCharsets.UTF_8);
@@ -457,6 +472,91 @@ public class MikuprojectCli {
         }
         Files.write(outputFile, text.getBytes(StandardCharsets.UTF_8));
         out.println("wrote " + path);
+    }
+
+    private boolean isValidDiagnosticsFormat(String value) {
+        return value == null || value.length() == 0 || "text".equals(value) || "json".equals(value);
+    }
+
+    private void writeAiExportDiagnostics(String diagnosticsFormat, String subject, CliOptions options, Object exported,
+            PrintStream err) {
+        if (!"json".equals(diagnosticsFormat)) {
+            return;
+        }
+        Map<String, Object> diagnostics = buildCommandDiagnostics("ai export " + subject, options);
+        if ("bundle".equals(subject) && exported instanceof Map<?, ?>) {
+            Map<?, ?> bundle = (Map<?, ?>) exported;
+            diagnostics.put("output_kind", "ai_projection_bundle");
+            diagnostics.put("phase_count", Integer.valueOf(listSize(bundle.get("phase_detail_views_full"))));
+            diagnostics.put("task_count", Integer.valueOf(listSize(bundle.get("task_edit_views_full"))));
+        } else if ("project-overview".equals(subject) && exported instanceof Map<?, ?>) {
+            Map<?, ?> overview = (Map<?, ?>) exported;
+            diagnostics.put("output_kind", "project_overview_view");
+            diagnostics.put("phase_count", Integer.valueOf(listSize(overview.get("phases"))));
+            Object summary = overview.get("summary");
+            if (summary instanceof Map<?, ?>) {
+                diagnostics.put("milestone_count", ((Map<?, ?>) summary).get("milestone_count"));
+            }
+        } else if ("task-edit".equals(subject) && exported instanceof Map<?, ?>) {
+            Map<?, ?> taskEdit = (Map<?, ?>) exported;
+            diagnostics.put("output_kind", "task_edit_view");
+            Object targetTask = taskEdit.get("target_task");
+            if (targetTask instanceof Map<?, ?>) {
+                diagnostics.put("target_task_uid", ((Map<?, ?>) targetTask).get("uid"));
+            }
+            Object phase = taskEdit.get("phase");
+            diagnostics.put("phase_uid", phase instanceof Map<?, ?> ? ((Map<?, ?>) phase).get("uid") : null);
+        } else if ("phase-detail".equals(subject) && exported instanceof Map<?, ?>) {
+            Map<?, ?> phaseDetail = (Map<?, ?>) exported;
+            diagnostics.put("output_kind", "phase_detail_view");
+            Object phase = phaseDetail.get("phase");
+            diagnostics.put("phase_uid", phase instanceof Map<?, ?> ? ((Map<?, ?>) phase).get("uid") : null);
+            Object scope = phaseDetail.get("scope");
+            if (scope instanceof Map<?, ?>) {
+                diagnostics.put("mode", ((Map<?, ?>) scope).get("mode"));
+                diagnostics.put("root_task_uid", ((Map<?, ?>) scope).get("root_uid"));
+                diagnostics.put("max_depth", ((Map<?, ?>) scope).get("max_depth"));
+            }
+            diagnostics.put("task_count", Integer.valueOf(listSize(phaseDetail.get("tasks"))));
+        }
+        err.println(jsonUtil.stringifyJson(diagnostics));
+    }
+
+    private Map<String, Object> buildCommandDiagnostics(String command, CliOptions options) {
+        Map<String, Object> diagnostics = new LinkedHashMap<String, Object>();
+        diagnostics.put("ok", Boolean.TRUE);
+        diagnostics.put("diagnostics_version", "1");
+        diagnostics.put("command", command);
+        diagnostics.put("context", command);
+        diagnostics.put("status", "ok");
+        diagnostics.put("exit_code", Integer.valueOf(0));
+        diagnostics.put("warning_count", Integer.valueOf(0));
+        diagnostics.put("error_count", Integer.valueOf(0));
+        diagnostics.put("io", buildIoDiagnostics(options));
+        diagnostics.put("warnings", new ArrayList<Object>());
+        diagnostics.put("errors", new ArrayList<Object>());
+        return diagnostics;
+    }
+
+    private Map<String, Object> buildIoDiagnostics(CliOptions options) {
+        Map<String, Object> io = new LinkedHashMap<String, Object>();
+        List<Object> inputs = new ArrayList<Object>();
+        Map<String, Object> input = new LinkedHashMap<String, Object>();
+        input.put("option", "--in");
+        input.put("value", options.get("in"));
+        input.put("source", "-".equals(options.get("in")) ? "stdin" : "file");
+        inputs.add(input);
+        io.put("inputs", inputs);
+        Map<String, Object> output = new LinkedHashMap<String, Object>();
+        output.put("option", "--out");
+        output.put("value", options.get("out"));
+        output.put("target", options.get("out") == null || options.get("out").length() == 0 || "-".equals(options.get("out")) ? "stdout" : "file");
+        io.put("output", output);
+        return io;
+    }
+
+    private int listSize(Object value) {
+        return value instanceof List<?> ? ((List<?>) value).size() : 0;
     }
 
     private void writeBinaryOutput(String path, byte[] bytes) throws IOException {
@@ -599,6 +699,41 @@ public class MikuprojectCli {
         }
         summary.put("major_milestones", majorMilestones);
         return summary;
+    }
+
+    private Map<String, Object> buildAiProjectionBundle(ProjectModel model) {
+        Map<String, Object> projectOverview = msProjectXml.exportProjectOverviewView(model);
+        List<Map<String, Object>> phaseDetailViewsFull = new ArrayList<Map<String, Object>>();
+        Object phasesObject = projectOverview.get("phases");
+        if (phasesObject instanceof List<?>) {
+            for (Object phaseObject : (List<?>) phasesObject) {
+                if (!(phaseObject instanceof Map<?, ?>)) {
+                    continue;
+                }
+                Object phaseUid = ((Map<?, ?>) phaseObject).get("uid");
+                if (phaseUid == null || String.valueOf(phaseUid).length() == 0) {
+                    continue;
+                }
+                phaseDetailViewsFull.add(msProjectXml.exportPhaseDetailView(model, String.valueOf(phaseUid), "full", null, null));
+            }
+        }
+
+        List<Map<String, Object>> taskEditViewsFull = new ArrayList<Map<String, Object>>();
+        if (model.tasks != null) {
+            for (TaskModel task : model.tasks) {
+                if (task == null || "0".equals(task.uid) || task.summary) {
+                    continue;
+                }
+                taskEditViewsFull.add(msProjectXml.exportTaskEditView(model, task.uid));
+            }
+        }
+
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("view_type", "ai_projection_bundle");
+        result.put("project_overview_view", projectOverview);
+        result.put("phase_detail_views_full", phaseDetailViewsFull);
+        result.put("task_edit_views_full", taskEditViewsFull);
+        return result;
     }
 
     private Map<String, Object> buildStateDiffSummary(jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonImport.ImportResult result) {
@@ -746,9 +881,10 @@ public class MikuprojectCli {
         out.println("  --version");
         out.println("  ai spec");
         out.println("  ai detect-kind --in document.json");
-        out.println("  ai export project-overview --in workbook.json [--out overview.editjson]");
-        out.println("  ai export task-edit --in workbook.json --task-uid taskUid [--out task.editjson]");
-        out.println("  ai export phase-detail --in workbook.json [--phase-uid phaseUid] [--mode mode] [--root-uid rootUid] [--max-depth n] [--out phase.editjson]");
+        out.println("  ai export project-overview --in workbook.json [--diagnostics text|json] [--out overview.editjson]");
+        out.println("  ai export bundle --in workbook.json [--diagnostics text|json] [--out bundle.editjson]");
+        out.println("  ai export task-edit --in workbook.json --task-uid taskUid [--diagnostics text|json] [--out task.editjson]");
+        out.println("  ai export phase-detail --in workbook.json [--phase-uid phaseUid] [--mode mode] [--root-uid rootUid] [--max-depth n] [--diagnostics text|json] [--out phase.editjson]");
         out.println("  ai validate-patch --state workbook.json --in patch.editjson");
         out.println("  state from-draft --in draft.editjson [--out workbook.json]");
         out.println("  state validate --in workbook.json");

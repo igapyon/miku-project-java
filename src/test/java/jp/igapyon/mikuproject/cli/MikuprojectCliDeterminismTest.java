@@ -37,6 +37,7 @@ public class MikuprojectCliDeterminismTest {
         assertStdoutDeterministic("report", "wbs-markdown", "--in", workbookFile.toString());
         assertStdoutDeterministic("report", "mermaid", "--in", workbookFile.toString());
         assertStdoutDeterministic("ai", "export", "project-overview", "--in", workbookFile.toString());
+        assertStdoutDeterministic("ai", "export", "bundle", "--in", workbookFile.toString());
 
         assertFileOutputDeterministic(".zip", "report", "all", "--in", workbookFile.toString(), "--out");
         assertFileOutputDeterministic(".xlsx", "export", "xlsx", "--in", workbookFile.toString(), "--out");
