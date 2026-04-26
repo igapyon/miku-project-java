@@ -56,27 +56,28 @@ CLI は `java -jar mikuproject.jar <command> ...` の形で実行する。
 
 代表的な command は次である。
 
-- `validate-xml <input.xml>`
-- `export-mermaid <input.xml>`
-- `export-wbs-markdown <input.xml> ...`
-- `export-daily-svg <input.xml> ...`
-- `export-weekly-svg <input.xml> ...`
-- `export-monthly-svg-zip <input.xml> <output.zip> ...`
-- `export-report-bundle <input.xml> <output.zip> ...`
-- `export-report-dir <input.xml> <output.dir> ...`
-- `export-workbook-json <input.xml>`
-- `export-xlsx <input.xml> <output.xlsxbin>`
-- `import-external <format> <mode> <input> <output.xml> [<base.xml>]`
+- `ai spec`
+- `state from-draft --in draft.editjson --out workbook.json`
+- `state apply-patch --state workbook.json --in patch.editjson --out workbook.next.json`
+- `state summarize --in workbook.json`
+- `state diff --before workbook.before.json --after workbook.after.json`
+- `validate xml --in project.xml`
+- `export xml --in workbook.json --out project.xml`
+- `export xlsx --in workbook.json --out workbook.xlsx`
+- `import xlsx --in workbook.xlsx --out workbook.json`
+- `merge xlsx --state workbook.json --in workbook.xlsx --out workbook.next.json`
+- `report all --in workbook.json --out report-bundle.zip`
+- `report wbs-xlsx --in workbook.json --out wbs.xlsx`
 
 詳細な command 一覧は `README.md` を参照する。
 
 ## 実行時リソース
 
-`export-ai-json-spec` は、ビルド済み classpath / JAR 内に含まれる `mikuproject-ai-json-spec.md` を出力する。
+`ai spec` は、ビルド済み classpath / JAR 内に含まれる `mikuproject-ai-json-spec.md` を出力する。
 実行時にカレントディレクトリ上の `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` は参照しない。
 
 この Markdown は Maven の `process-resources` で `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` から `target/classes/jp/igapyon/mikuproject/coreapi/mikuproject-ai-json-spec.md` へコピーされる。
-そのため、配布済み `mikuproject.jar` は任意のカレントディレクトリから `java -jar mikuproject.jar export-ai-json-spec` を実行できる。
+そのため、配布済み `mikuproject.jar` は任意のカレントディレクトリから `java -jar mikuproject.jar ai spec` を実行できる。
 
 ## report SVG の注意
 
@@ -86,11 +87,11 @@ daily / weekly SVG は、モデル内の最も早い task 開始日を timeline 
 ただし、入力 model の全 task が同一日時かつ zero duration の場合、出力 SVG は有効でも全 task bar が同じ日付位置へ縦に並ぶ。
 2泊3日など期間を持つ計画として見せたい場合は、AI JSON / workbook JSON / XML の段階で task の `Start` / `Finish` または `planned_start` / `planned_finish` に実日程を入れる。
 
-`validate-xml` では、placeholder / summary / milestone を除く複数 task が同一 `start` / `finish` かつ zero duration に潰れている場合、この入力品質リスクを warning として報告する。
+`validate xml --in project.xml` では、placeholder / summary / milestone を除く複数 task が同一 `start` / `finish` かつ zero duration に潰れている場合、この入力品質リスクを warning として報告する。
 
 ## 最小 entrypoint から全機能 entrypoint への段取り
 
-Java CLI は、`validate-xml` と主要 export だけを持つ最小 entrypoint から開始したが、現在は workbook / patch / AI JSON / xlsx / batch command まで含む実用的な entrypoint へ広がっている。
+Java CLI は、`validate-xml` と主要 export だけを持つ最小 entrypoint から開始したが、現在は Agent Skills から呼びやすい command group / named option 体系へ整理している。
 
 今後の整理は、次の 4 段階で進める。
 
@@ -108,8 +109,8 @@ Java CLI は、`validate-xml` と主要 export だけを持つ最小 entrypoint 
 
 ### 3. option と batch command を整理する
 
-- 複数 command で重複する option 群は、`WbsMarkdownOptions`, `WbsExportOptions`, `NativeSvgOptions` の単位で揃える
-- `*-batch` command は upstream straight conversion そのものではなく、Java 側運用拡張として分けて扱う
+- 複数 command で重複する option 群は、`--before`, `--after`, `--display-mode`, `--progress-mode`, `--holiday-dates`, `--label-mode` として揃える
+- command group は `ai`, `state`, `validate`, `export`, `import`, `merge`, `report` を正規契約とする
 - help 表示、`README.md`、test を同じ単位で更新し、entrypoint の見え方を崩さない
 
 ### 4. full entrypoint として保守可能に固定する

@@ -113,17 +113,19 @@
 ### CLI / automation
 
 - Java CLI entry の既存 automation command 確認
-  - 現状は validate / validate batch、Mermaid export / Mermaid export batch、WBS Markdown export / WBS Markdown export batch、daily SVG export / daily SVG export batch、weekly SVG export / weekly SVG export batch、monthly SVG zip export / monthly SVG zip export batch、主要 export、report zip / report zip batch / report directory / report directory batch、WBS xlsx / WBS xlsx batch、workbook JSON validate / validate batch / export / export batch / import / import batch / merge / merge batch、workbook xlsx export / export batch / validate batch / import / import batch / merge / merge batch、patch JSON validate / validate batch / apply / apply batch、project overview view export / export batch、phase detail view export / export batch、task edit view export / export batch、AI JSON spec / kind / kind batch / draft request / view export / import、external import まで
+  - 現状の正規 CLI 契約は Node.js CLI に寄せた `ai`, `state`, `validate`, `export`, `import`, `merge`, `report` の command group と named option を中心に扱う
+  - `mikuproject_workbook_json` を Agent Skills との会話境界 state とし、XML は `validate xml` / `export xml` のような明示 command でのみ表に出す
+  - `state from-draft`, `state apply-patch`, `state summarize`, `state diff`, `report all`, `report wbs-xlsx` は Java CLI test で workbook JSON state 起点の導線を固定済み
   - WBS markdown / xlsx / report directory には display range / progress / holiday option を渡せる
   - daily / weekly SVG には label mode、monthly SVG zip には holiday / label option を渡せる
   - report bundle / report directory にも holiday / label を含む SVG option と WBS option をまとめて渡せる
-  - `export-ai-json-spec` は実行時に JAR / classpath 内リソースを読み、`vendor/...` 相対パスには依存しない
+  - `ai spec` は実行時に JAR / classpath 内リソースを読み、`vendor/...` 相対パスには依存しない
   - daily / weekly SVG は task の最初の開始日を timeline 基準日にし、固定サンプル日付への依存を避ける
   - 複数入力をまとめる command は Java 側独自の運用拡張として扱い、現時点では追加を優先しない
   - help / `README.md` / CLI test では、主要 command 一覧、help alias、未知 command / 引数不足 / `*-batch` pair 数不整合 / unsupported calendar mode の入口契約を固定済み
   - hierarchy / dependency fixture に対する AI view / report bundle / report directory / scoped phase detail の主要出力も CLI test で固定済み
   - diagnostics については、usage error / command failed / `I/O error` の 3 系統を分け、入口契約違反には `usage error:` prefix を付ける基本契約を CLI test で固定済み
-  - 残るのは、新規 command 追加ではなく、既存 command の diagnostics 文言、option 表現、README / help / test の同期をどこまで細かく保守するかという運用面の詰めである
+  - 残るのは、Node.js CLI と同水準の `--diagnostics json`、stdin / stdout handling、usage error code をどこまで細かく揃えるかという運用面の詰めである
 - Java CLI entry を最小 entrypoint から full entrypoint へ広げる段取りは `docs/runtime-java-cli.md` に 4 段階で整理済み
   - `core 公開面の薄い入口化`
   - `主要単発 command の整備`
@@ -210,8 +212,8 @@ upstream 更新追随では、カテゴリ単位ではなく `upstream file -> J
 - 2026-04-21 時点では、straight conversion が薄かった report / XLSX / patch 周辺の補強は TODO 上で完了扱いに寄せた。Node parity 方針も、現フェーズでは report 系出力の opt-in parity を完了ラインとし、JSON view / XML / diagnostics / project XLSX を含む「全出力」への拡張は次段の保守論点として切り分ける方針に整理した
 - 2026-04-21 時点では、Project Patch JSON の delete 系 warning / changes 補強後に `mvn test -Dtest=ProjectPatchJsonTest,ProjectPatchJsonTasksTest` が `8` tests, `0` failures、`mvn test -Dtest=ProjectPatchJsonTest,ProjectPatchJsonTasksTest,CoreApiWorkbookTest,MikuprojectCliTest` が `49` tests, `0` failures で通っている
 - 2026-04-21 時点では、`project_draft_view` import の task 日付 fallback 契約確認として `mvn test -Dtest=MsProjectAiViewsTest` が `6` tests, `0` failures で通っている。upstream / Java とも task ごとの `planned_start` / `planned_finish` は必須ではなく、欠けた場合は project 起点 fallback を使う
-- 2026-04-21 時点では、zero duration cluster warning 方針を `validateProjectModel(...)` / `validate-xml` に固定し、`mvn test -Dtest=MsProjectXmlTest,MikuprojectCliTest` の対象追加分で確認する
-- 2026-04-21 時点では、report 出力同等性の保守回帰として `MikuprojectCliTest.keepsReportBundleAndReportDirOutputsEquivalentToStandaloneWbsXlsx` を追加し、`dependency.xml` で report bundle zip と report dir の entry 名 / entry bytes、および standalone `export-wbs-xlsx` と report 同梱 `wbs.xlsx` の byte 一致を固定した
+- 2026-04-21 時点では、zero duration cluster warning 方針を `validateProjectModel(...)` / `validate xml --in` に固定し、`mvn test -Dtest=MsProjectXmlTest,MikuprojectCliTest` の対象追加分で確認する
+- 2026-04-21 時点では、report 出力同等性の保守回帰として `MikuprojectCliTest.keepsReportBundleAndReportDirOutputsEquivalentToStandaloneWbsXlsx` を追加し、`dependency.xml` で report bundle zip と report dir の entry 名 / entry bytes、および standalone `report wbs-xlsx` と report 同梱 `wbs.xlsx` の byte 一致を固定した
 - 2026-04-21 時点では、monthly calendar coverage を `WbsSvgTest.exportsMonthlyCalendarArchiveForSampleAndFixtureRanges` で sample / dependency / hierarchy の 3 系統へ広げ、プロジェクト期間に含まれる月数、`YYYY-MM.svg` file 名、各 SVG 非空を固定した。CLI 側の zip path は既存 test で `monthly-calendar/YYYY-MM.svg` を確認済みである
 - 2026-04-21 時点では、`vendor/mikuproject/src/ts/msproject-mermaid.ts` を題材にした upstream follow-up 実例を追加し、`mvn test -Dtest=MsProjectMermaidTest` が `3` tests, `0` failures で通っている
 - 2026-04-21 時点では、`vendor/mikuproject/src/ts/msproject-xml.ts` を題材にした upstream follow-up 実例も追加し、`mvn test -Dtest=MsProjectXmlTest` が `18` tests, `0` failures で通っている
@@ -349,10 +351,9 @@ Java 版では、Node.js 版 upstream の仕様を次の 2 つに分けて扱う
 
 - upstream 更新追随時は、この文書のカテゴリ単位ではなく、対応 file 単位で差分を見る
 - Java 側で着手済みの領域は、対応 class と test の対応関係をセットで保守する
-- Java CLI には、upstream にはない Java 側独自の複数入力 `*-batch` command を追加している
-- 現時点の独自 batch command は `validate-xml-batch`, `validate-workbook-json-batch`, `validate-patch-json-batch`, `validate-xlsx-batch`, `detect-ai-json-kind-batch`, `export-mermaid-batch`, `export-wbs-markdown-batch`, `export-daily-svg-batch`, `export-weekly-svg-batch`, `export-monthly-svg-zip-batch`, `export-report-bundle-batch`, `export-report-dir-batch`, `export-wbs-xlsx-batch`, `export-workbook-json-batch`, `export-xlsx-batch`, `export-project-overview-view-batch`, `export-phase-detail-view-batch`, `export-task-edit-view-batch`, `import-workbook-json-batch`, `import-xlsx-batch`, `merge-workbook-json-batch`, `merge-xlsx-batch`, `apply-patch-json-batch`
-- これらは移植本体そのものではなく、CLI 運用上の利便性向上を目的にした後付け拡張として扱う
-- 現フェーズでは、未追加の `*-batch` command を増やすことは優先しない
+- Java CLI は Agent Skills からの利用を優先し、正規契約では command group / named option を使う
+- 旧 CLI にあった batch command 群は正規契約から外し、README / help では扱わない
+- 現フェーズでは、batch command を増やすことは優先しない
 - Java CLI の正式配布成果物は `mvn package` で生成される単一 fat jar とし、想定パスは `target/mikuproject.jar` とする
 - `mvn package` で追跡・レビュー用の `target/mikuproject-sources.jar` も生成する
 - 利用側向けの配布パッケージとして `target/mikuproject-dist.zip` を生成し、`mikuproject.jar`, `mikuproject-sources.jar`, `README.md`, `LICENSE`, `docs/runtime-java-cli.md` を同梱する
