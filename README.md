@@ -131,34 +131,34 @@ Supported commands:
 
 - `--version`
 - `ai spec`
-- `ai detect-kind --in document.json`
-- `ai export project-overview --in workbook.json [--diagnostics text|json] [--out overview.editjson]`
-- `ai export bundle --in workbook.json [--diagnostics text|json] [--out bundle.editjson]`
-- `ai export task-edit --in workbook.json --task-uid taskUid [--diagnostics text|json] [--out task.editjson]`
-- `ai export phase-detail --in workbook.json [--phase-uid phaseUid] [--mode mode] [--root-uid rootUid] [--max-depth n] [--diagnostics text|json] [--out phase.editjson]`
+- `ai detect-kind [--in document.json|-] [--diagnostics text|json]`
+- `ai export project-overview [--in workbook.json|-] [--diagnostics text|json] [--out overview.editjson|-]`
+- `ai export bundle [--in workbook.json|-] [--diagnostics text|json] [--out bundle.editjson|-]`
+- `ai export task-edit [--in workbook.json|-] [--task-uid taskUid] [--select auto|first-task|uid] [--diagnostics text|json] [--out task.editjson|-]`
+- `ai export phase-detail [--in workbook.json|-] [--phase-uid phaseUid] [--select auto|first-phase|uid] [--mode scoped|full] [--root-task-uid rootTaskUid] [--max-depth n] [--diagnostics text|json] [--out phase.editjson|-]`
 - `ai validate-patch --state workbook.json --in patch.editjson`
-- `state from-draft --in draft.editjson [--out workbook.json]`
+- `state from-draft [--in draft.editjson|-] [--out workbook.json|-]`
 - `state validate --in workbook.json`
 - `state import --in workbook.json [--out workbook.normalized.json]`
 - `state merge --state workbook.json --in workbook.patch.json [--out workbook.next.json]`
-- `state apply-patch --state workbook.json --in patch.editjson [--out workbook.next.json]`
-- `state summarize --in workbook.json [--out summary.json]`
-- `state diff --before workbook.before.json --after workbook.after.json [--out diff.json]`
+- `state apply-patch --state workbook.json [--in patch.editjson|-] [--out workbook.next.json|-]`
+- `state summarize [--in workbook.json|-] [--out summary.json|-]`
+- `state diff --before workbook.before.json --after workbook.after.json [--out diff.json|-]`
 - `validate xml --in project.xml`
 - `validate xlsx --in workbook.xlsx`
-- `export workbook-json --in workbook.json [--out workbook.normalized.json]`
-- `export xml --in workbook.json --out project.xml`
-- `export xlsx --in workbook.json --out workbook.xlsx`
+- `export workbook-json [--in workbook.json|-] [--diagnostics text|json] [--out workbook.json|-]`
+- `export xml [--in workbook.json|-] [--diagnostics text|json] [--out project.xml|-]`
+- `export xlsx [--in workbook.json|-] [--diagnostics text|json] [--out project.xlsx|-]`
 - `import xlsx --in workbook.xlsx [--out workbook.json]`
 - `merge xlsx --state workbook.json --in workbook.xlsx [--out workbook.next.json]`
-- `report all --in workbook.json --out report-bundle.zip`
+- `report all [--in workbook.json|-] [--diagnostics text|json] [--out report-bundle.zip|-]`
 - `report dir --in workbook.json --out report.dir`
-- `report wbs-xlsx --in workbook.json --out wbs.xlsx`
-- `report daily-svg --in workbook.json [--out daily.svg]`
-- `report weekly-svg --in workbook.json [--out weekly.svg]`
-- `report monthly-calendar-svg --in workbook.json --out monthly-calendar.zip`
-- `report wbs-markdown --in workbook.json [--out wbs.md]`
-- `report mermaid --in workbook.json [--out mermaid.mmd]`
+- `report wbs-xlsx [--in workbook.json|-] [--diagnostics text|json] [--out report.xlsx|-]`
+- `report daily-svg [--in workbook.json|-] [--diagnostics text|json] [--out report.svg|-]`
+- `report weekly-svg [--in workbook.json|-] [--diagnostics text|json] [--out report.svg|-]`
+- `report monthly-calendar-svg [--in workbook.json|-] [--diagnostics text|json] [--out report.zip|-]`
+- `report wbs-markdown [--in workbook.json|-] [--diagnostics text|json] [--out report.md|-]`
+- `report mermaid [--in workbook.json|-] [--diagnostics text|json] [--out report.mmd|-]`
 
 Notes:
 

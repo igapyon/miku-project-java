@@ -16,11 +16,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import jp.igapyon.mikuproject.coreapi.CoreApiAiJsonUtil;
+import jp.igapyon.mikuproject.model.ProjectModel;
 import jp.igapyon.mikuproject.msprojectxml.MsProjectSamples;
+import jp.igapyon.mikuproject.msprojectxml.MsProjectXml;
+import jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJson;
+import jp.igapyon.mikuproject.projectworkbookjson.WorkbookJsonDocument;
 
 public class MikuprojectCliTest {
     @Test
@@ -33,8 +40,8 @@ public class MikuprojectCliTest {
 
         assertEquals(0, exitCode);
         assertTrue(text(out).contains("ai spec"));
-        assertTrue(text(out).contains("state from-draft --in draft.editjson"));
-        assertTrue(text(out).contains("report wbs-xlsx --in workbook.json --out wbs.xlsx"));
+        assertTrue(text(out).contains("state from-draft [--in draft.editjson|-]"));
+        assertTrue(text(out).contains("report wbs-xlsx [--in workbook.json|-]"));
         assertFalse(text(out).contains("xlsxbin"));
         assertEquals("", text(err));
     }
@@ -49,8 +56,10 @@ public class MikuprojectCliTest {
         assertEquals(0, cli.run(new String[] { "--help" }, stream(longHelpOut), stream(new ByteArrayOutputStream())));
 
         assertTrue(text(shortHelpOut).contains("report dir --in workbook.json --out report.dir"));
-        assertTrue(text(shortHelpOut).contains("ai export bundle --in workbook.json"));
-        assertTrue(text(longHelpOut).contains("ai export phase-detail --in workbook.json"));
+        assertTrue(text(shortHelpOut).contains("ai export bundle [--in workbook.json|-]"));
+        assertTrue(text(longHelpOut).contains("ai export phase-detail [--in workbook.json|-]"));
+        assertTrue(text(longHelpOut).contains("--root-task-uid rootTaskUid"));
+        assertFalse(text(longHelpOut).contains("--root-uid"));
     }
 
     @Test
@@ -152,7 +161,7 @@ public class MikuprojectCliTest {
                     stream(new ByteArrayOutputStream())));
 
             assertTrue(text(specOut).contains("project_draft_view"));
-            assertTrue(text(kindOut).contains("kind=patch_json"));
+            assertEquals("patch_json\n", text(kindOut));
             assertTrue(text(validateOut).contains("warnings="));
             assertTrue(Files.readString(workbookFile, StandardCharsets.UTF_8).contains("\"format\":\"mikuproject_workbook_json\""));
             assertTrue(Files.readString(nextWorkbookFile, StandardCharsets.UTF_8).contains("Patched Project"));
@@ -213,6 +222,89 @@ public class MikuprojectCliTest {
             Files.deleteIfExists(draftFile);
             Files.deleteIfExists(workbookFile);
             Files.deleteIfExists(bundleFile);
+        }
+    }
+
+    @Test
+    public void exportsTaskEditWithNodeCompatibleSelectOptions() throws IOException {
+        MikuprojectCli cli = new MikuprojectCli();
+        MsProjectXml xml = new MsProjectXml();
+        ProjectModel model = xml.importFromXml(readVendorTestdata("hierarchy.xml"));
+        Path workbookFile = Files.createTempFile("mikuproject-cli-task-select", ".json");
+        Files.write(workbookFile, exportWorkbookJsonText(model).getBytes(StandardCharsets.UTF_8));
+        try {
+            ByteArrayOutputStream defaultOut = new ByteArrayOutputStream();
+            ByteArrayOutputStream firstTaskOut = new ByteArrayOutputStream();
+            ByteArrayOutputStream missingUidErr = new ByteArrayOutputStream();
+
+            assertEquals(0, cli.run(new String[] { "ai", "export", "task-edit", "--in", workbookFile.toString() },
+                    stream(defaultOut), stream(new ByteArrayOutputStream())));
+            assertEquals(0, cli.run(new String[] { "ai", "export", "task-edit", "--in", workbookFile.toString(),
+                    "--select", "first-task" }, stream(firstTaskOut), stream(new ByteArrayOutputStream())));
+            assertEquals(2, cli.run(new String[] { "ai", "export", "task-edit", "--in", workbookFile.toString(),
+                    "--select", "uid" }, stream(new ByteArrayOutputStream()), stream(missingUidErr)));
+
+            assertTrue(text(defaultOut).contains("\"view_type\":\"task_edit_view\""));
+            assertTrue(text(defaultOut).contains("\"uid\":\"2\""));
+            assertTrue(text(firstTaskOut).contains("\"uid\":\"2\""));
+            assertTrue(text(missingUidErr).contains("--task-uid"));
+        } finally {
+            Files.deleteIfExists(workbookFile);
+        }
+    }
+
+    @Test
+    public void exportsScopedPhaseDetailWithRootTaskUidOption() throws IOException {
+        MikuprojectCli cli = new MikuprojectCli();
+        MsProjectXml xml = new MsProjectXml();
+        ProjectModel model = xml.importFromXml(readVendorTestdata("hierarchy.xml"));
+        Path workbookFile = Files.createTempFile("mikuproject-cli-phase-detail", ".json");
+        Path phaseFile = Files.createTempFile("mikuproject-cli-phase-detail", ".editjson");
+        Files.write(workbookFile, exportWorkbookJsonText(model).getBytes(StandardCharsets.UTF_8));
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+            int exitCode = cli.run(new String[] { "ai", "export", "phase-detail", "--in", workbookFile.toString(),
+                    "--phase-uid", "1", "--mode", "scoped", "--root-task-uid", "2", "--max-depth", "1", "--out",
+                    phaseFile.toString() }, stream(out), stream(err));
+
+            String phaseText = Files.readString(phaseFile, StandardCharsets.UTF_8);
+            assertEquals(0, exitCode);
+            assertTrue(text(out).contains("wrote " + phaseFile.toString()));
+            assertEquals("", text(err));
+            assertTrue(phaseText.contains("\"view_type\":\"phase_detail_view\""));
+            assertTrue(phaseText.contains("\"mode\":\"scoped\""));
+            assertTrue(phaseText.contains("\"root_uid\":\"2\""));
+            assertTrue(phaseText.contains("\"max_depth\":1"));
+        } finally {
+            Files.deleteIfExists(workbookFile);
+            Files.deleteIfExists(phaseFile);
+        }
+    }
+
+    @Test
+    public void exportsPhaseDetailWithNodeCompatibleSelectOptions() throws IOException {
+        MikuprojectCli cli = new MikuprojectCli();
+        MsProjectXml xml = new MsProjectXml();
+        ProjectModel model = xml.importFromXml(readVendorTestdata("hierarchy.xml"));
+        Path workbookFile = Files.createTempFile("mikuproject-cli-phase-select", ".json");
+        Files.write(workbookFile, exportWorkbookJsonText(model).getBytes(StandardCharsets.UTF_8));
+        try {
+            ByteArrayOutputStream firstPhaseOut = new ByteArrayOutputStream();
+            ByteArrayOutputStream missingUidErr = new ByteArrayOutputStream();
+
+            assertEquals(0, cli.run(new String[] { "ai", "export", "phase-detail", "--in", workbookFile.toString(),
+                    "--select", "first-phase" }, stream(firstPhaseOut), stream(new ByteArrayOutputStream())));
+            assertEquals(2, cli.run(new String[] { "ai", "export", "phase-detail", "--in", workbookFile.toString(),
+                    "--select", "uid" }, stream(new ByteArrayOutputStream()), stream(missingUidErr)));
+
+            assertTrue(text(firstPhaseOut).contains("\"view_type\":\"phase_detail_view\""));
+            assertTrue(text(firstPhaseOut).contains("\"mode\":\"scoped\""));
+            assertTrue(text(firstPhaseOut).contains("\"uid\":\"1\""));
+            assertTrue(text(missingUidErr).contains("--phase-uid"));
+        } finally {
+            Files.deleteIfExists(workbookFile);
         }
     }
 
@@ -282,12 +374,12 @@ public class MikuprojectCliTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        int exitCode = cli.run(new String[] { "state", "from-draft" }, stream(out), stream(err));
+        int exitCode = cli.run(new String[] { "state", "apply-patch", "--in", "patch.editjson" }, stream(out), stream(err));
 
         assertEquals(2, exitCode);
         assertEquals("", text(out));
         assertTrue(text(err).contains("usage error:"));
-        assertTrue(text(err).contains("state from-draft requires --in"));
+        assertTrue(text(err).contains("state apply-patch requires --state"));
     }
 
     @Test
@@ -377,6 +469,20 @@ public class MikuprojectCliTest {
         builder.append("{\"op\":\"add_resource\",\"uid\":\"r-new\",\"name\":\"CLI Resource\"}");
         builder.append("]}");
         return builder.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    private String exportWorkbookJsonText(ProjectModel model) {
+        WorkbookJsonDocument document = new ProjectWorkbookJson().exportProjectWorkbookJson(model);
+        Map<String, Object> json = new LinkedHashMap<String, Object>();
+        json.put("format", document.format);
+        json.put("version", document.version);
+        json.put("sheets", document.sheets);
+        return new CoreApiAiJsonUtil().stringifyJson(json);
+    }
+
+    private String readVendorTestdata(String fileName) throws IOException {
+        byte[] bytes = Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", fileName));
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 
     private void deleteTree(Path root) throws IOException {

@@ -57,18 +57,24 @@ CLI は `java -jar mikuproject.jar <command> ...` の形で実行する。
 代表的な command は次である。
 
 - `ai spec`
+- `ai detect-kind --in patch.editjson --diagnostics json`
+- `ai export task-edit --in workbook.json --select first-task --out task.editjson`
+- `ai export phase-detail --in workbook.json --phase-uid phaseUid --mode scoped --root-task-uid rootTaskUid --max-depth 2 --out phase.editjson`
 - `ai export bundle --in workbook.json --diagnostics json --out bundle.editjson`
 - `state from-draft --in draft.editjson --out workbook.json`
 - `state apply-patch --state workbook.json --in patch.editjson --out workbook.next.json`
 - `state summarize --in workbook.json`
 - `state diff --before workbook.before.json --after workbook.after.json`
 - `validate xml --in project.xml`
-- `export xml --in workbook.json --out project.xml`
-- `export xlsx --in workbook.json --out workbook.xlsx`
+- `export xml --in workbook.json --diagnostics json --out project.xml`
+- `export xlsx --in workbook.json --diagnostics json --out project.xlsx`
 - `import xlsx --in workbook.xlsx --out workbook.json`
 - `merge xlsx --state workbook.json --in workbook.xlsx --out workbook.next.json`
-- `report all --in workbook.json --out report-bundle.zip`
-- `report wbs-xlsx --in workbook.json --out wbs.xlsx`
+- `report all --in workbook.json --diagnostics json --out report-bundle.zip`
+- `report wbs-xlsx --in workbook.json --diagnostics json --out report.xlsx`
+
+Node.js upstream CLI と共有する command では、標準入力 / 標準出力を明示する `--in -` / `--out -` を受ける。
+`--in` を省略できる共有 command では、Node.js upstream CLI と同様に標準入力を暗黙入力として扱う。
 
 詳細な command 一覧は `README.md` を参照する。
 
