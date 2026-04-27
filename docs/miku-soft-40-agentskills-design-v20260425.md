@@ -385,7 +385,6 @@ Agent Skills repositories should move toward receiving upstream main application
 The TOBE target shape is as follows.
 
 - receive a single jar for the Java CLI path
-- optionally receive the corresponding `-sources.jar` as a traceability artifact
 - receive a single JavaScript file for the Node.js CLI path
 - do not edit upstream source inside the skill repository
 - document the artifact update procedure
@@ -401,7 +400,7 @@ Agent Skills should be installable as local skill packages.
 
 Packaging should include the files needed for the agent to read instructions and run intended local workflows.
 
-As the TOBE target shape, miku Agent Skills should bundle both Java CLI and Node.js CLI paths when the corresponding upstream runtime exists or can be produced. The Java path should be represented by a single executable jar, and the Node.js path should be represented by a single JavaScript CLI file. A matching `-sources.jar` may be bundled for traceability, but it should not be required for normal skill execution.
+As the TOBE target shape, miku Agent Skills should bundle both Java CLI and Node.js CLI paths when the corresponding upstream runtime exists or can be produced. The Java path should be represented by a single jar, and the Node.js path should be represented by a single JavaScript CLI file.
 
 Current repositories may temporarily use broader vendored runtime contents or source-tree-derived packaging. This is allowed only as a transition state. New packaging work should move toward single-runtime-artifact handling.
 
@@ -413,7 +412,6 @@ Typical bundle contents:
 - references needed by the skill
 - skill-local scripts
 - single jar Java CLI runtime when provided
-- matching Java `-sources.jar` when provided for traceability
 - single-file JavaScript CLI runtime when provided
 - upstream runtime artifacts, preferably single jar and single JavaScript CLI file
 - package metadata when needed
@@ -505,7 +503,6 @@ repository root
       references/
       runtime/
         <product>.jar
-        <product>-sources.jar
         <product>.mjs
   tests/
   workplace/.gitkeep
@@ -522,7 +519,6 @@ skills/
     references/
     runtime/
       mikuproject.jar
-      mikuproject-sources.jar
       mikuproject.mjs
 ```
 
@@ -601,7 +597,6 @@ Bundle scripts are packaging and verification commands for the skill package. In
 The normal inputs are the skill files and the received runtime artifacts:
 
 - single jar Java CLI runtime
-- optional Java `-sources.jar` traceability artifact
 - single JavaScript CLI runtime
 - `SKILL.md`
 - references and small skill-local scripts
@@ -641,6 +636,8 @@ Important design points:
 - report outputs such as `WBS XLSX`, `SVG`, `Markdown`, `Mermaid`, and ZIP are derived outputs
 - AI JSON spec retrieval is exposed through upstream core API functions and the `mikuproject ai spec` CLI path, so the skill should prefer those contracts over file search
 - declared `mikuproject` runtime artifacts are checked before broad repository exploration
+- the upstream Node.js CLI runtime artifact is produced by `mikuproject` as a single `bundle/mikuproject.mjs` file and should be received by `mikuproject-skills` as `skills/mikuproject/runtime/mikuproject.mjs`
+- the upstream Java CLI runtime artifact is produced by `mikuproject-java` as `target/mikuproject.jar` and should be received by `mikuproject-skills` as `skills/mikuproject/runtime/mikuproject.jar`
 
 This skill does not aim to replace the `mikuproject` browser UI. Its center is structured AI-agent operation over the upstream product's core APIs and artifacts.
 
