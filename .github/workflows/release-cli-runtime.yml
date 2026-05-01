@@ -49,7 +49,6 @@ jobs:
           mkdir -p release-assets
           cp target/mikuproject.jar "release-assets/mikuproject-${VERSION}.jar"
           cp target/mikuproject-sources.jar "release-assets/mikuproject-sources-${VERSION}.jar"
-          cp target/mikuproject-dist.zip "release-assets/mikuproject-dist-${VERSION}.zip"
 
       - name: Set up Java 8 for runtime verification
         uses: actions/setup-java@v4
