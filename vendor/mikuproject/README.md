@@ -181,6 +181,7 @@ Node 側から `core API` を起動する最小 helper は [`scripts/lib/core-ap
 Node 側から `core API` を薄く包む最小 CLI first cut として、次の入口を追加している。
 
 - `mikuproject ai spec`
+- `mikuproject --version`
 - `mikuproject ai export project-overview`
 - `mikuproject ai export task-edit`
 - `mikuproject ai export phase-detail`
@@ -191,6 +192,7 @@ Node 側から `core API` を薄く包む最小 CLI first cut として、次の
 - `mikuproject state summarize`
 - `mikuproject state diff`
 - `mikuproject state apply-patch`
+- `mikuproject import xlsx`
 - `mikuproject export workbook-json`
 - `mikuproject export xml`
 - `mikuproject export xlsx`
@@ -202,7 +204,8 @@ Node 側から `core API` を薄く包む最小 CLI first cut として、次の
 - `mikuproject report wbs-markdown`
 - `mikuproject report mermaid`
 
-主成果物は `stdout`、warning / diagnostics は `stderr` を基本とする。
+text 系の主成果物は `stdout` または `--out <path>`、warning / diagnostics は `stderr` を基本とする。
+XLSX / ZIP などの binary artifact は `--out <path>` へ出力する。stream-friendly な binary 入出力が必要な場合は、明示的に `--in-base64 -` / `--out-base64 -` を使う。
 `--diagnostics text|json` を受けるコマンドでは、構造化 diagnostics を扱える。
 
 既存WBSの安全な局所修正フローは、まず `ai export project-overview` で全体を見て、`task-edit` または `phase-detail` を AI に渡し、返ってきた `patch_json` を `validate-patch` してから `state apply-patch` / `state diff` へ進む形を基本とする。導線全体は [docs/import-export-workflows.md](docs/import-export-workflows.md) を参照。
@@ -210,6 +213,7 @@ Node 側から `core API` を薄く包む最小 CLI first cut として、次の
 例:
 
 ```bash
+mikuproject --version
 mikuproject ai spec
 mikuproject ai export project-overview --in workbook.json --out overview.editjson
 mikuproject ai export task-edit --in workbook.json --task-uid 123 --out task.editjson
@@ -220,8 +224,11 @@ mikuproject state from-draft --in draft.json --out workbook.json
 mikuproject state summarize --in workbook.json --diagnostics json
 mikuproject state diff --before workbook.before.json --after workbook.after.json --diagnostics json
 mikuproject state apply-patch --state workbook.json --in patch.json --out workbook.next.json
+mikuproject import xlsx --in project.xlsx --out workbook.json
+base64 < project.xlsx | mikuproject import xlsx --in-base64 - --out -
 mikuproject export xml --in workbook.json --out project.xml
 mikuproject export xlsx --in workbook.json --out project.xlsx
+mikuproject export xlsx --in workbook.json --out-base64 -
 mikuproject report wbs-xlsx --in workbook.json --out project-wbs.xlsx
 mikuproject report daily-svg --in workbook.json --out project-daily.svg
 mikuproject report weekly-svg --in workbook.json --out project-weekly.svg
@@ -234,34 +241,28 @@ mikuproject report mermaid --in workbook.json --out project.mmd
 `report monthly-calendar-svg` は月別 SVG 一式をまとめた ZIP を出力する。
 `report all` は `wbs.xlsx` / `wbs.md` / `mermaid.mmd` / `daily.svg` / `weekly.svg` / `monthly-calendar/YYYY-MM.svg` をまとめた ZIP を出力する。
 
-## CLI bundle first cut
+## CLI runtime artifact
 
-`mikuproject` 側で CLI 実行に必要な runtime をまとめた自己完結ディレクトリ bundle を出力できるようにしている。
+`mikuproject` 側で、Agent Skills など下流から受け取って実行できる単一 `MJS` CLI runtime artifact を生成できる。
 
 ```bash
 npm run build:cli-bundle
 ```
 
-既定の出力先は `bundle/mikuproject-cli-bundle/` で、主に次を含む。
+既定の出力先は `bundle/mikuproject.mjs` と `bundle/mikuproject-sources.tgz` である。
+この artifact には、CLI entrypoint、`core API` 実行に必要な `src/js` runtime、XML DOM 実装を含めている。
+`mikuproject-sources.tgz` には、再ビルド・監査・下流確認用の source / docs / tests をまとめて格納する。
 
-```text
-bundle/
-  mikuproject-cli-bundle/
-    README.md
-    package.json
-    scripts/
-    src/
-    node_modules/
-```
-
-この bundle は追加の `npm install` なしで、そのまま CLI 実行に使える first cut を狙っている。たとえば次で動く。
+生成後は追加の `npm install` なしで、そのまま CLI 実行に使える。たとえば次で動く。
 
 ```bash
-node bundle/mikuproject-cli-bundle/scripts/mikuproject-cli.mjs ai spec
-node bundle/mikuproject-cli-bundle/scripts/mikuproject-cli.mjs export xml --in workbook.json --out project.xml
+node bundle/mikuproject.mjs ai spec
+node bundle/mikuproject.mjs export xml --in workbook.json --out project.xml
 ```
 
-bundle 生成時は、repo root の `node_modules` にある CLI runtime 依存を取り込む。現時点では `@xmldom/xmldom` を CLI の優先 XML DOM 実装として使い、`jsdom` は HTML / Blob / File など XML 以外の Web API 補完のために同梱する。そのため、bundle 生成前には一度 `npm install` 済みであることを前提とする。
+`mikuproject-skills` などの下流 Agent Skills では、この Node.js runtime artifact を `skills/mikuproject/runtime/mikuproject.mjs` のような skill-local runtime path に配置して使う想定である。
+
+生成時は repo root の `node_modules/@xmldom/xmldom` から XML DOM 実装を artifact 内へ埋め込む。そのため、artifact 生成前には一度 `npm install` 済みであることを前提とする。生成後の実行時には、`@xmldom/xmldom` や `jsdom` の `node_modules` は不要である。
 
 ## 関連ドキュメント
 

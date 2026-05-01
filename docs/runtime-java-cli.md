@@ -68,9 +68,12 @@ CLI は `java -jar mikuproject.jar <command> ...` の形で実行する。
 - `validate xml --in project.xml`
 - `export xml --in workbook.json --diagnostics json --out project.xml`
 - `export xlsx --in workbook.json --diagnostics json --out project.xlsx`
+- `export xlsx --in workbook.json --out-base64 -`
 - `import xlsx --in workbook.xlsx --out workbook.json`
+- `import xlsx --in-base64 - --out workbook.json`
 - `merge xlsx --state workbook.json --in workbook.xlsx --out workbook.next.json`
 - `report all --in workbook.json --diagnostics json --out report-bundle.zip`
+- `report all --in workbook.json --out-base64 -`
 - `report wbs-xlsx --in workbook.json --diagnostics json --out report.xlsx`
 
 Node.js upstream CLI と共有する command では、標準入力 / 標準出力を明示する `--in -` / `--out -` を受ける。

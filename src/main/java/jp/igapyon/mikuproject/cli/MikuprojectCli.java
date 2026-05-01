@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -299,8 +300,11 @@ public class MikuprojectCli {
             return 0;
         }
         if ("xlsx".equals(subject)) {
+            if (!ensureBinaryOutputTarget(options, "export xlsx", err)) {
+                return 2;
+            }
             byte[] bytes = workbookXlsx.encodeWorkbook(workbookXlsx.exportWorkbook(model));
-            writeBinaryOutput(options.get("out"), bytes, out);
+            writeBinaryOutput(options, bytes, out);
             writeSimpleDiagnostics(diagnosticsFormat, "export xlsx", options, "project_xlsx", err);
             return 0;
         }
@@ -313,13 +317,17 @@ public class MikuprojectCli {
         }
         String subject = args[1];
         CliOptions options = parseOptions(args, 2);
+        String diagnosticsFormat = options.get("diagnostics");
+        if (!isValidDiagnosticsFormat(diagnosticsFormat)) {
+            return usageError(err, "--diagnostics requires text or json");
+        }
         if ("xlsx".equals(subject)) {
-            String input = requireOption(options, "in", err, "import xlsx requires --in <workbook.xlsx>");
-            if (input == null) {
+            if (!ensureBinaryInputSource(options, "import xlsx", err)) {
                 return 2;
             }
-            ProjectModel model = workbookXlsx.importAsProjectModel(workbookXlsx.decodeWorkbook(Files.readAllBytes(Paths.get(input))));
+            ProjectModel model = workbookXlsx.importAsProjectModel(workbookXlsx.decodeWorkbook(readBinaryInput(options, "import xlsx")));
             writeWorkbookJsonOutput(options.get("out"), model, out);
+            writeSimpleDiagnostics(diagnosticsFormat, "import xlsx", options, "workbook_json", err);
             return 0;
         }
         return usageError(err, "unknown import command: " + subject, true);
@@ -365,8 +373,11 @@ public class MikuprojectCli {
         WbsExportOptions xlsxOptions = parseWbsXlsxOptions(options);
         NativeSvgOptions svgOptions = parseSvgOptions(options);
         if ("all".equals(subject)) {
+            if (!ensureBinaryOutputTarget(options, "report all", err)) {
+                return 2;
+            }
             CoreApiReportAdapters.ReportBundle bundle = reportAdapters.report.all.export(model, markdownOptions, xlsxOptions, svgOptions);
-            writeBinaryOutput(options.get("out"), bundle.zipBytes, out, " (" + bundle.entries.size() + " entries)");
+            writeBinaryOutput(options, bundle.zipBytes, out, " (" + bundle.entries.size() + " entries)");
             writeSimpleDiagnostics(diagnosticsFormat, "report all", options, "report_bundle_zip", err);
             return 0;
         }
@@ -381,8 +392,11 @@ public class MikuprojectCli {
             return 0;
         }
         if ("wbs-xlsx".equals(subject)) {
+            if (!ensureBinaryOutputTarget(options, "report wbs-xlsx", err)) {
+                return 2;
+            }
             byte[] bytes = reportAdapters.report.wbsXlsx.exportBytes(model, xlsxOptions);
-            writeBinaryOutput(options.get("out"), bytes, out);
+            writeBinaryOutput(options, bytes, out);
             writeSimpleDiagnostics(diagnosticsFormat, "report wbs-xlsx", options, "wbs_xlsx", err);
             return 0;
         }
@@ -397,8 +411,11 @@ public class MikuprojectCli {
             return 0;
         }
         if ("monthly-calendar-svg".equals(subject)) {
+            if (!ensureBinaryOutputTarget(options, "report monthly-calendar-svg", err)) {
+                return 2;
+            }
             MonthlyCalendarSvgArchive archive = reportAdapters.report.svg.exportMonthlyCalendar(model, svgOptions);
-            writeBinaryOutput(options.get("out"), archive.zipBytes, out, " (" + archive.entries.size() + " entries)");
+            writeBinaryOutput(options, archive.zipBytes, out, " (" + archive.entries.size() + " entries)");
             writeSimpleDiagnostics(diagnosticsFormat, "report monthly-calendar-svg", options, "monthly_calendar_svg_zip", err);
             return 0;
         }
@@ -444,16 +461,34 @@ public class MikuprojectCli {
 
     private String readText(String path) throws IOException {
         if ("-".equals(path)) {
-            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-            byte[] chunk = new byte[8192];
-            int read;
-            while ((read = System.in.read(chunk)) != -1) {
-                buffer.write(chunk, 0, read);
-            }
-            return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
+            return new String(readStdinBytes(), StandardCharsets.UTF_8);
         }
         byte[] bytes = Files.readAllBytes(Paths.get(path));
         return new String(bytes, StandardCharsets.UTF_8);
+    }
+
+    private byte[] readStdinBytes() throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        byte[] chunk = new byte[8192];
+        int read;
+        while ((read = System.in.read(chunk)) != -1) {
+            buffer.write(chunk, 0, read);
+        }
+        return buffer.toByteArray();
+    }
+
+    private byte[] readBinaryInput(CliOptions options, String commandLabel) throws IOException {
+        if (options.has("in-base64")) {
+            String source = options.get("in-base64");
+            byte[] encoded = "-".equals(source) ? readStdinBytes() : Files.readAllBytes(Paths.get(source));
+            try {
+                String normalized = new String(encoded, StandardCharsets.UTF_8).replaceAll("\\s+", "");
+                return Base64.getDecoder().decode(normalized);
+            } catch (IllegalArgumentException ex) {
+                throw new IllegalArgumentException(commandLabel + " invalid Base64 input");
+            }
+        }
+        return Files.readAllBytes(Paths.get(options.get("in")));
     }
 
     private ProjectModel importWorkbookJsonModel(String path) throws IOException {
@@ -558,16 +593,26 @@ public class MikuprojectCli {
         Map<String, Object> io = new LinkedHashMap<String, Object>();
         List<Object> inputs = new ArrayList<Object>();
         Map<String, Object> input = new LinkedHashMap<String, Object>();
-        input.put("option", "--in");
-        input.put("value", options.get("in"));
-        input.put("source", options.get("in") == null || options.get("in").length() == 0 ? "stdin_implicit"
-                : "-".equals(options.get("in")) ? "stdin" : "file");
+        boolean base64Input = options.has("in-base64");
+        input.put("option", base64Input ? "--in-base64" : "--in");
+        input.put("value", base64Input ? options.get("in-base64") : options.get("in"));
+        if (base64Input) {
+            input.put("source", "-".equals(options.get("in-base64")) ? "stdin_base64" : "file_base64");
+        } else {
+            input.put("source", options.get("in") == null || options.get("in").length() == 0 ? "stdin_implicit"
+                    : "-".equals(options.get("in")) ? "stdin" : "file");
+        }
         inputs.add(input);
         io.put("inputs", inputs);
         Map<String, Object> output = new LinkedHashMap<String, Object>();
-        output.put("option", "--out");
-        output.put("value", options.get("out"));
-        output.put("target", options.get("out") == null || options.get("out").length() == 0 || "-".equals(options.get("out")) ? "stdout" : "file");
+        boolean base64Output = options.has("out-base64");
+        output.put("option", base64Output ? "--out-base64" : "--out");
+        output.put("value", base64Output ? options.get("out-base64") : options.get("out"));
+        if (base64Output) {
+            output.put("target", "-".equals(options.get("out-base64")) ? "stdout_base64" : "file_base64");
+        } else {
+            output.put("target", options.get("out") == null || options.get("out").length() == 0 || "-".equals(options.get("out")) ? "stdout" : "file");
+        }
         io.put("output", output);
         return io;
     }
@@ -672,11 +717,16 @@ public class MikuprojectCli {
         return null;
     }
 
-    private void writeBinaryOutput(String path, byte[] bytes, PrintStream out) throws IOException {
-        writeBinaryOutput(path, bytes, out, " (" + bytes.length + " bytes)");
+    private void writeBinaryOutput(CliOptions options, byte[] bytes, PrintStream out) throws IOException {
+        writeBinaryOutput(options, bytes, out, " (" + bytes.length + " bytes)");
     }
 
-    private void writeBinaryOutput(String path, byte[] bytes, PrintStream out, String suffix) throws IOException {
+    private void writeBinaryOutput(CliOptions options, byte[] bytes, PrintStream out, String suffix) throws IOException {
+        if (options.has("out-base64")) {
+            out.println(Base64.getEncoder().encodeToString(bytes));
+            return;
+        }
+        String path = options.get("out");
         if (path == null || path.length() == 0 || "-".equals(path)) {
             out.write(bytes);
             out.flush();
@@ -689,6 +739,48 @@ public class MikuprojectCli {
         }
         Files.write(outputFile, bytes);
         out.println("wrote " + path + suffix);
+    }
+
+    private boolean ensureBinaryInputSource(CliOptions options, String commandLabel, PrintStream err) {
+        if (options.has("in") && options.has("in-base64")) {
+            usageError(err, commandLabel + " cannot use --in and --in-base64 together");
+            return false;
+        }
+        if ("-".equals(options.get("in"))) {
+            usageError(err, commandLabel + " binary stdin requires --in-base64 -");
+            return false;
+        }
+        if (options.has("in-base64")) {
+            if (options.get("in-base64").length() == 0) {
+                usageError(err, commandLabel + " requires --in <path> or --in-base64 -");
+                return false;
+            }
+            return true;
+        }
+        if (options.has("in") && options.get("in").length() > 0) {
+            return true;
+        }
+        usageError(err, commandLabel + " requires --in <path> or --in-base64 -");
+        return false;
+    }
+
+    private boolean ensureBinaryOutputTarget(CliOptions options, String commandLabel, PrintStream err) {
+        if (options.has("out") && options.has("out-base64")) {
+            usageError(err, commandLabel + " cannot use --out and --out-base64 together");
+            return false;
+        }
+        if (options.has("out-base64")) {
+            if (!"-".equals(options.get("out-base64"))) {
+                usageError(err, commandLabel + " --out-base64 supports only -");
+                return false;
+            }
+            return true;
+        }
+        if (options.has("out") && options.get("out").length() > 0 && !"-".equals(options.get("out"))) {
+            return true;
+        }
+        usageError(err, commandLabel + " is a binary artifact and requires --out <path> or --out-base64 -");
+        return false;
     }
 
     private int validateProjectModel(ProjectModel model, PrintStream out) {
@@ -944,6 +1036,10 @@ public class MikuprojectCli {
             return values.get(name);
         }
 
+        boolean has(String name) {
+            return values.containsKey(name);
+        }
+
         Integer getInteger(String name) {
             String value = get(name);
             if (value == null || value.length() == 0) {
@@ -1020,15 +1116,15 @@ public class MikuprojectCli {
         out.println("  validate xlsx --in workbook.xlsx");
         out.println("  export workbook-json [--in workbook.json|-] [--diagnostics text|json] [--out workbook.json|-]");
         out.println("  export xml [--in workbook.json|-] [--diagnostics text|json] [--out project.xml|-]");
-        out.println("  export xlsx [--in workbook.json|-] [--diagnostics text|json] [--out project.xlsx|-]");
-        out.println("  import xlsx --in workbook.xlsx [--out workbook.json]");
+        out.println("  export xlsx [--in workbook.json|-] [--diagnostics text|json] (--out project.xlsx|--out-base64 -)");
+        out.println("  import xlsx (--in workbook.xlsx|--in-base64 -) [--diagnostics text|json] [--out workbook.json|-]");
         out.println("  merge xlsx --state workbook.json --in workbook.xlsx [--out workbook.next.json]");
-        out.println("  report all [--in workbook.json|-] [--diagnostics text|json] [--out report-bundle.zip|-]");
+        out.println("  report all [--in workbook.json|-] [--diagnostics text|json] (--out report-bundle.zip|--out-base64 -)");
         out.println("  report dir --in workbook.json --out report.dir");
-        out.println("  report wbs-xlsx [--in workbook.json|-] [--diagnostics text|json] [--out report.xlsx|-]");
+        out.println("  report wbs-xlsx [--in workbook.json|-] [--diagnostics text|json] (--out report.xlsx|--out-base64 -)");
         out.println("  report daily-svg [--in workbook.json|-] [--diagnostics text|json] [--out report.svg|-]");
         out.println("  report weekly-svg [--in workbook.json|-] [--diagnostics text|json] [--out report.svg|-]");
-        out.println("  report monthly-calendar-svg [--in workbook.json|-] [--diagnostics text|json] [--out report.zip|-]");
+        out.println("  report monthly-calendar-svg [--in workbook.json|-] [--diagnostics text|json] (--out report.zip|--out-base64 -)");
         out.println("  report wbs-markdown [--in workbook.json|-] [--diagnostics text|json] [--out report.md|-]");
         out.println("  report mermaid [--in workbook.json|-] [--diagnostics text|json] [--out report.mmd|-]");
     }

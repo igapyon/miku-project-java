@@ -73,6 +73,41 @@ repo top から入るときの入口は `README.md` の `Development Docs` 節�
 report / workbook / import / AI view の主要導線は sample 記録がある状態になっている。
 現フェーズでは、新規機能追加ではなく、この sample 記録と既存実装 / test 対応のズレを小さく保つことを優先する。
 
+## 2026-05-01 `vendor/mikuproject/scripts/mikuproject-cli.mjs`
+
+```text
+upstream file:
+  vendor/mikuproject/scripts/mikuproject-cli.mjs
+
+java classes:
+  jp.igapyon.mikuproject.cli.MikuprojectCli
+
+tests:
+  MikuprojectCliTest.usesNodeCompatibleBase64ForBinaryCliIo
+  MikuprojectCliTest.rejectsBinaryStdoutWithoutBase64Option
+  MikuprojectCliTest.keepsReadmeCliCommandListInSyncWithHelpOutput
+
+diff summary:
+  挙動差分:
+    Node.js CLI の XLSX / ZIP binary artifact 出力契約に合わせ、Java CLI でも `export xlsx` / `report wbs-xlsx` / `report monthly-calendar-svg` / `report all` は `--out <path>` または `--out-base64 -` を要求する。binary stdout は usage error として扱う。
+  命名差分:
+    Node.js 側の `--in-base64` / `--out-base64` option 名を Java CLI でもそのまま採用した。
+  未移植差分:
+    現時点で今回の binary I/O 追随範囲に顕在化している未移植差分は記録していない。
+  Java 側独自拡張:
+    Java CLI の diagnostics JSON は既存の簡易 `io` 構造を維持しつつ、`stdin_base64` / `stdout_base64` を記録する。
+
+follow-up:
+  - 実施した確認:
+    `mvn test -Dtest=MikuprojectCliTest`
+  - fixture:
+    `project_draft_view` から生成した workbook JSON / XLSX を使う CLI focused test
+  - 次回の確認観点:
+    upstream 側で binary 入出力 option、diagnostics io schema、XLSX import mode が変わった場合は再確認する
+  - `docs/remaining-migration-items.md` への反映:
+    2026-05-01 時点の binary I/O 追随結果と focused test 通過結果を追加
+```
+
 ## 記録サンプル
 
 ### 2026-04-21 `vendor/mikuproject/src/ts/msproject-validate.ts`
