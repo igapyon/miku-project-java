@@ -8,14 +8,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +44,7 @@ public class MikuprojectCliTest {
         assertEquals(0, exitCode);
         assertTrue(text(out).contains("ai spec"));
         assertTrue(text(out).contains("state from-draft [--in draft.editjson|-]"));
-        assertTrue(text(out).contains("report wbs-xlsx [--in workbook.json|-]"));
+        assertTrue(text(out).contains("report wbs-xlsx [--in workbook.json|-] [--diagnostics text|json] (--out report.xlsx|--out-base64 -)"));
         assertFalse(text(out).contains("xlsxbin"));
         assertEquals("", text(err));
     }
@@ -222,6 +225,78 @@ public class MikuprojectCliTest {
             Files.deleteIfExists(draftFile);
             Files.deleteIfExists(workbookFile);
             Files.deleteIfExists(bundleFile);
+        }
+    }
+
+    @Test
+    public void usesNodeCompatibleBase64ForBinaryCliIo() throws IOException {
+        MikuprojectCli cli = new MikuprojectCli();
+        Path draftFile = Files.createTempFile("mikuproject-cli-binary-draft", ".editjson");
+        Path workbookFile = Files.createTempFile("mikuproject-cli-binary-workbook", ".json");
+        Path xlsxFile = Files.createTempFile("mikuproject-cli-binary", ".xlsx");
+        Files.write(draftFile, aiJsonText());
+        try {
+            assertEquals(0, cli.run(new String[] { "state", "from-draft", "--in", draftFile.toString(), "--out", workbookFile.toString() },
+                    stream(new ByteArrayOutputStream()), stream(new ByteArrayOutputStream())));
+            assertEquals(0, cli.run(new String[] { "export", "xlsx", "--in", workbookFile.toString(), "--out", xlsxFile.toString() },
+                    stream(new ByteArrayOutputStream()), stream(new ByteArrayOutputStream())));
+
+            ByteArrayOutputStream exportOut = new ByteArrayOutputStream();
+            ByteArrayOutputStream importOut = new ByteArrayOutputStream();
+            ByteArrayOutputStream importErr = new ByteArrayOutputStream();
+            ByteArrayOutputStream reportOut = new ByteArrayOutputStream();
+
+            assertEquals(0, cli.run(new String[] { "export", "xlsx", "--in", workbookFile.toString(), "--out-base64", "-" },
+                    stream(exportOut), stream(new ByteArrayOutputStream())));
+            byte[] exportedBytes = Base64.getDecoder().decode(text(exportOut).trim());
+            assertEquals("PK", new String(exportedBytes, 0, 2, StandardCharsets.UTF_8));
+
+            InputStream originalIn = System.in;
+            try {
+                System.setIn(new ByteArrayInputStream((Base64.getEncoder().encodeToString(Files.readAllBytes(xlsxFile)) + "\n")
+                        .getBytes(StandardCharsets.UTF_8)));
+                assertEquals(0, cli.run(new String[] { "import", "xlsx", "--in-base64", "-", "--diagnostics", "json" },
+                        stream(importOut), stream(importErr)));
+            } finally {
+                System.setIn(originalIn);
+            }
+            assertTrue(text(importOut).contains("\"format\":\"mikuproject_workbook_json\""));
+            assertTrue(text(importErr).contains("\"command\":\"import xlsx\""));
+            assertTrue(text(importErr).contains("\"source\":\"stdin_base64\""));
+
+            assertEquals(0, cli.run(new String[] { "report", "all", "--in", workbookFile.toString(), "--out-base64", "-" },
+                    stream(reportOut), stream(new ByteArrayOutputStream())));
+            byte[] reportBytes = Base64.getDecoder().decode(text(reportOut).trim());
+            assertEquals("PK", new String(reportBytes, 0, 2, StandardCharsets.UTF_8));
+        } finally {
+            Files.deleteIfExists(draftFile);
+            Files.deleteIfExists(workbookFile);
+            Files.deleteIfExists(xlsxFile);
+        }
+    }
+
+    @Test
+    public void rejectsBinaryStdoutWithoutBase64Option() throws IOException {
+        MikuprojectCli cli = new MikuprojectCli();
+        Path draftFile = Files.createTempFile("mikuproject-cli-binary-reject-draft", ".editjson");
+        Path workbookFile = Files.createTempFile("mikuproject-cli-binary-reject-workbook", ".json");
+        Files.write(draftFile, aiJsonText());
+        try {
+            assertEquals(0, cli.run(new String[] { "state", "from-draft", "--in", draftFile.toString(), "--out", workbookFile.toString() },
+                    stream(new ByteArrayOutputStream()), stream(new ByteArrayOutputStream())));
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            ByteArrayOutputStream err = new ByteArrayOutputStream();
+            int exitCode = cli.run(new String[] { "export", "xlsx", "--in", workbookFile.toString(), "--out", "-" },
+                    stream(out), stream(err));
+
+            assertEquals(2, exitCode);
+            assertEquals("", text(out));
+            assertTrue(text(err).contains("binary artifact"));
+            assertTrue(text(err).contains("--out-base64 -"));
+        } finally {
+            Files.deleteIfExists(draftFile);
+            Files.deleteIfExists(workbookFile);
         }
     }
 

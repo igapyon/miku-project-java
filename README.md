@@ -148,15 +148,15 @@ Supported commands:
 - `validate xlsx --in workbook.xlsx`
 - `export workbook-json [--in workbook.json|-] [--diagnostics text|json] [--out workbook.json|-]`
 - `export xml [--in workbook.json|-] [--diagnostics text|json] [--out project.xml|-]`
-- `export xlsx [--in workbook.json|-] [--diagnostics text|json] [--out project.xlsx|-]`
-- `import xlsx --in workbook.xlsx [--out workbook.json]`
+- `export xlsx [--in workbook.json|-] [--diagnostics text|json] (--out project.xlsx|--out-base64 -)`
+- `import xlsx (--in workbook.xlsx|--in-base64 -) [--diagnostics text|json] [--out workbook.json|-]`
 - `merge xlsx --state workbook.json --in workbook.xlsx [--out workbook.next.json]`
-- `report all [--in workbook.json|-] [--diagnostics text|json] [--out report-bundle.zip|-]`
+- `report all [--in workbook.json|-] [--diagnostics text|json] (--out report-bundle.zip|--out-base64 -)`
 - `report dir --in workbook.json --out report.dir`
-- `report wbs-xlsx [--in workbook.json|-] [--diagnostics text|json] [--out report.xlsx|-]`
+- `report wbs-xlsx [--in workbook.json|-] [--diagnostics text|json] (--out report.xlsx|--out-base64 -)`
 - `report daily-svg [--in workbook.json|-] [--diagnostics text|json] [--out report.svg|-]`
 - `report weekly-svg [--in workbook.json|-] [--diagnostics text|json] [--out report.svg|-]`
-- `report monthly-calendar-svg [--in workbook.json|-] [--diagnostics text|json] [--out report.zip|-]`
+- `report monthly-calendar-svg [--in workbook.json|-] [--diagnostics text|json] (--out report.zip|--out-base64 -)`
 - `report wbs-markdown [--in workbook.json|-] [--diagnostics text|json] [--out report.md|-]`
 - `report mermaid [--in workbook.json|-] [--diagnostics text|json] [--out report.mmd|-]`
 
