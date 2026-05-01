@@ -36,7 +36,7 @@ import jp.igapyon.mikuproject.wbssvg.WbsSvg.MonthlyCalendarSvgArchive;
 import jp.igapyon.mikuproject.wbsxlsx.WbsXlsx.WbsExportOptions;
 
 public class MikuprojectCli {
-    public static final String VERSION = "0.8.1";
+    public static final String VERSION = "0.8.3";
 
     private final MsProjectXml msProjectXml = new MsProjectXml();
     private final CoreApiReportAdapters reportAdapters = new CoreApiReportAdapters();
