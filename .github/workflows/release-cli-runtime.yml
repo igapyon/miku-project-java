@@ -28,13 +28,6 @@ jobs:
         with:
           ref: ${{ github.event.inputs.tag_name || github.event.release.tag_name || github.ref }}
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "8"
-          cache: maven
-
       - name: Build
         run: mvn -B package
 
@@ -57,6 +50,12 @@ jobs:
           cp target/mikuproject.jar "release-assets/mikuproject-${VERSION}.jar"
           cp target/mikuproject-sources.jar "release-assets/mikuproject-sources-${VERSION}.jar"
           cp target/mikuproject-dist.zip "release-assets/mikuproject-dist-${VERSION}.zip"
+
+      - name: Set up Java 8 for runtime verification
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "8"
 
       - name: Verify CLI runtime asset
         run: java -jar release-assets/mikuproject-[0-9]*.jar --version
