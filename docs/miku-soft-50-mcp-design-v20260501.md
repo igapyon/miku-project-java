@@ -1,4 +1,4 @@
-# Miku Software MCP Design v20260427
+# Miku Software MCP Design v20260501
 
 This memo organizes design characteristics commonly expected for MCP server versions in the `miku` software series.
 
@@ -23,6 +23,8 @@ What characterizes MCP server versions is not a new product separate from the up
 - Use Node.js / TypeScript as the standard MCP server implementation choice
 - Use upstream public APIs, CLI, or bundled runtime artifacts rather than duplicating product logic
 - Treat the MCP server as a thin protocol adapter
+- Prefer stateless or short-lived execution over durable server-side product state
+- Treat client-provided files and data as the source of truth unless a product-specific design explicitly says otherwise
 - Keep local and server deployments aligned around the same tool contracts
 - Preserve diagnostics, warnings, and artifact roles in structured results
 
@@ -39,9 +41,9 @@ Use the shared design documents together as follows.
 
 - `docs/miku-soft-10-mainapp-design-v20260425.md`
   - describes the upstream product design and semantic center
-- `docs/miku-soft-40-agentskills-design-v20260425.md`
+- `docs/miku-soft-40-agentskills-design-v20260429.md`
   - describes how Agent Skills versions expose miku workflows to AI agents
-- `docs/miku-soft-50-mcp-design-v20260427.md`
+- `docs/miku-soft-50-mcp-design-v20260501.md`
   - describes how MCP server versions should expose miku workflows to MCP clients
 
 This document separates the following levels.
@@ -119,16 +121,26 @@ The MCP version emphasizes the parts that fit MCP operation particularly well.
 - resource links for generated artifacts
 - diagnostics and warnings as structured results
 - repeatable file-based operation
+- request-scoped or session-scoped data processing
+- command execution on behalf of the MCP client
 - stdio local server execution
 - optional HTTP server deployment when remote access is required
 
 An MCP version should not become a generic planner, generic converter, hosted replacement application, or independent semantic implementation. Its value is that MCP clients can use the upstream miku product correctly through stable tool and resource contracts.
 
+For most miku MCP servers, the default execution model is simple: the MCP client
+provides the input files, structured data, or resource references for each
+operation; the MCP server validates the request, invokes the upstream product
+API, CLI, or bundled runtime through fixed adapter code, and returns generated
+artifacts, diagnostics, summaries, or transformed data. The MCP server should
+not become the durable owner of the product data unless that responsibility is
+explicitly designed for a specific product.
+
 ## Relationship to Main Applications
 
 MCP server versions are downstream of miku main applications.
 
-The upstream main application owns the product semantics, canonical source, core conversions, output policy, and limitations. The MCP server owns protocol exposure, tool schema, resource naming, transport handling, runtime discovery, and result formatting.
+The upstream main application owns the product semantics, canonical source, core conversions, output policy, and limitations. The MCP client or calling environment usually owns the concrete input and output files for a run. The MCP server owns protocol exposure, tool schema, resource naming, transport handling, runtime discovery, command invocation, and result formatting.
 
 The preferred relationship is as follows.
 
@@ -138,6 +150,8 @@ The preferred relationship is as follows.
 - MCP server exposes reusable state and artifacts as resources
 - MCP server may expose product-specific workflow prompts
 - MCP server returns diagnostics, warnings, hard errors, and generated artifact links in a structured form
+- MCP server treats durable product data as client-owned unless a product-specific design assigns persistence to the server
+- MCP server keeps intermediate state request-scoped or session-scoped where practical
 - MCP server does not reimplement core conversion behavior unless no upstream surface exists
 
 If an upstream capability is missing, the preferred order is to request or implement the capability on the upstream side, expose it as a stable upstream API, and then let the MCP server call it. MCP servers should not silently add upstream product capabilities on the MCP side. MCP-local workaround code should be treated as temporary or product-specific, not as the new semantic center.
@@ -178,7 +192,11 @@ An MCP server usually exposes one or more of the following.
 
 The MCP server is not primarily the browser UI, not primarily a runtime port, and not primarily an Agent Skill. For miku MCP repositories, Node.js / TypeScript is the normal MCP server implementation choice. The server can call bundled or configured runtime artifacts if that is the natural way to execute the upstream product, but the MCP layer itself should remain thin.
 
-The center of an MCP server is reliable protocol adaptation: receive a typed tool call, validate arguments, call the upstream runtime, preserve useful state, expose resulting artifacts as resources, and return diagnostics without hiding important constraints.
+The center of an MCP server is reliable protocol adaptation: receive a typed
+tool call, validate arguments, call the upstream runtime, expose resulting
+artifacts as resources, and return diagnostics without hiding important
+constraints. When state is needed, prefer explicit input and output artifacts or
+short-lived session state over implicit durable server-side product state.
 
 ## Cross-Cutting Principles
 
@@ -226,6 +244,8 @@ MCP servers use the following principles as defaults.
 - Prefer a single Node.js / TypeScript MCP server unless a concrete product constraint justifies another server implementation
 - Prefer bundled or configured runtime artifacts when local, reproducible execution needs them
 - Prefer upstream public APIs, stable global APIs, or documented CLI commands
+- Align the MCP package version with the primary bundled Node.js CLI runtime
+  version by default
 - Keep tool schemas and result schemas under version control
 - Keep repository-level README user-facing and developer details under `docs/`
 - Use `workplace/` or a configured workspace root for local scratch data, uploaded files, generated outputs, and verification files
@@ -275,6 +295,14 @@ The local stdio server should not behave like a long-running public web service.
 
 The HTTP server is a deployment variant, not the initial semantic center.
 
+For miku MCP servers, the preferred HTTP shape is an ephemeral execution
+adapter. The client remains the owner of the canonical product files and data.
+The HTTP server receives explicit inputs, uploads, or session-scoped resource
+references, runs the configured product runtime or CLI, and returns generated
+artifacts, transformed data, and diagnostics. It should not become a durable
+product database or the source of truth for current product state unless a
+product-specific design explicitly assigns that responsibility.
+
 An HTTP MCP server must define the following before it is treated as production-ready.
 
 - authentication and authorization model
@@ -290,6 +318,61 @@ An HTTP MCP server must define the following before it is treated as production-
 
 HTTP deployment should not expose arbitrary local filesystem paths from the host. It should prefer session-scoped resource URIs, upload identifiers, or controlled workspace-relative paths.
 
+Mutation-style tools in an HTTP deployment should prefer input-to-output
+semantics: given base data and a patch, edit request, conversion request, or
+other operation input, return the updated data, diff, summary, diagnostics, and
+generated artifacts for the client to persist. Server-side product state should
+be request-scoped or session-scoped, short-lived, and safe to discard.
+
+### HTTP MVP Implementation Guidance
+
+The first `mikuproject-mcp` Streamable HTTP implementation confirmed that a miku
+MCP HTTP MVP can stay small when it follows the stateless execution-adapter
+model.
+
+Recommended first implementation shape:
+
+- keep the stdio entrypoint unchanged
+- add HTTP as a separate entrypoint, not as a replacement for stdio
+- expose a single Streamable HTTP endpoint such as `/mcp`
+- bind to `127.0.0.1` by default
+- use stateless transport unless server-to-client requests, resumability, or
+  durable per-client state is explicitly needed
+- create or reset MCP server state per request when the product operation can be
+  handled as input-to-output processing
+- do not accept client-provided host file path arguments in HTTP `tools/call`
+  when inline content or controlled resource references can represent the input
+- prefer inline JSON/text content and Base64 content for stateless HTTP calls
+- use request-scoped temporary workspaces only for adapter-internal runtime
+  files, such as materializing one inline input when an upstream CLI accepts
+  only one stdin payload for a multi-input operation
+- remove request-scoped temporary workspaces after the response completes
+- do not issue `Mcp-Session-Id` in the stateless MVP
+- validate `Origin` and reject non-local origins unless explicitly allowlisted
+- set an HTTP request body size limit before passing input to the MCP transport
+- set an HTTP response body size limit before returning large content-mode or
+  Base64 artifacts
+- keep tool names, input schemas, resource URIs, prompt names, result shapes,
+  diagnostics, and artifact roles identical to stdio
+- verify initialize, tool listing, representative tool calls, resource reads,
+  prompt listing, invalid-origin rejection, request-size rejection,
+  response-size rejection, host-path rejection, and temporary workspace cleanup
+  through an HTTP client test
+
+If a stateless HTTP profile deletes temporary workspaces immediately after each
+response, returned server-local paths are not durable artifact handles. Hosted
+profiles that need clients to retrieve generated files should add explicit
+content-return, download, or resource-retention behavior.
+
+Invalid session behavior is not applicable to a stateless MVP that does not
+issue `Mcp-Session-Id`. If a later profile enables stateful HTTP sessions,
+invalid session behavior should be designed and tested with that session model.
+
+This shape is intentionally not a hosted multi-user design. Remote deployment
+still requires the broader HTTP server principles above: authentication,
+workspace isolation, upload lifecycle, storage policy, cleanup, audit, and
+runtime isolation.
+
 ## Tool Design Principles
 
 MCP tools are the main execution surface.
@@ -304,7 +387,7 @@ For products with a documented CLI, MCP tool names should preserve the CLI
 command tree. Use this form:
 
 ```text
-<product>.<cli command tokens joined by "_">
+<product>_<cli command tokens joined by "_">
 ```
 
 Omit only the runtime launcher, such as `node mikuproject.mjs` or
@@ -318,17 +401,29 @@ Skills documentation harder to compare.
 
 Examples:
 
-- `mikuproject.ai_spec`
-- `mikuproject.ai_detect_kind`
-- `mikuproject.state_from_draft`
-- `mikuproject.ai_export_project_overview`
-- `mikuproject.ai_export_task_edit`
-- `mikuproject.ai_export_phase_detail`
-- `mikuproject.ai_validate_patch`
-- `mikuproject.state_apply_patch`
-- `mikuproject.state_diff`
-- `mikuproject.export_workbook_json`
-- `mikuproject.report_mermaid`
+- `mikuproject_version`
+- `mikuproject_ai_spec`
+- `mikuproject_ai_detect_kind`
+- `mikuproject_state_from_draft`
+- `mikuproject_ai_export_project_overview`
+- `mikuproject_ai_export_bundle`
+- `mikuproject_ai_export_task_edit`
+- `mikuproject_ai_export_phase_detail`
+- `mikuproject_ai_validate_patch`
+- `mikuproject_state_apply_patch`
+- `mikuproject_state_diff`
+- `mikuproject_state_summarize`
+- `mikuproject_export_workbook_json`
+- `mikuproject_export_xml`
+- `mikuproject_export_xlsx`
+- `mikuproject_import_xlsx`
+- `mikuproject_report_wbs_xlsx`
+- `mikuproject_report_daily_svg`
+- `mikuproject_report_weekly_svg`
+- `mikuproject_report_monthly_calendar_svg`
+- `mikuproject_report_all`
+- `mikuproject_report_wbs_markdown`
+- `mikuproject_report_mermaid`
 
 Tool input should use JSON Schema. Tool results should return structured content when practical. For compatibility with clients that primarily display text, structured results may also be serialized into a text content block.
 
@@ -425,7 +520,11 @@ MCP servers distinguish several kinds of data.
 
 These roles should not be collapsed only because they are all represented as JSON or files.
 
-For local stdio deployment, file paths can be a practical state boundary. For HTTP deployment, session-scoped resource URIs or upload identifiers are usually safer than arbitrary host paths.
+For local stdio deployment, file paths can be a practical state boundary. For
+HTTP deployment, inline content, Base64 content, session-scoped resource URIs,
+or upload identifiers are usually safer than arbitrary host paths. Temporary
+files created from inline HTTP inputs should be treated as adapter-internal
+runtime bridges, not as durable artifacts or public resource handles.
 
 For products such as `mikuproject`, `mikuproject_workbook_json` may be the practical MCP state handoff format, while `MS Project XML` remains the product's semantic base. The MCP server should make that distinction visible in naming, docs, and tool descriptions.
 
@@ -591,19 +690,34 @@ For a first miku MCP server, use this shape.
 
 For `mikuproject-mcp`, the MVP tools should be close to the Agent Skills MVP operation set.
 
-- `mikuproject.ai_spec`
-- `mikuproject.ai_detect_kind`
-- `mikuproject.state_from_draft`
-- `mikuproject.ai_export_project_overview`
-- `mikuproject.ai_export_task_edit`
-- `mikuproject.ai_export_phase_detail`
-- `mikuproject.ai_validate_patch`
-- `mikuproject.state_apply_patch`
-- `mikuproject.state_diff`
-- `mikuproject.state_summarize`
-- `mikuproject.export_workbook_json`
+- `mikuproject_ai_spec`
+- `mikuproject_ai_detect_kind`
+- `mikuproject_version`
+- `mikuproject_state_from_draft`
+- `mikuproject_ai_export_project_overview`
+- `mikuproject_ai_export_bundle`
+- `mikuproject_ai_export_task_edit`
+- `mikuproject_ai_export_phase_detail`
+- `mikuproject_ai_validate_patch`
+- `mikuproject_state_apply_patch`
+- `mikuproject_state_diff`
+- `mikuproject_state_summarize`
+- `mikuproject_export_workbook_json`
+- `mikuproject_export_xml`
+- `mikuproject_export_xlsx`
+- `mikuproject_import_xlsx`
+- `mikuproject_report_wbs_xlsx`
+- `mikuproject_report_daily_svg`
+- `mikuproject_report_weekly_svg`
+- `mikuproject_report_monthly_calendar_svg`
+- `mikuproject_report_all`
+- `mikuproject_report_wbs_markdown`
+- `mikuproject_report_mermaid`
 
-File import/export and report generation can be added after the core state workflow is stable.
+The current first version includes core state workflow tools plus file
+import/export and report outputs that are available in the bundled Java and
+Node runtime artifacts. Additional CLI operations such as XML import and merge
+imports can remain later capability-gated extensions.
 
 ## Out of Scope for the First Version
 
@@ -718,11 +832,11 @@ CLI correspondence.
 
 The CLI command tree is the naming source for MCP tools:
 
-- `ai spec` becomes `mikuproject.ai_spec`
-- `ai detect-kind` becomes `mikuproject.ai_detect_kind`
-- `state from-draft` becomes `mikuproject.state_from_draft`
-- `ai validate-patch` becomes `mikuproject.ai_validate_patch`
-- `state apply-patch` becomes `mikuproject.state_apply_patch`
+- `ai spec` becomes `mikuproject_ai_spec`
+- `ai detect-kind` becomes `mikuproject_ai_detect_kind`
+- `state from-draft` becomes `mikuproject_state_from_draft`
+- `ai validate-patch` becomes `mikuproject_ai_validate_patch`
+- `state apply-patch` becomes `mikuproject_state_apply_patch`
 
 For `mikuproject-mcp`, the MCP server implementation is TypeScript. The
 TypeScript version establishes the MCP contract for tools, schemas, result
@@ -732,4 +846,17 @@ shapes, resources, diagnostics, and local workspace behavior.
 implementation in the current Node server documentation. If a concrete future
 requirement appears, handle that implementation design at that time.
 
-If `mikuproject-mcp` later adds an HTTP server, it should keep the same core tool names. The HTTP server should add session-scoped resources, upload handling, authentication, storage policy, and artifact lifecycle management rather than changing the product operation vocabulary.
+As of 2026-05-01, `mikuproject-mcp` includes a localhost-oriented stateless
+Streamable HTTP entrypoint. It keeps the same core tool names and follows the
+general miku MCP execution model. The HTTP entrypoint is a short-lived adapter
+for client-owned project data: it accepts explicit inline workbook/WBS/patch
+inputs or Base64 content, invokes the existing `mikuproject` runtime commands,
+and returns generated artifacts, diagnostics, diffs, summaries, or updated state
+for the client to store.
+
+The current HTTP entrypoint does not issue `Mcp-Session-Id`, rejects
+client-provided host path arguments for `tools/call`, and uses request-scoped
+temporary files only as adapter-internal runtime inputs when the upstream CLI
+requires a path. A hosted or non-localhost profile remains out of scope until
+authentication, storage policy, upload handling, artifact lifecycle management,
+audit, and runtime isolation are explicitly designed.
