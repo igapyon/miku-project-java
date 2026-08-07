@@ -15,6 +15,7 @@ import jp.igapyon.mikuproject.model.PredecessorModel;
 import jp.igapyon.mikuproject.model.ProjectModel;
 import jp.igapyon.mikuproject.model.ResourceModel;
 import jp.igapyon.mikuproject.model.TaskModel;
+import jp.igapyon.mikuproject.model.WeekDayModel;
 import jp.igapyon.mikuproject.msprojectxml.MsProjectXml;
 
 public class ProjectWorkbookJsonImport {
@@ -40,11 +41,14 @@ public class ProjectWorkbookJsonImport {
     public ImportAsProjectModelResult importProjectWorkbookJsonAsProjectModel(Object documentLike) {
         ProjectWorkbookJsonValidate.ValidationResult validation = validate.validateWorkbookJsonDocument(documentLike);
         ProjectModel model = new MsProjectXml().normalizeProjectModel(new ProjectModel());
-        importProjectRows(validation.document.ensureSheet("Project"), model, new ArrayList<ImportChange>());
+        List<Map<String, Object>> projectRows = validation.document.ensureSheet("Project");
+        importProjectRows(projectRows, model, new ArrayList<ImportChange>());
+        applyProjectDefaults(model, projectRows);
         importTaskRowsAsProjectModel(validation.document.ensureSheet("Tasks"), model);
         importResourceRowsAsProjectModel(validation.document.ensureSheet("Resources"), model);
         importAssignmentRowsAsProjectModel(validation.document.ensureSheet("Assignments"), model);
         importCalendarRowsAsProjectModel(validation.document.ensureSheet("Calendars"), model);
+        ensureDefaultCalendar(model);
         importNonWorkingDayRows(validation.document.ensureSheet("NonWorkingDays"), model, new ArrayList<ImportChange>());
         ImportAsProjectModelResult result = new ImportAsProjectModelResult();
         result.model = new MsProjectXml().normalizeProjectModel(model);
@@ -267,18 +271,22 @@ public class ProjectWorkbookJsonImport {
     }
 
     private void importTaskRowsAsProjectModel(List<Map<String, Object>> rows, ProjectModel model) {
-        for (Map<String, Object> row : rows) {
+        for (int rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
+            Map<String, Object> row = rows.get(rowIndex);
             TaskModel task = new TaskModel();
             task.uid = stringValue(row.get("UID"));
-            task.id = stringValue(row.get("ID"));
-            task.name = stringValue(row.get("Name"));
-            task.outlineLevel = integerValue(row.get("OutlineLevel"));
-            task.outlineNumber = stringValue(row.get("OutlineNumber"));
+            if (isBlank(task.uid)) {
+                continue;
+            }
+            task.id = defaultString(stringValue(row.get("ID")), String.valueOf(rowIndex + 1));
+            task.name = defaultString(stringValue(row.get("Name")), task.uid);
+            task.outlineLevel = defaultInteger(integerValue(row.get("OutlineLevel")), Integer.valueOf(1));
+            task.outlineNumber = defaultString(stringValue(row.get("OutlineNumber")), String.valueOf(rowIndex + 1));
             task.wbs = stringValue(row.get("WBS"));
-            task.start = normalizeDateTime(row.get("Start"), "start");
-            task.finish = normalizeDateTime(row.get("Finish"), "finish");
-            task.duration = stringValue(row.get("Duration"));
-            task.percentComplete = integerValue(row.get("PercentComplete"));
+            task.start = defaultString(normalizeDateTime(row.get("Start"), "start"), "");
+            task.finish = defaultString(normalizeDateTime(row.get("Finish"), "finish"), "");
+            task.duration = defaultString(stringValue(row.get("Duration")), "");
+            task.percentComplete = defaultInteger(integerValue(row.get("PercentComplete")), Integer.valueOf(0));
             task.percentWorkComplete = integerValue(row.get("PercentWorkComplete"));
             Boolean milestone = booleanValue(row.get("Milestone"));
             task.milestone = milestone != null ? milestone.booleanValue() : false;
@@ -297,8 +305,37 @@ public class ProjectWorkbookJsonImport {
         }
     }
 
+    private void applyProjectDefaults(ProjectModel model, List<Map<String, Object>> projectRows) {
+        model.project.name = defaultString(model.project.name, "Imported Project");
+        model.project.startDate = defaultString(model.project.startDate, "");
+        model.project.finishDate = defaultString(model.project.finishDate, "");
+        if (!hasBooleanProjectField(projectRows, "ScheduleFromStart")) {
+            model.project.scheduleFromStart = true;
+        }
+    }
+
+    private boolean hasBooleanProjectField(List<Map<String, Object>> rows, String fieldName) {
+        for (Map<String, Object> row : rows) {
+            if (fieldName.equals(stringValue(row.get("Field"))) && booleanValue(row.get("Value")) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String defaultString(String value, String fallback) {
+        return isBlank(value) ? fallback : value;
+    }
+
+    private Integer defaultInteger(Integer value, Integer fallback) {
+        return value == null || value.intValue() == 0 ? fallback : value;
+    }
+
     private void importResourceRowsAsProjectModel(List<Map<String, Object>> rows, ProjectModel model) {
         for (Map<String, Object> row : rows) {
+            if (isBlank(stringValue(row.get("UID")))) {
+                continue;
+            }
             ResourceModel resource = new ResourceModel();
             resource.uid = stringValue(row.get("UID"));
             resource.id = stringValue(row.get("ID"));
@@ -327,6 +364,10 @@ public class ProjectWorkbookJsonImport {
 
     private void importAssignmentRowsAsProjectModel(List<Map<String, Object>> rows, ProjectModel model) {
         for (Map<String, Object> row : rows) {
+            if (isBlank(stringValue(row.get("UID"))) || isBlank(stringValue(row.get("TaskUID")))
+                    || isBlank(stringValue(row.get("ResourceUID")))) {
+                continue;
+            }
             jp.igapyon.mikuproject.model.AssignmentModel assignment = new jp.igapyon.mikuproject.model.AssignmentModel();
             assignment.uid = stringValue(row.get("UID"));
             assignment.taskUid = stringValue(row.get("TaskUID"));
@@ -354,6 +395,9 @@ public class ProjectWorkbookJsonImport {
 
     private void importCalendarRowsAsProjectModel(List<Map<String, Object>> rows, ProjectModel model) {
         for (Map<String, Object> row : rows) {
+            if (isBlank(stringValue(row.get("UID")))) {
+                continue;
+            }
             CalendarModel calendar = new CalendarModel();
             calendar.uid = stringValue(row.get("UID"));
             calendar.name = stringValue(row.get("Name"));
@@ -361,6 +405,25 @@ public class ProjectWorkbookJsonImport {
             calendar.isBaseCalendar = isBaseCalendar != null ? isBaseCalendar.booleanValue() : false;
             calendar.baseCalendarUID = stringValue(row.get("BaseCalendarUID"));
             model.calendars.add(calendar);
+        }
+    }
+
+    private void ensureDefaultCalendar(ProjectModel model) {
+        if (!model.calendars.isEmpty()) {
+            return;
+        }
+        CalendarModel calendar = new CalendarModel();
+        calendar.uid = defaultString(model.project.calendarUID, "1");
+        calendar.name = "Standard";
+        calendar.isBaseCalendar = true;
+        for (int dayType = 1; dayType <= 7; dayType++) {
+            WeekDayModel weekDay = new WeekDayModel();
+            weekDay.dayType = Integer.valueOf(dayType);
+            calendar.weekDays.add(weekDay);
+        }
+        model.calendars.add(calendar);
+        if (isBlank(model.project.calendarUID)) {
+            model.project.calendarUID = calendar.uid;
         }
     }
 

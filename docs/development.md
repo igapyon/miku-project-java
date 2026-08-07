@@ -48,6 +48,10 @@ Java 1.8 前提でも利用可能な JUnit 系の現行版を第一候補とし�
   - `mvn test -Dtest=ProjectWorkbookJsonTest,ProjectXlsxTest,CoreApiWorkbookTest`
 - upstream 追随の保守回帰:
   - `mvn test -Dtest=WbsMarkdownTest,WbsSvgTest,WbsXlsxTest,ProjectWorkbookJsonTest,ProjectXlsxTest,CoreApiWorkbookTest,CoreApiPublicTest,CoreApiImportTest,MsProjectAiViewsTest,MikuprojectCliTest`
+- Node upstream report artifact parity:
+  - `MIKUPROJECT_RUN_NODE_PARITY=true mvn test`
+- runtime jar / sources jar / distribution zip reproducibility:
+  - `sh scripts/verify-reproducible-package.sh`
 
 upstream 更新追随で実行結果を差分確認へつなぐときは、次も併せて参照する。
 

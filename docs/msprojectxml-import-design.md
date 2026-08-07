@@ -19,7 +19,7 @@
 
 現在の正本:
 
-- `docs/miku-soft-30-straight-conversion-v20260425.md`
+- `docs/miku-soft-reference.md`
 - `docs/step1-spec.md`
 - `docs/remaining-migration-items.md`
 - `docs/upstream-class-mapping.md`

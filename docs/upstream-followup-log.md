@@ -108,6 +108,41 @@ follow-up:
     2026-05-01 時点の binary I/O 追随結果と focused test 通過結果を追加
 ```
 
+## 2026-08-06 `vendor/mikuproject/scripts/mikuproject-cli.mjs`
+
+```text
+upstream file:
+  vendor/mikuproject/scripts/mikuproject-cli.mjs
+
+java classes:
+  jp.igapyon.mikuproject.cli.MikuprojectCli
+  jp.igapyon.mikuproject.msprojectxml.MsProjectAiViews
+
+tests:
+  MikuprojectNodeParityTest.comparesSharedTextCliOutputWithNodeUpstreamWhenEnabled
+  MikuprojectNodeParityTest.comparesReportDirectoryBytesWithNodeUpstreamWhenEnabled
+  MikuprojectNodeParityTest.comparesReportBundleZipBytesWithNodeUpstreamWhenEnabled
+  MikuprojectNodeParityTest.comparesMonthlySvgZipBytesWithNodeUpstreamWhenEnabled
+
+diff summary:
+  挙動差分:
+    `state summarize`、AI projection bundle、`export workbook-json` の stdout / stderr / exit code を Node runtime と byte comparison する。shared diagnostics JSON は Node の version、status、io schema、pretty JSON format に合わせた。
+  命名差分:
+    Java help は Node-compatible commands と Java extensions を別節に表示する。共有 command の option signature は Node help に合わせる。
+  未移植差分:
+    本記録の fixture 範囲では未移植差分はない。未日付モデルの SVG fallback と Java extended XLSX layout は、下記 Java 側独自拡張として扱う。
+  Java 側独自拡張:
+    `state validate` / `state import` / `state merge`、`validate xml` / `validate xlsx`、`merge xlsx`、`report dir`、extended XLSX layout、未日付 SVG fallback を保持する。
+
+follow-up:
+  - 実施した確認:
+    `MIKUPROJECT_RUN_NODE_PARITY=true mvn -B test`
+  - fixture:
+    `vendor/mikuproject/testdata/workbook-import-sample.json`、`dependency.xml`
+  - 次回の確認観点:
+    CLI help、diagnostics schema、workbook JSON projection、report artifact の upstream 変更
+```
+
 ## 記録サンプル
 
 ### 2026-04-21 `vendor/mikuproject/src/ts/msproject-validate.ts`

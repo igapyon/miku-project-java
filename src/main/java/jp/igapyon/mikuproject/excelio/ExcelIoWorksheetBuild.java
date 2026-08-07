@@ -173,12 +173,15 @@ public class ExcelIoWorksheetBuild {
 
     private String sanitizeXmlText(String value) {
         StringBuilder builder = new StringBuilder();
-        for (int index = 0; index < value.length(); index++) {
-            char ch = value.charAt(index);
-            if ((ch >= 0x00 && ch <= 0x08) || ch == 0x0b || ch == 0x0c || (ch >= 0x0e && ch <= 0x1f)) {
-                continue;
+        for (int offset = 0; offset < value.length();) {
+            int codePoint = value.codePointAt(offset);
+            if (codePoint == 0x09 || codePoint == 0x0a || codePoint == 0x0d
+                    || (codePoint >= 0x20 && codePoint <= 0xd7ff)
+                    || (codePoint >= 0xe000 && codePoint <= 0xfffd)
+                    || (codePoint >= 0x10000 && codePoint <= 0x10ffff)) {
+                builder.appendCodePoint(codePoint);
             }
-            builder.append(ch);
+            offset += Character.charCount(codePoint);
         }
         return builder.toString();
     }

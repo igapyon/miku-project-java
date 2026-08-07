@@ -283,7 +283,7 @@ public class MsProjectAiViews {
         project.put("name", normalized.project.name);
         project.put("planned_start", normalized.project.startDate);
         project.put("planned_finish", normalized.project.finishDate);
-        project.put("status_date", normalized.project.statusDate);
+        putIfNonNull(project, "status_date", normalized.project.statusDate);
         result.put("project", project);
 
         Map<String, Object> summary = new LinkedHashMap<String, Object>();
@@ -423,7 +423,7 @@ public class MsProjectAiViews {
             taskJson.put("is_summary", Boolean.valueOf(task.summary));
             taskJson.put("is_milestone", Boolean.valueOf(task.milestone));
             taskJson.put("planned_duration", task.duration);
-            taskJson.put("planned_duration_hours", parseDurationHours(task.duration));
+            putIfNonNull(taskJson, "planned_duration_hours", parseDurationHours(task.duration));
             taskJson.put("planned_start", task.start);
             taskJson.put("planned_finish", task.finish);
             taskJson.put("percent_complete", task.percentComplete);
@@ -588,13 +588,13 @@ public class MsProjectAiViews {
         target.put("is_summary", Boolean.valueOf(targetTask.summary));
         target.put("is_milestone", Boolean.valueOf(targetTask.milestone));
         target.put("planned_duration", targetTask.duration);
-        target.put("planned_duration_hours", parseDurationHours(targetTask.duration));
+        putIfNonNull(target, "planned_duration_hours", parseDurationHours(targetTask.duration));
         target.put("planned_start", targetTask.start);
         target.put("planned_finish", targetTask.finish);
         target.put("percent_complete", targetTask.percentComplete);
-        target.put("notes", targetTask.notes);
+        putIfNonNull(target, "notes", targetTask.notes);
         target.put("calendar_uid", targetTask.calendarUID == null ? null : targetTask.calendarUID);
-        target.put("critical", targetTask.critical);
+        putIfNonNull(target, "critical", targetTask.critical);
         result.put("target_task", target);
 
         if (parentTask == null) {
@@ -1007,6 +1007,12 @@ public class MsProjectAiViews {
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    private void putIfNonNull(Map<String, Object> target, String key, Object value) {
+        if (value != null) {
+            target.put(key, value);
+        }
     }
 
     private String stringValue(Object value) {

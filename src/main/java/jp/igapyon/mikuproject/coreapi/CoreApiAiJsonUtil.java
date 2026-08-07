@@ -57,6 +57,12 @@ public class CoreApiAiJsonUtil {
         return builder.toString();
     }
 
+    public String stringifyPrettyJson(Object value) {
+        StringBuilder builder = new StringBuilder();
+        appendPrettyJson(builder, value, 0);
+        return builder.toString();
+    }
+
     @SuppressWarnings("unchecked")
     private void appendJson(StringBuilder builder, Object value) {
         if (value == null) {
@@ -100,6 +106,71 @@ public class CoreApiAiJsonUtil {
             return;
         }
         appendJsonString(builder, String.valueOf(value));
+    }
+
+    @SuppressWarnings("unchecked")
+    private void appendPrettyJson(StringBuilder builder, Object value, int depth) {
+        if (value == null) {
+            builder.append("null");
+            return;
+        }
+        if (value instanceof String) {
+            appendJsonString(builder, (String) value);
+            return;
+        }
+        if (value instanceof Number || value instanceof Boolean) {
+            builder.append(String.valueOf(value));
+            return;
+        }
+        if (value instanceof Map<?, ?>) {
+            Map<Object, Object> map = (Map<Object, Object>) value;
+            if (map.isEmpty()) {
+                builder.append("{}");
+                return;
+            }
+            builder.append("{\n");
+            boolean first = true;
+            for (Map.Entry<Object, Object> entry : map.entrySet()) {
+                if (!first) {
+                    builder.append(",\n");
+                }
+                first = false;
+                appendIndent(builder, depth + 1);
+                appendJsonString(builder, String.valueOf(entry.getKey()));
+                builder.append(": ");
+                appendPrettyJson(builder, entry.getValue(), depth + 1);
+            }
+            builder.append("\n");
+            appendIndent(builder, depth);
+            builder.append("}");
+            return;
+        }
+        if (value instanceof List<?>) {
+            List<Object> list = (List<Object>) value;
+            if (list.isEmpty()) {
+                builder.append("[]");
+                return;
+            }
+            builder.append("[\n");
+            for (int index = 0; index < list.size(); index++) {
+                if (index > 0) {
+                    builder.append(",\n");
+                }
+                appendIndent(builder, depth + 1);
+                appendPrettyJson(builder, list.get(index), depth + 1);
+            }
+            builder.append("\n");
+            appendIndent(builder, depth);
+            builder.append("]");
+            return;
+        }
+        appendJsonString(builder, String.valueOf(value));
+    }
+
+    private void appendIndent(StringBuilder builder, int depth) {
+        for (int index = 0; index < depth; index++) {
+            builder.append("  ");
+        }
     }
 
     private void appendJsonString(StringBuilder builder, String value) {
