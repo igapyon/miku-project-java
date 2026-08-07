@@ -76,6 +76,31 @@ public class ExcelIoTest {
     }
 
     @Test
+    public void preservesSupplementaryUnicodeAndRemovesInvalidXmlCharacters() {
+        XlsxWorkbookCodec codec = new XlsxWorkbookCodec();
+        XlsxWorkbookLike workbook = new XlsxWorkbookLike();
+        XlsxSheetLike sheet = new XlsxSheetLike();
+        sheet.name = "Project";
+        XlsxRowLike row = new XlsxRowLike();
+        XlsxCellLike supplementary = new XlsxCellLike();
+        supplementary.value = "😀 🐇 𠮷野家";
+        XlsxCellLike invalid = new XlsxCellLike();
+        invalid.value = "before" + Character.toString((char) 0xd800) + "middle"
+                + Character.toString((char) 0xdc00)
+                + Character.toString((char) 0xfffe)
+                + Character.toString((char) 0xffff) + "after";
+        row.cells.add(supplementary);
+        row.cells.add(invalid);
+        sheet.rows.add(row);
+        workbook.sheets.add(sheet);
+
+        XlsxWorkbookLike imported = codec.importWorkbook(codec.exportWorkbook(workbook));
+
+        assertEquals("😀 🐇 𠮷野家", imported.sheets.get(0).rows.get(0).cells.get(0).value);
+        assertEquals("beforemiddleafter", imported.sheets.get(0).rows.get(0).cells.get(1).value);
+    }
+
+    @Test
     public void rejectsInvalidWorkbookBytes() {
         XlsxWorkbookCodec codec = new XlsxWorkbookCodec();
         assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {

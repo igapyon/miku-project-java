@@ -94,6 +94,18 @@ public class MikuprojectNodeParityTest {
         assertArrayEquals(Files.readAllBytes(nodeZip), Files.readAllBytes(javaZip), "monthly svg zip");
     }
 
+    @Test
+    public void comparesSharedTextCliOutputWithNodeUpstreamWhenEnabled() throws IOException, InterruptedException {
+        assumeNodeParityEnabled();
+
+        assertSharedCliResultEqualsNode(new String[] { "state", "summarize", "--in",
+                "vendor/mikuproject/testdata/workbook-import-sample.json" });
+        assertSharedCliResultEqualsNode(new String[] { "ai", "export", "bundle", "--in",
+                "vendor/mikuproject/testdata/workbook-import-sample.json", "--diagnostics", "json" });
+        assertSharedCliResultEqualsNode(new String[] { "export", "workbook-json", "--in",
+                "vendor/mikuproject/testdata/workbook-import-sample.json", "--diagnostics", "json" });
+    }
+
     private void assumeNodeParityEnabled() {
         assumeTrue("true".equalsIgnoreCase(System.getenv("MIKUPROJECT_RUN_NODE_PARITY")),
                 "set MIKUPROJECT_RUN_NODE_PARITY=true to run Node upstream parity");
@@ -109,6 +121,27 @@ public class MikuprojectNodeParityTest {
         byte[] processOutput = readAll(process.getInputStream());
         int exitCode = process.waitFor();
         assertEquals(0, exitCode, new String(processOutput, StandardCharsets.UTF_8));
+    }
+
+    private void assertSharedCliResultEqualsNode(String[] args) throws IOException, InterruptedException {
+        java.io.ByteArrayOutputStream javaOut = new java.io.ByteArrayOutputStream();
+        java.io.ByteArrayOutputStream javaErr = new java.io.ByteArrayOutputStream();
+        int javaExitCode = new MikuprojectCli().run(args,
+                new java.io.PrintStream(javaOut, true, StandardCharsets.UTF_8.name()),
+                new java.io.PrintStream(javaErr, true, StandardCharsets.UTF_8.name()));
+
+        List<String> command = new ArrayList<String>();
+        command.add("node");
+        command.add("vendor/mikuproject/scripts/mikuproject-cli.mjs");
+        Collections.addAll(command, args);
+        Process process = new ProcessBuilder(command).directory(Paths.get(".").toFile()).start();
+        byte[] nodeOut = readAll(process.getInputStream());
+        byte[] nodeErr = readAll(process.getErrorStream());
+        int nodeExitCode = process.waitFor();
+
+        assertEquals(nodeExitCode, javaExitCode, "exit code");
+        assertArrayEquals(nodeOut, javaOut.toByteArray(), "stdout");
+        assertArrayEquals(nodeErr, javaErr.toByteArray(), "stderr");
     }
 
     private Path writeWorkbookJson(Path xmlFile) throws IOException {

@@ -109,6 +109,19 @@
   - [x] テストは byte size / decode だけでなく、zip entry、worksheet XML、styles XML、data validation、freeze pane、主要セル style を確認する
     - 2026-04-21 時点で `ExcelIoTest` が OOXML zip entry / worksheet XML / data validation / freeze pane / formula を確認し、`ProjectXlsxTest` が主要セル style、data validation、sheet theme、Settings section / merged range を確認済み
 
+### メンテナンス記録
+
+- 2026-08-06 | mikuproject-java | Java CLI runtime / repository operation | `workplace/` の除外規則を `workplace/.gitkeep` のみ追跡する規約へ明確化
+  - 適用: `.gitignore` を `workplace/*` と `!workplace/.gitkeep` に更新し、README の運用説明も同期
+  - 適用: Release workflow は Temurin 21 の明示 build、Maven cache、Maven の `help:evaluate` による version 取得、Java 8 runtime smoke へ更新
+  - 検証: `MIKUPROJECT_RUN_NODE_PARITY=true mvn -B test` を実行し、129 tests を成功（skip 0）
+  - 次: GitHub Actions 上で release workflow を初回実行する際、Java 8 runtime smoke の実行ログを確認する
+
+- 2026-08-06 | mikuproject-java | miku-soft standard alignment | shared Node CLI contract と Java extensions の分離を明文化
+  - 適用: 標準参照、upstream snapshot、CLI mapping、CONTRIBUTING / CONTRIBUTORS / THIRD_PARTY_NOTICES を追加。共有標準のコピー文書は削除
+  - 適用: shared JSON output / diagnostics / workbook projection の Node-compatible serialization を追加し、Java-only commands と legacy runtime behavior を対応表へ明記
+  - 検証: `MikuprojectNodeParityTest` を stdout / stderr / exit code comparison へ拡張し、report artifact bytes と合わせて通過
+
 ### 今週
 
 - [x] Java 版の対象を `CLI` 中心に固定し、対象範囲を文書で揃える

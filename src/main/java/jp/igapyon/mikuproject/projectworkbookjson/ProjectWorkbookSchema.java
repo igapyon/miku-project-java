@@ -16,8 +16,8 @@ public class ProjectWorkbookSchema {
             "FinishDate", "CurrentDate", "StatusDate", "CalendarUID", "MinutesPerDay", "MinutesPerWeek", "DaysPerMonth",
             "ScheduleFromStart" };
     public static final String[] TASK_HEADERS = { "UID", "ID", "Name", "OutlineLevel", "OutlineNumber", "WBS", "Start",
-            "Finish", "Duration", "PercentComplete", "PercentWorkComplete", "Milestone", "Summary", "Critical", "Type",
-            "Priority", "CalendarUID", "ConstraintType", "ConstraintDate", "Deadline", "Predecessors", "Notes" };
+            "Finish", "Duration", "PercentComplete", "PercentWorkComplete", "Milestone", "Summary", "Critical",
+            "Type", "Priority", "CalendarUID", "ConstraintType", "ConstraintDate", "Deadline", "Predecessors", "Notes" };
     public static final String[] RESOURCE_HEADERS = { "UID", "ID", "Name", "Type", "Initials", "Group", "MaxUnits",
             "CalendarUID", "StandardRate", "OvertimeRate", "CostPerUse", "Work", "ActualWork", "RemainingWork", "Cost",
             "ActualCost", "RemainingCost", "PercentWorkComplete", "WorkGroup", "StandardRateFormat",

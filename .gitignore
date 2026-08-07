@@ -1,4 +1,6 @@
 .DS_Store
-workplace/
+.vscode/mcp.json
+workplace/*
+!workplace/.gitkeep
 target/
 *.class

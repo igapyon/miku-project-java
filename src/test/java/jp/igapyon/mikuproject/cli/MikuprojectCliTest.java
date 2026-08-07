@@ -166,17 +166,17 @@ public class MikuprojectCliTest {
             assertTrue(text(specOut).contains("project_draft_view"));
             assertEquals("patch_json\n", text(kindOut));
             assertTrue(text(validateOut).contains("warnings="));
-            assertTrue(Files.readString(workbookFile, StandardCharsets.UTF_8).contains("\"format\":\"mikuproject_workbook_json\""));
+            assertTrue(compactJsonLayout(Files.readString(workbookFile, StandardCharsets.UTF_8)).contains("\"format\":\"mikuproject_workbook_json\""));
             assertTrue(Files.readString(nextWorkbookFile, StandardCharsets.UTF_8).contains("Patched Project"));
-            assertTrue(text(summaryOut).contains("\"kind\":\"state_summary\""));
-            assertTrue(text(diffOut).contains("\"kind\":\"state_diff_summary\""));
-            assertTrue(text(overviewOut).contains("\"view_type\":\"project_overview_view\""));
-            assertTrue(text(bundleOut).contains("\"view_type\":\"ai_projection_bundle\""));
+            assertTrue(compactJsonLayout(text(summaryOut)).contains("\"kind\":\"state_summary\""));
+            assertTrue(compactJsonLayout(text(diffOut)).contains("\"kind\":\"state_diff_summary\""));
+            assertTrue(compactJsonLayout(text(overviewOut)).contains("\"view_type\":\"project_overview_view\""));
+            assertTrue(compactJsonLayout(text(bundleOut)).contains("\"view_type\":\"ai_projection_bundle\""));
             assertTrue(text(bundleOut).contains("\"project_overview_view\""));
-            assertTrue(text(bundleOut).contains("\"phase_detail_views_full\":["));
-            assertTrue(text(bundleOut).contains("\"task_edit_views_full\":["));
-            assertTrue(text(taskEditOut).contains("\"view_type\":\"task_edit_view\""));
-            assertTrue(text(phaseOut).contains("\"view_type\":\"phase_detail_view\""));
+            assertTrue(compactJsonLayout(text(bundleOut)).contains("\"phase_detail_views_full\":["));
+            assertTrue(compactJsonLayout(text(bundleOut)).contains("\"task_edit_views_full\":["));
+            assertTrue(compactJsonLayout(text(taskEditOut)).contains("\"view_type\":\"task_edit_view\""));
+            assertTrue(compactJsonLayout(text(phaseOut)).contains("\"view_type\":\"phase_detail_view\""));
             assertTrue(Files.readString(exportedXmlFile, StandardCharsets.UTF_8).contains("Patched Project"));
             assertTrue(Files.size(reportZipFile) > 0);
             assertTrue(Files.exists(reportDir.resolve("wbs.xlsx")));
@@ -215,12 +215,12 @@ public class MikuprojectCliTest {
 
             String bundleText = Files.readString(bundleFile, StandardCharsets.UTF_8);
             assertEquals(0, exitCode);
-            assertTrue(text(out).contains("wrote " + bundleFile.toString()));
+            assertEquals("", text(out));
             assertEquals("", text(err));
-            assertTrue(bundleText.contains("\"view_type\":\"ai_projection_bundle\""));
+            assertTrue(compactJsonLayout(bundleText).contains("\"view_type\":\"ai_projection_bundle\""));
             assertTrue(bundleText.contains("\"project_overview_view\""));
-            assertTrue(bundleText.contains("\"phase_detail_views_full\":["));
-            assertTrue(bundleText.contains("\"task_edit_views_full\":["));
+            assertTrue(compactJsonLayout(bundleText).contains("\"phase_detail_views_full\":["));
+            assertTrue(compactJsonLayout(bundleText).contains("\"task_edit_views_full\":["));
         } finally {
             Files.deleteIfExists(draftFile);
             Files.deleteIfExists(workbookFile);
@@ -260,9 +260,9 @@ public class MikuprojectCliTest {
             } finally {
                 System.setIn(originalIn);
             }
-            assertTrue(text(importOut).contains("\"format\":\"mikuproject_workbook_json\""));
-            assertTrue(text(importErr).contains("\"command\":\"import xlsx\""));
-            assertTrue(text(importErr).contains("\"source\":\"stdin_base64\""));
+            assertTrue(compactJsonLayout(text(importOut)).contains("\"format\":\"mikuproject_workbook_json\""));
+            assertTrue(compactJsonLayout(text(importErr)).contains("\"command\":\"import xlsx\""));
+            assertTrue(compactJsonLayout(text(importErr)).contains("\"mode\":\"stdin_base64\""));
 
             assertEquals(0, cli.run(new String[] { "report", "all", "--in", workbookFile.toString(), "--out-base64", "-" },
                     stream(reportOut), stream(new ByteArrayOutputStream())));
@@ -319,9 +319,9 @@ public class MikuprojectCliTest {
             assertEquals(2, cli.run(new String[] { "ai", "export", "task-edit", "--in", workbookFile.toString(),
                     "--select", "uid" }, stream(new ByteArrayOutputStream()), stream(missingUidErr)));
 
-            assertTrue(text(defaultOut).contains("\"view_type\":\"task_edit_view\""));
-            assertTrue(text(defaultOut).contains("\"uid\":\"2\""));
-            assertTrue(text(firstTaskOut).contains("\"uid\":\"2\""));
+            assertTrue(compactJsonLayout(text(defaultOut)).contains("\"view_type\":\"task_edit_view\""));
+            assertTrue(compactJsonLayout(text(defaultOut)).contains("\"uid\":\"2\""));
+            assertTrue(compactJsonLayout(text(firstTaskOut)).contains("\"uid\":\"2\""));
             assertTrue(text(missingUidErr).contains("--task-uid"));
         } finally {
             Files.deleteIfExists(workbookFile);
@@ -346,12 +346,12 @@ public class MikuprojectCliTest {
 
             String phaseText = Files.readString(phaseFile, StandardCharsets.UTF_8);
             assertEquals(0, exitCode);
-            assertTrue(text(out).contains("wrote " + phaseFile.toString()));
+            assertEquals("", text(out));
             assertEquals("", text(err));
-            assertTrue(phaseText.contains("\"view_type\":\"phase_detail_view\""));
-            assertTrue(phaseText.contains("\"mode\":\"scoped\""));
-            assertTrue(phaseText.contains("\"root_uid\":\"2\""));
-            assertTrue(phaseText.contains("\"max_depth\":1"));
+            assertTrue(compactJsonLayout(phaseText).contains("\"view_type\":\"phase_detail_view\""));
+            assertTrue(compactJsonLayout(phaseText).contains("\"mode\":\"scoped\""));
+            assertTrue(compactJsonLayout(phaseText).contains("\"root_uid\":\"2\""));
+            assertTrue(compactJsonLayout(phaseText).contains("\"max_depth\":1"));
         } finally {
             Files.deleteIfExists(workbookFile);
             Files.deleteIfExists(phaseFile);
@@ -374,9 +374,9 @@ public class MikuprojectCliTest {
             assertEquals(2, cli.run(new String[] { "ai", "export", "phase-detail", "--in", workbookFile.toString(),
                     "--select", "uid" }, stream(new ByteArrayOutputStream()), stream(missingUidErr)));
 
-            assertTrue(text(firstPhaseOut).contains("\"view_type\":\"phase_detail_view\""));
-            assertTrue(text(firstPhaseOut).contains("\"mode\":\"scoped\""));
-            assertTrue(text(firstPhaseOut).contains("\"uid\":\"1\""));
+            assertTrue(compactJsonLayout(text(firstPhaseOut)).contains("\"view_type\":\"phase_detail_view\""));
+            assertTrue(compactJsonLayout(text(firstPhaseOut)).contains("\"mode\":\"scoped\""));
+            assertTrue(compactJsonLayout(text(firstPhaseOut)).contains("\"uid\":\"1\""));
             assertTrue(text(missingUidErr).contains("--phase-uid"));
         } finally {
             Files.deleteIfExists(workbookFile);
@@ -399,13 +399,13 @@ public class MikuprojectCliTest {
                     "--diagnostics", "json" }, stream(out), stream(err));
 
             assertEquals(0, exitCode);
-            assertTrue(text(out).contains("\"view_type\":\"ai_projection_bundle\""));
+            assertTrue(compactJsonLayout(text(out)).contains("\"view_type\":\"ai_projection_bundle\""));
             assertFalse(text(out).contains("\"diagnostics_version\""));
-            assertTrue(text(err).contains("\"diagnostics_version\":\"1\""));
-            assertTrue(text(err).contains("\"command\":\"ai export bundle\""));
-            assertTrue(text(err).contains("\"output_kind\":\"ai_projection_bundle\""));
-            assertTrue(text(err).contains("\"phase_count\":1"));
-            assertTrue(text(err).contains("\"task_count\":1"));
+            assertTrue(compactJsonLayout(text(err)).contains("\"diagnostics_version\":1"));
+            assertTrue(compactJsonLayout(text(err)).contains("\"command\":\"ai export bundle\""));
+            assertTrue(compactJsonLayout(text(err)).contains("\"output_kind\":\"ai_projection_bundle\""));
+            assertTrue(compactJsonLayout(text(err)).contains("\"phase_count\":1"));
+            assertTrue(compactJsonLayout(text(err)).contains("\"task_count\":1"));
         } finally {
             Files.deleteIfExists(draftFile);
             Files.deleteIfExists(workbookFile);
@@ -491,6 +491,10 @@ public class MikuprojectCliTest {
         return new String(out.toByteArray(), StandardCharsets.UTF_8);
     }
 
+    private String compactJsonLayout(String value) {
+        return value.replaceAll("(?m)^\\s+", "").replace("\r", "").replace("\n", "").replace(": ", ":");
+    }
+
     private List<String> extractUsageCommands(String usageText) {
         List<String> commands = new ArrayList<String>();
         String[] lines = usageText.split("\\R");
@@ -507,16 +511,19 @@ public class MikuprojectCliTest {
         boolean inCliList = false;
         String[] lines = readmeText.split("\\R");
         for (String line : lines) {
-            if ("- `--version`".equals(line)) {
+            if ("Supported commands:".equals(line)) {
                 inCliList = true;
+                continue;
             }
             if (!inCliList) {
                 continue;
             }
-            if (!line.startsWith("- `")) {
+            if ("Notes:".equals(line)) {
                 break;
             }
-            commands.add(line.substring(3, line.length() - 1));
+            if (line.startsWith("- `")) {
+                commands.add(line.substring(3, line.length() - 1));
+            }
         }
         return commands;
     }

@@ -37,6 +37,17 @@ import jp.igapyon.mikuproject.wbsxlsx.WbsXlsx.WbsExportOptions;
 
 public class MikuprojectCli {
     public static final String VERSION = "0.8.3";
+    private static final String[] NODE_TASK_HEADERS = { "UID", "ID", "Name", "OutlineLevel", "OutlineNumber", "WBS", "Start",
+            "Finish", "Duration", "PercentComplete", "PercentWorkComplete", "Milestone", "Summary", "Critical", "CalendarUID",
+            "Predecessors", "Notes" };
+    private static final String[] NODE_RESOURCE_HEADERS = { "UID", "ID", "Name", "Type", "Initials", "Group", "MaxUnits",
+            "CalendarUID", "StandardRate", "OvertimeRate", "CostPerUse", "Work", "ActualWork", "RemainingWork" };
+    private static final String[] NODE_ASSIGNMENT_HEADERS = { "UID", "TaskUID", "TaskName", "ResourceUID", "ResourceName", "Start",
+            "Finish", "Units", "Work", "ActualWork", "RemainingWork", "PercentWorkComplete" };
+    private static final String[] NODE_CALENDAR_HEADERS = { "UID", "Name", "IsBaseCalendar", "BaseCalendarUID", "WeekDays",
+            "Exceptions", "WorkWeeks" };
+    private static final String[] NODE_NON_WORKING_DAYS_HEADERS = { "CalendarUID", "Index", "CalendarName", "Name", "Date",
+            "FromDate", "ToDate", "DayWorking" };
 
     private final MsProjectXml msProjectXml = new MsProjectXml();
     private final CoreApiReportAdapters reportAdapters = new CoreApiReportAdapters();
@@ -112,9 +123,9 @@ public class MikuprojectCli {
             CoreApiAiJsonParseResult parsed = coreApiImport.parseAiJsonText(readText(input));
             out.println(safe(parsed.kind));
             if ("json".equals(diagnosticsFormat)) {
-                Map<String, Object> diagnostics = buildCommandDiagnostics("ai detect-kind", options);
+                Map<String, Object> diagnostics = buildCommandDiagnostics("detect-kind", options);
                 diagnostics.put("detected_kind", parsed.kind);
-                err.println(jsonUtil.stringifyJson(diagnostics));
+                err.println(jsonUtil.stringifyPrettyJson(diagnostics));
             }
             return parsed.kind == null || parsed.kind.length() == 0 ? 1 : 0;
         }
@@ -123,6 +134,10 @@ public class MikuprojectCli {
         }
         if ("validate-patch".equals(action)) {
             CliOptions options = parseOptions(args, 2);
+            String diagnosticsFormat = options.get("diagnostics");
+            if (!isValidDiagnosticsFormat(diagnosticsFormat)) {
+                return usageError(err, "--diagnostics requires text or json");
+            }
             String state = requireOption(options, "state", err, "ai validate-patch requires --state <workbook.json>");
             String input = inputOrStdin(options);
             if (state == null) {
@@ -130,16 +145,8 @@ public class MikuprojectCli {
             }
             ProjectModel baseModel = importWorkbookJsonModel(state);
             Object json = parseJsonFile(input);
-            jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonCore.ValidationResult validation = patchJson.validatePatchDocument(json);
             jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonCore.ImportResult applied = patchJson.importProjectPatchJson(json, baseModel);
-            for (PatchWarning warning : validation.warnings) {
-                out.println("warning\t" + safe(warning.message));
-            }
-            for (PatchWarning warning : applied.warnings) {
-                out.println("warning\t" + safe(warning.message));
-            }
-            out.println("operations=" + validation.document.operations.size() + ", changes=" + applied.changes.size()
-                    + ", warnings=" + (validation.warnings.size() + applied.warnings.size()));
+            writePatchValidationOutput(diagnosticsFormat, options, applied, out);
             return 0;
         }
         return usageError(err, "unknown ai command: " + action, true);
@@ -182,7 +189,7 @@ public class MikuprojectCli {
         } else {
             return usageError(err, "unknown ai export command: " + subject, true);
         }
-        writeTextOutput(options.get("out"), jsonUtil.stringifyJson(result) + "\n", out);
+        writeTextOutput(options.get("out"), jsonUtil.stringifyPrettyJson(result) + "\n", out);
         writeAiExportDiagnostics(diagnosticsFormat, subject, options, result, err);
         return 0;
     }
@@ -226,6 +233,10 @@ public class MikuprojectCli {
             return 0;
         }
         if ("apply-patch".equals(action)) {
+            String diagnosticsFormat = options.get("diagnostics");
+            if (!isValidDiagnosticsFormat(diagnosticsFormat)) {
+                return usageError(err, "--diagnostics requires text or json");
+            }
             String state = requireOption(options, "state", err, "state apply-patch requires --state <workbook.json>");
             String input = inputOrStdin(options);
             if (state == null) {
@@ -234,14 +245,25 @@ public class MikuprojectCli {
             jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonCore.ImportResult result =
                     patchJson.importProjectPatchJson(parseJsonFile(input), importWorkbookJsonModel(state));
             writeWorkbookJsonOutput(options.get("out"), result.model, out);
+            writePatchDiagnostics(diagnosticsFormat, "apply-patch", options, result, err);
             return 0;
         }
         if ("summarize".equals(action)) {
+            String diagnosticsFormat = options.get("diagnostics");
+            if (!isValidDiagnosticsFormat(diagnosticsFormat)) {
+                return usageError(err, "--diagnostics requires text or json");
+            }
             String input = inputOrStdin(options);
-            writeTextOutput(options.get("out"), jsonUtil.stringifyJson(buildStateSummary(importWorkbookJsonModel(input))) + "\n", out);
+            Map<String, Object> summary = buildStateSummary(importWorkbookJsonModel(input));
+            writeTextOutput(options.get("out"), jsonUtil.stringifyPrettyJson(summary) + "\n", out);
+            writeStateSummaryDiagnostics(diagnosticsFormat, options, summary, err);
             return 0;
         }
         if ("diff".equals(action)) {
+            String diagnosticsFormat = options.get("diagnostics");
+            if (!isValidDiagnosticsFormat(diagnosticsFormat)) {
+                return usageError(err, "--diagnostics requires text or json");
+            }
             String before = requireOption(options, "before", err, "state diff requires --before <workbook.before.json>");
             String after = requireOption(options, "after", err, "state diff requires --after <workbook.after.json>");
             if (before == null || after == null) {
@@ -250,7 +272,9 @@ public class MikuprojectCli {
             ProjectModel beforeModel = importWorkbookJsonModel(before);
             jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonImport.ImportResult result =
                     workbookJson.importProjectWorkbookJson(parseJsonFile(after), beforeModel);
-            writeTextOutput(options.get("out"), jsonUtil.stringifyJson(buildStateDiffSummary(result)) + "\n", out);
+            Map<String, Object> summary = buildStateDiffSummary(result);
+            writeTextOutput(options.get("out"), jsonUtil.stringifyPrettyJson(summary) + "\n", out);
+            writeStateDiffDiagnostics(diagnosticsFormat, options, summary, err);
             return 0;
         }
         return usageError(err, "unknown state command: " + action, true);
@@ -291,12 +315,15 @@ public class MikuprojectCli {
         ProjectModel model = importWorkbookJsonModel(input);
         if ("workbook-json".equals(subject)) {
             writeWorkbookJsonOutput(options.get("out"), model, out);
-            writeSimpleDiagnostics(diagnosticsFormat, "export workbook-json", options, "workbook_json", err);
+            writeSimpleDiagnostics(diagnosticsFormat, "export workbook-json", options, "workbook_json",
+                    diagnosticsDetail("sheet_count", Integer.valueOf(6)), err);
             return 0;
         }
         if ("xml".equals(subject)) {
-            writeTextOutput(options.get("out"), msProjectXml.exportToXml(model), out);
-            writeSimpleDiagnostics(diagnosticsFormat, "export xml", options, "msproject_xml", err);
+            String xmlText = msProjectXml.exportToXml(model) + "\n";
+            writeTextOutput(options.get("out"), xmlText, out);
+            writeSimpleDiagnostics(diagnosticsFormat, "export xml", options, "ms_project_xml",
+                    diagnosticsDetail("output_length", Integer.valueOf(xmlText.length())), err);
             return 0;
         }
         if ("xlsx".equals(subject)) {
@@ -305,7 +332,8 @@ public class MikuprojectCli {
             }
             byte[] bytes = workbookXlsx.encodeWorkbook(workbookXlsx.exportWorkbook(model));
             writeBinaryOutput(options, bytes, out);
-            writeSimpleDiagnostics(diagnosticsFormat, "export xlsx", options, "project_xlsx", err);
+            writeSimpleDiagnostics(diagnosticsFormat, "export xlsx", options, "xlsx",
+                    diagnosticsDetail("byte_length", Integer.valueOf(bytes.length)), err);
             return 0;
         }
         return usageError(err, "unknown export command: " + subject, true);
@@ -325,9 +353,14 @@ public class MikuprojectCli {
             if (!ensureBinaryInputSource(options, "import xlsx", err)) {
                 return 2;
             }
-            ProjectModel model = workbookXlsx.importAsProjectModel(workbookXlsx.decodeWorkbook(readBinaryInput(options, "import xlsx")));
+            byte[] inputBytes = readBinaryInput(options, "import xlsx");
+            ProjectModel model = workbookXlsx.importAsProjectModel(workbookXlsx.decodeWorkbook(inputBytes));
             writeWorkbookJsonOutput(options.get("out"), model, out);
-            writeSimpleDiagnostics(diagnosticsFormat, "import xlsx", options, "workbook_json", err);
+            Map<String, Object> details = diagnosticsDetail("input_kind", "xlsx");
+            details.put("output_kind", "workbook_json");
+            details.put("byte_length", Integer.valueOf(inputBytes.length));
+            details.put("sheet_count", Integer.valueOf(6));
+            writeSimpleDiagnostics(diagnosticsFormat, "import xlsx", options, null, details, err);
             return 0;
         }
         return usageError(err, "unknown import command: " + subject, true);
@@ -378,7 +411,8 @@ public class MikuprojectCli {
             }
             CoreApiReportAdapters.ReportBundle bundle = reportAdapters.report.all.export(model, markdownOptions, xlsxOptions, svgOptions);
             writeBinaryOutput(options, bundle.zipBytes, out, " (" + bundle.entries.size() + " entries)");
-            writeSimpleDiagnostics(diagnosticsFormat, "report all", options, "report_bundle_zip", err);
+            writeSimpleDiagnostics(diagnosticsFormat, "report all", options, "report_bundle_zip",
+                    diagnosticsDetail("byte_length", Integer.valueOf(bundle.zipBytes.length)), err);
             return 0;
         }
         if ("dir".equals(subject)) {
@@ -397,17 +431,22 @@ public class MikuprojectCli {
             }
             byte[] bytes = reportAdapters.report.wbsXlsx.exportBytes(model, xlsxOptions);
             writeBinaryOutput(options, bytes, out);
-            writeSimpleDiagnostics(diagnosticsFormat, "report wbs-xlsx", options, "wbs_xlsx", err);
+            writeSimpleDiagnostics(diagnosticsFormat, "report wbs-xlsx", options, "wbs_xlsx",
+                    diagnosticsDetail("byte_length", Integer.valueOf(bytes.length)), err);
             return 0;
         }
         if ("daily-svg".equals(subject)) {
-            writeTextOutput(options.get("out"), reportAdapters.report.svg.exportDaily(model, svgOptions), out);
-            writeSimpleDiagnostics(diagnosticsFormat, "report daily-svg", options, "daily_svg", err);
+            String svgText = reportAdapters.report.svg.exportDaily(model, svgOptions) + "\n";
+            writeTextOutput(options.get("out"), svgText, out);
+            writeSimpleDiagnostics(diagnosticsFormat, "report daily-svg", options, "daily_svg",
+                    diagnosticsDetail("output_length", Integer.valueOf(svgText.length())), err);
             return 0;
         }
         if ("weekly-svg".equals(subject)) {
-            writeTextOutput(options.get("out"), reportAdapters.report.svg.exportWeekly(model, svgOptions), out);
-            writeSimpleDiagnostics(diagnosticsFormat, "report weekly-svg", options, "weekly_svg", err);
+            String svgText = reportAdapters.report.svg.exportWeekly(model, svgOptions) + "\n";
+            writeTextOutput(options.get("out"), svgText, out);
+            writeSimpleDiagnostics(diagnosticsFormat, "report weekly-svg", options, "weekly_svg",
+                    diagnosticsDetail("output_length", Integer.valueOf(svgText.length())), err);
             return 0;
         }
         if ("monthly-calendar-svg".equals(subject)) {
@@ -416,17 +455,22 @@ public class MikuprojectCli {
             }
             MonthlyCalendarSvgArchive archive = reportAdapters.report.svg.exportMonthlyCalendar(model, svgOptions);
             writeBinaryOutput(options, archive.zipBytes, out, " (" + archive.entries.size() + " entries)");
-            writeSimpleDiagnostics(diagnosticsFormat, "report monthly-calendar-svg", options, "monthly_calendar_svg_zip", err);
+            writeSimpleDiagnostics(diagnosticsFormat, "report monthly-calendar-svg", options, "monthly_calendar_svg_zip",
+                    diagnosticsDetail("byte_length", Integer.valueOf(archive.zipBytes.length)), err);
             return 0;
         }
         if ("wbs-markdown".equals(subject)) {
-            writeTextOutput(options.get("out"), reportAdapters.report.wbsMarkdown.export(model, markdownOptions), out);
-            writeSimpleDiagnostics(diagnosticsFormat, "report wbs-markdown", options, "wbs_markdown", err);
+            String markdownText = reportAdapters.report.wbsMarkdown.export(model, markdownOptions) + "\n";
+            writeTextOutput(options.get("out"), markdownText, out);
+            writeSimpleDiagnostics(diagnosticsFormat, "report wbs-markdown", options, "wbs_markdown",
+                    diagnosticsDetail("output_length", Integer.valueOf(markdownText.length())), err);
             return 0;
         }
         if ("mermaid".equals(subject)) {
-            writeTextOutput(options.get("out"), reportAdapters.report.mermaid.exportGantt(model), out);
-            writeSimpleDiagnostics(diagnosticsFormat, "report mermaid", options, "mermaid_gantt", err);
+            String mermaidText = reportAdapters.report.mermaid.exportGantt(model) + "\n";
+            writeTextOutput(options.get("out"), mermaidText, out);
+            writeSimpleDiagnostics(diagnosticsFormat, "report mermaid", options, "mermaid",
+                    diagnosticsDetail("output_length", Integer.valueOf(mermaidText.length())), err);
             return 0;
         }
         return usageError(err, "unknown report command: " + subject, true);
@@ -451,8 +495,51 @@ public class MikuprojectCli {
         Map<String, Object> json = new LinkedHashMap<String, Object>();
         json.put("format", document.format);
         json.put("version", document.version);
-        json.put("sheets", document.sheets);
-        return jsonUtil.stringifyJson(json);
+        json.put("sheets", nodeCompatibleWorkbookSheets(document));
+        return jsonUtil.stringifyPrettyJson(json);
+    }
+
+    private Map<String, Object> nodeCompatibleWorkbookSheets(
+            jp.igapyon.mikuproject.projectworkbookjson.WorkbookJsonDocument document) {
+        Map<String, Object> sheets = new LinkedHashMap<String, Object>();
+        sheets.put("Project", document.sheets.get("Project"));
+        sheets.put("Tasks", nodeCompatibleWorkbookRows(document.sheets.get("Tasks"), NODE_TASK_HEADERS, "Tasks"));
+        sheets.put("Resources", nodeCompatibleWorkbookRows(document.sheets.get("Resources"), NODE_RESOURCE_HEADERS, "Resources"));
+        sheets.put("Assignments", nodeCompatibleWorkbookRows(document.sheets.get("Assignments"), NODE_ASSIGNMENT_HEADERS, "Assignments"));
+        sheets.put("Calendars", nodeCompatibleWorkbookRows(document.sheets.get("Calendars"), NODE_CALENDAR_HEADERS, "Calendars"));
+        sheets.put("NonWorkingDays", nodeCompatibleWorkbookRows(document.sheets.get("NonWorkingDays"), NODE_NON_WORKING_DAYS_HEADERS,
+                "NonWorkingDays"));
+        return sheets;
+    }
+
+    private List<Object> nodeCompatibleWorkbookRows(List<Map<String, Object>> rows, String[] headers, String sheetName) {
+        List<Object> result = new ArrayList<Object>();
+        if (rows == null) {
+            return result;
+        }
+        for (Map<String, Object> source : rows) {
+            Map<String, Object> row = new LinkedHashMap<String, Object>();
+            for (String header : headers) {
+                Object value = source.get(header);
+                if ("Tasks".equals(sheetName) && "Predecessors".equals(header) && value == null) {
+                    value = "";
+                }
+                if (("Tasks".equals(sheetName) && ("WBS".equals(header) || "CalendarUID".equals(header) || "Notes".equals(header)))
+                        && isBlankText(value)) {
+                    value = null;
+                }
+                if ("NonWorkingDays".equals(sheetName) && "Index".equals(header) && value != null) {
+                    value = String.valueOf(Integer.parseInt(String.valueOf(value)) + 1);
+                }
+                row.put(header, value);
+            }
+            result.add(row);
+        }
+        return result;
+    }
+
+    private boolean isBlankText(Object value) {
+        return value == null || String.valueOf(value).trim().length() == 0;
     }
 
     private void writeXml(String path, ProjectModel model) throws IOException {
@@ -512,7 +599,6 @@ public class MikuprojectCli {
             Files.createDirectories(parent);
         }
         Files.write(outputFile, text.getBytes(StandardCharsets.UTF_8));
-        out.println("wrote " + path);
     }
 
     private boolean isValidDiagnosticsFormat(String value) {
@@ -560,58 +646,233 @@ public class MikuprojectCli {
             }
             diagnostics.put("task_count", Integer.valueOf(listSize(phaseDetail.get("tasks"))));
         }
-        err.println(jsonUtil.stringifyJson(diagnostics));
+        err.println(jsonUtil.stringifyPrettyJson(diagnostics));
     }
 
     private void writeSimpleDiagnostics(String diagnosticsFormat, String command, CliOptions options, String outputKind,
             PrintStream err) {
+        writeSimpleDiagnostics(diagnosticsFormat, command, options, outputKind, new LinkedHashMap<String, Object>(), err);
+    }
+
+    private void writeSimpleDiagnostics(String diagnosticsFormat, String command, CliOptions options, String outputKind,
+            Map<String, Object> details, PrintStream err) {
         if (!"json".equals(diagnosticsFormat)) {
             return;
         }
         Map<String, Object> diagnostics = buildCommandDiagnostics(command, options);
-        diagnostics.put("output_kind", outputKind);
-        err.println(jsonUtil.stringifyJson(diagnostics));
+        if (outputKind != null) {
+            diagnostics.put("output_kind", outputKind);
+        }
+        diagnostics.putAll(details);
+        err.println(jsonUtil.stringifyPrettyJson(diagnostics));
+    }
+
+    private Map<String, Object> diagnosticsDetail(String key, Object value) {
+        Map<String, Object> details = new LinkedHashMap<String, Object>();
+        details.put(key, value);
+        return details;
+    }
+
+    private void writeStateSummaryDiagnostics(String diagnosticsFormat, CliOptions options, Map<String, Object> summary,
+            PrintStream err) {
+        if (!"json".equals(diagnosticsFormat)) {
+            return;
+        }
+        Map<String, Object> diagnostics = buildCommandDiagnostics("state summarize", options);
+        Object project = summary.get("project");
+        if (project instanceof Map<?, ?>) {
+            diagnostics.put("project_name", ((Map<?, ?>) project).get("name"));
+        }
+        diagnostics.put("phase_count", summary.get("phase_count"));
+        Object detail = summary.get("summary");
+        if (detail instanceof Map<?, ?>) {
+            diagnostics.put("task_count", ((Map<?, ?>) detail).get("task_count"));
+            diagnostics.put("milestone_count", ((Map<?, ?>) detail).get("milestone_count"));
+        }
+        err.println(jsonUtil.stringifyPrettyJson(diagnostics));
+    }
+
+    private void writeStateDiffDiagnostics(String diagnosticsFormat, CliOptions options, Map<String, Object> summary,
+            PrintStream err) {
+        if (!"json".equals(diagnosticsFormat)) {
+            return;
+        }
+        Map<String, Object> diagnostics = buildCommandDiagnostics("state diff", options);
+        diagnostics.put("io", buildIoDiagnostics(options, "before", "after"));
+        Object warnings = summary.get("warnings");
+        int warningCount = listSize(warnings);
+        diagnostics.put("status", warningCount > 0 ? "warning" : "noop");
+        diagnostics.put("warning_count", Integer.valueOf(warningCount));
+        diagnostics.put("warnings", warnings instanceof List<?> ? warnings : new ArrayList<Object>());
+        diagnostics.put("changes_summary", summary.get("changes_summary"));
+        err.println(jsonUtil.stringifyPrettyJson(diagnostics));
+    }
+
+    private void writePatchValidationOutput(String diagnosticsFormat, CliOptions options,
+            jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonCore.ImportResult result, PrintStream out) {
+        Map<String, Object> report = buildPatchDiagnostics("ai validate-patch", options, result, "state", "in");
+        report.put("diagnostics_format", diagnosticsFormat == null || diagnosticsFormat.length() == 0 ? "text" : diagnosticsFormat);
+        if ("json".equals(diagnosticsFormat)) {
+            out.println(jsonUtil.stringifyPrettyJson(report));
+            return;
+        }
+        Map<?, ?> changesSummary = (Map<?, ?>) report.get("changes_summary");
+        out.println("[mikuproject-cli] validate-patch ok=true status=" + report.get("status") + " warnings="
+                + report.get("warning_count") + " errors=0 changes=" + changesSummary.get("total_changes"));
+        for (PatchWarning warning : result.warnings) {
+            out.println("[warning] " + formatPatchWarning(warning));
+        }
+        Map<?, ?> byScope = (Map<?, ?>) changesSummary.get("by_scope");
+        out.println("[changes] project=" + byScope.get("project") + " tasks=" + byScope.get("tasks") + " resources="
+                + byScope.get("resources") + " assignments=" + byScope.get("assignments") + " calendars="
+                + byScope.get("calendars"));
+    }
+
+    private void writePatchDiagnostics(String diagnosticsFormat, String context, CliOptions options,
+            jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonCore.ImportResult result, PrintStream err) {
+        Map<String, Object> diagnostics = buildPatchDiagnostics(context, options, result, "state", "in");
+        if ("json".equals(diagnosticsFormat)) {
+            err.println(jsonUtil.stringifyPrettyJson(diagnostics));
+            return;
+        }
+        outPatchDiagnosticsText(context, diagnostics, result.warnings, err);
+    }
+
+    private Map<String, Object> buildPatchDiagnostics(String context, CliOptions options,
+            jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonCore.ImportResult result, String... inputNames) {
+        Map<String, Object> changesSummary = summarizePatchChanges(result.changes);
+        List<Object> warnings = patchWarningMaps(result.warnings);
+        String status = warnings.isEmpty() ? (Integer.valueOf(0).equals(changesSummary.get("total_changes")) ? "noop" : "success")
+                : "warning";
+        Map<String, Object> diagnostics = buildCommandDiagnostics(context, options);
+        diagnostics.put("status", status);
+        diagnostics.put("warning_count", Integer.valueOf(warnings.size()));
+        diagnostics.put("warnings", warnings);
+        diagnostics.put("io", buildIoDiagnostics(options, inputNames));
+        diagnostics.put("changes_summary", changesSummary);
+        return diagnostics;
+    }
+
+    private void outPatchDiagnosticsText(String context, Map<String, Object> diagnostics, List<PatchWarning> warnings,
+            PrintStream err) {
+        Map<?, ?> changesSummary = (Map<?, ?>) diagnostics.get("changes_summary");
+        err.println("[mikuproject-cli] " + context + " patch_json status=" + diagnostics.get("status") + " changes="
+                + changesSummary.get("total_changes") + " warnings=" + diagnostics.get("warning_count"));
+        for (PatchWarning warning : warnings) {
+            err.println("[warning] " + formatPatchWarning(warning));
+        }
+    }
+
+    private String formatPatchWarning(PatchWarning warning) {
+        StringBuilder text = new StringBuilder(safe(warning.message));
+        appendPatchWarningDetail(text, "scope", warning.scope);
+        appendPatchWarningDetail(text, "uid", warning.uid);
+        appendPatchWarningDetail(text, "label", warning.label);
+        return text.toString();
+    }
+
+    private void appendPatchWarningDetail(StringBuilder text, String label, String value) {
+        if (value != null && value.length() > 0) {
+            text.append(" ").append(label).append("=").append(value);
+        }
+    }
+
+    private List<Object> patchWarningMaps(List<PatchWarning> warnings) {
+        List<Object> result = new ArrayList<Object>();
+        for (PatchWarning warning : warnings) {
+            Map<String, Object> item = new LinkedHashMap<String, Object>();
+            item.put("message", warning.message);
+            if (warning.scope != null) {
+                item.put("scope", warning.scope);
+            }
+            if (warning.uid != null) {
+                item.put("uid", warning.uid);
+            }
+            if (warning.label != null) {
+                item.put("label", warning.label);
+            }
+            result.add(item);
+        }
+        return result;
+    }
+
+    private Map<String, Object> summarizePatchChanges(List<jp.igapyon.mikuproject.projectpatchjson.ImportChange> changes) {
+        Map<String, Integer> byScope = initializedScopeCounts();
+        Map<String, List<String>> affected = initializedScopeLists();
+        for (jp.igapyon.mikuproject.projectpatchjson.ImportChange change : changes) {
+            if (!byScope.containsKey(change.scope)) {
+                continue;
+            }
+            byScope.put(change.scope, Integer.valueOf(byScope.get(change.scope).intValue() + 1));
+            List<String> items = affected.get(change.scope);
+            if (!items.contains(change.uid)) {
+                items.add(change.uid);
+            }
+        }
+        Map<String, Object> affectedCounts = new LinkedHashMap<String, Object>();
+        for (Map.Entry<String, List<String>> entry : affected.entrySet()) {
+            affectedCounts.put(entry.getKey(), Integer.valueOf(entry.getValue().size()));
+        }
+        Map<String, Object> summary = new LinkedHashMap<String, Object>();
+        summary.put("total_changes", Integer.valueOf(changes.size()));
+        summary.put("by_scope", byScope);
+        summary.put("affected_items", affectedCounts);
+        return summary;
     }
 
     private Map<String, Object> buildCommandDiagnostics(String command, CliOptions options) {
         Map<String, Object> diagnostics = new LinkedHashMap<String, Object>();
         diagnostics.put("ok", Boolean.TRUE);
-        diagnostics.put("diagnostics_version", "1");
+        diagnostics.put("diagnostics_version", Integer.valueOf(1));
         diagnostics.put("command", command);
         diagnostics.put("context", command);
-        diagnostics.put("status", "ok");
+        diagnostics.put("status", "success");
         diagnostics.put("exit_code", Integer.valueOf(0));
         diagnostics.put("warning_count", Integer.valueOf(0));
         diagnostics.put("error_count", Integer.valueOf(0));
-        diagnostics.put("io", buildIoDiagnostics(options));
         diagnostics.put("warnings", new ArrayList<Object>());
         diagnostics.put("errors", new ArrayList<Object>());
+        diagnostics.put("io", buildIoDiagnostics(options));
         return diagnostics;
     }
 
     private Map<String, Object> buildIoDiagnostics(CliOptions options) {
+        return buildIoDiagnostics(options, "in");
+    }
+
+    private Map<String, Object> buildIoDiagnostics(CliOptions options, String... inputNames) {
         Map<String, Object> io = new LinkedHashMap<String, Object>();
         List<Object> inputs = new ArrayList<Object>();
-        Map<String, Object> input = new LinkedHashMap<String, Object>();
-        boolean base64Input = options.has("in-base64");
-        input.put("option", base64Input ? "--in-base64" : "--in");
-        input.put("value", base64Input ? options.get("in-base64") : options.get("in"));
-        if (base64Input) {
-            input.put("source", "-".equals(options.get("in-base64")) ? "stdin_base64" : "file_base64");
-        } else {
-            input.put("source", options.get("in") == null || options.get("in").length() == 0 ? "stdin_implicit"
-                    : "-".equals(options.get("in")) ? "stdin" : "file");
+        for (String inputName : inputNames) {
+            Map<String, Object> input = new LinkedHashMap<String, Object>();
+            boolean base64Input = "in".equals(inputName) && options.has("in-base64");
+            String value = base64Input ? options.get("in-base64") : options.get(inputName);
+            input.put("option", base64Input ? "--in-base64" : "--" + inputName);
+            if (base64Input) {
+                input.put("mode", "-".equals(value) ? "stdin_base64" : "file_base64");
+            } else {
+                input.put("mode", value == null || value.length() == 0 ? "stdin_implicit" : "-".equals(value) ? "stdin" : "file");
+            }
+            if (value != null && value.length() > 0 && !"-".equals(value)) {
+                input.put("path", value);
+            }
+            inputs.add(input);
         }
-        inputs.add(input);
         io.put("inputs", inputs);
         Map<String, Object> output = new LinkedHashMap<String, Object>();
         boolean base64Output = options.has("out-base64");
-        output.put("option", base64Output ? "--out-base64" : "--out");
-        output.put("value", base64Output ? options.get("out-base64") : options.get("out"));
         if (base64Output) {
-            output.put("target", "-".equals(options.get("out-base64")) ? "stdout_base64" : "file_base64");
+            String value = options.get("out-base64");
+            output.put("mode", "-".equals(value) ? "stdout_base64" : "file_base64");
+            if (value != null && !"-".equals(value)) {
+                output.put("path", value);
+            }
         } else {
-            output.put("target", options.get("out") == null || options.get("out").length() == 0 || "-".equals(options.get("out")) ? "stdout" : "file");
+            String value = options.get("out");
+            output.put("mode", value == null || value.length() == 0 || "-".equals(value) ? "stdout" : "file");
+            if (value != null && value.length() > 0 && !"-".equals(value)) {
+                output.put("path", value);
+            }
         }
         io.put("output", output);
         return io;
@@ -738,7 +999,6 @@ public class MikuprojectCli {
             Files.createDirectories(parent);
         }
         Files.write(outputFile, bytes);
-        out.println("wrote " + path + suffix);
     }
 
     private boolean ensureBinaryInputSource(CliOptions options, String commandLabel, PrintStream err) {
@@ -886,7 +1146,7 @@ public class MikuprojectCli {
         Map<String, Object> overview = msProjectXml.exportProjectOverviewView(model);
         Map<String, Object> summary = new LinkedHashMap<String, Object>();
         summary.put("kind", "state_summary");
-        summary.put("project", overview.get("project"));
+        summary.put("project", withoutNullValues(overview.get("project")));
         summary.put("summary", overview.get("summary"));
         List<?> phases = overview.get("phases") instanceof List<?> ? (List<?>) overview.get("phases") : new ArrayList<Object>();
         List<?> dependencies = overview.get("top_level_dependencies") instanceof List<?> ? (List<?>) overview.get("top_level_dependencies") : new ArrayList<Object>();
@@ -914,6 +1174,19 @@ public class MikuprojectCli {
         }
         summary.put("major_milestones", majorMilestones);
         return summary;
+    }
+
+    private Object withoutNullValues(Object value) {
+        if (!(value instanceof Map<?, ?>)) {
+            return value;
+        }
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
+            if (entry.getValue() != null) {
+                result.put(String.valueOf(entry.getKey()), entry.getValue());
+            }
+        }
+        return result;
     }
 
     private Map<String, Object> buildAiProjectionBundle(ProjectModel model) {
@@ -1096,37 +1369,39 @@ public class MikuprojectCli {
 
     private void printUsage(PrintStream out) {
         out.println("mikuproject-java CLI");
-        out.println("usage:");
+        out.println("Usage:");
+        out.println("Shared Node-compatible commands:");
         out.println("  --version");
         out.println("  ai spec");
-        out.println("  ai detect-kind [--in document.json|-] [--diagnostics text|json]");
         out.println("  ai export project-overview [--in workbook.json|-] [--diagnostics text|json] [--out overview.editjson|-]");
-        out.println("  ai export bundle [--in workbook.json|-] [--diagnostics text|json] [--out bundle.editjson|-]");
         out.println("  ai export task-edit [--in workbook.json|-] [--task-uid taskUid] [--select auto|first-task|uid] [--diagnostics text|json] [--out task.editjson|-]");
         out.println("  ai export phase-detail [--in workbook.json|-] [--phase-uid phaseUid] [--select auto|first-phase|uid] [--mode scoped|full] [--root-task-uid rootTaskUid] [--max-depth n] [--diagnostics text|json] [--out phase.editjson|-]");
-        out.println("  ai validate-patch --state workbook.json --in patch.editjson");
+        out.println("  ai export bundle [--in workbook.json|-] [--diagnostics text|json] [--out bundle.editjson|-]");
+        out.println("  ai detect-kind [--in document.json|-] [--diagnostics text|json]");
+        out.println("  ai validate-patch --state workbook.json [--in patch.json] [--diagnostics text|json]");
         out.println("  state from-draft [--in draft.editjson|-] [--out workbook.json|-]");
-        out.println("  state validate --in workbook.json");
-        out.println("  state import --in workbook.json [--out workbook.normalized.json]");
-        out.println("  state merge --state workbook.json --in workbook.patch.json [--out workbook.next.json]");
-        out.println("  state apply-patch --state workbook.json [--in patch.editjson|-] [--out workbook.next.json|-]");
-        out.println("  state summarize [--in workbook.json|-] [--out summary.json|-]");
-        out.println("  state diff --before workbook.before.json --after workbook.after.json [--out diff.json|-]");
-        out.println("  validate xml --in project.xml");
-        out.println("  validate xlsx --in workbook.xlsx");
+        out.println("  state apply-patch --state workbook.json|- [--in patch.json|-] [--diagnostics text|json] [--out workbook.next.json|-]");
+        out.println("  state summarize [--in workbook.json|-] [--diagnostics text|json]");
+        out.println("  state diff --before workbook.before.json --after workbook.after.json [--diagnostics text|json]");
         out.println("  export workbook-json [--in workbook.json|-] [--diagnostics text|json] [--out workbook.json|-]");
         out.println("  export xml [--in workbook.json|-] [--diagnostics text|json] [--out project.xml|-]");
         out.println("  export xlsx [--in workbook.json|-] [--diagnostics text|json] (--out project.xlsx|--out-base64 -)");
         out.println("  import xlsx (--in workbook.xlsx|--in-base64 -) [--diagnostics text|json] [--out workbook.json|-]");
-        out.println("  merge xlsx --state workbook.json --in workbook.xlsx [--out workbook.next.json]");
-        out.println("  report all [--in workbook.json|-] [--diagnostics text|json] (--out report-bundle.zip|--out-base64 -)");
-        out.println("  report dir --in workbook.json --out report.dir");
         out.println("  report wbs-xlsx [--in workbook.json|-] [--diagnostics text|json] (--out report.xlsx|--out-base64 -)");
         out.println("  report daily-svg [--in workbook.json|-] [--diagnostics text|json] [--out report.svg|-]");
         out.println("  report weekly-svg [--in workbook.json|-] [--diagnostics text|json] [--out report.svg|-]");
         out.println("  report monthly-calendar-svg [--in workbook.json|-] [--diagnostics text|json] (--out report.zip|--out-base64 -)");
+        out.println("  report all [--in workbook.json|-] [--diagnostics text|json] (--out report-bundle.zip|--out-base64 -)");
         out.println("  report wbs-markdown [--in workbook.json|-] [--diagnostics text|json] [--out report.md|-]");
         out.println("  report mermaid [--in workbook.json|-] [--diagnostics text|json] [--out report.mmd|-]");
+        out.println("Java extensions:");
+        out.println("  state validate --in workbook.json");
+        out.println("  state import --in workbook.json [--out workbook.normalized.json]");
+        out.println("  state merge --state workbook.json --in workbook.patch.json [--out workbook.next.json]");
+        out.println("  validate xml --in project.xml");
+        out.println("  validate xlsx --in workbook.xlsx");
+        out.println("  merge xlsx --state workbook.json --in workbook.xlsx [--out workbook.next.json]");
+        out.println("  report dir --in workbook.json --out report.dir");
     }
 
     private String safe(String value) {
