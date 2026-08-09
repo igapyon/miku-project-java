@@ -50,7 +50,7 @@ upstream 更新追随で差分を見たときは、まず変更された upstrea
 
 ## 対応表
 
-### `vendor/mikuproject/tests/mikuproject-msproject-xml-roundtrip.test.js`
+### `vendor/miku-project/tests/mikuproject-msproject-xml-roundtrip.test.js`
 
 - `limits default calendar holiday exceptions to the project date range`
   - Java 側対応:
@@ -63,7 +63,7 @@ upstream 更新追随で差分を見たときは、まず変更された upstrea
   - Java 側対応:
     - `MsProjectXmlTest.roundTripsUpstreamMinimalXmlFixture`
   - fixture:
-    - `vendor/mikuproject/testdata/minimal.xml`
+    - `vendor/miku-project/testdata/minimal.xml`
 
 - `round-trips hierarchy through CSV + ParentID export and import`
   - Java 側対応:
@@ -97,16 +97,16 @@ upstream 更新追随で差分を見たときは、まず変更された upstrea
 
 ## fixture 対応
 
-- `vendor/mikuproject/testdata/minimal.xml`
+- `vendor/miku-project/testdata/minimal.xml`
   - Java 側:
     - `MsProjectXmlTest.roundTripsUpstreamMinimalXmlFixture`
 
-- `vendor/mikuproject/testdata/hierarchy.xml`
+- `vendor/miku-project/testdata/hierarchy.xml`
   - Java 側:
     - `MsProjectXmlTest.importsUpstreamHierarchyXmlFixture`
     - `MsProjectXmlTest.roundTripsUpstreamHierarchyXmlFixture`
 
-- `vendor/mikuproject/testdata/dependency.xml`
+- `vendor/miku-project/testdata/dependency.xml`
   - Java 側:
     - `MsProjectXmlTest.importsUpstreamDependencyXmlFixture`
     - `MsProjectXmlTest.roundTripsUpstreamDependencyXmlFixture`

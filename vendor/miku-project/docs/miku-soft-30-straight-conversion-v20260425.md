@@ -987,7 +987,7 @@ For this reason, it is appropriate to describe this porting work not as `work to
 In this repository, the shared principles above are applied to `mikuproject`.
 
 - upstream:
-  - `vendor/mikuproject/src/ts/*.ts`
+  - `vendor/miku-project/src/ts/*.ts`
 - main Java-side responsibilities:
   - `MS Project XML`
   - `ProjectModel`

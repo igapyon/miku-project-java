@@ -2,15 +2,12 @@
 
 ## Contract boundary
 
-The Node CLI at `vendor/mikuproject/scripts/mikuproject-cli.mjs` is the
-fixed-snapshot source of truth for every command listed as shared below. Java
-must preserve the command name, options, defaults, stdin/stdout behavior,
+The Node CLI at `vendor/miku-project/scripts/miku-project-cli.mjs` is the
+`v0.12.0` source of truth for every command listed as shared below. Java must
+preserve the command name, options, defaults, stdin/stdout behavior,
 diagnostics, exit code, and generated artifact contract unless a difference is
-explicitly documented as a Java extension. Current upstream commit `a3385a5`
-renamed that file to `scripts/miku-project-cli.mjs` and made `miku-project` the
-canonical public command while retaining `mikuproject` as its Node alias. The
-Java public CLI follows the canonical name; the vendored parity runner remains
-on its fixed snapshot until a separate subtree upgrade.
+explicitly documented as a Java extension. `miku-project` is the canonical
+public command; Node retains `mikuproject` as an explicit compatibility alias.
 
 The Java `--help` output is intentionally not byte-identical to the Node help:
 it also advertises the Java-only commands below. The shared-command entries and

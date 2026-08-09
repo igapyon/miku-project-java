@@ -41,8 +41,8 @@ This repository keeps `README.md` and `docs/remaining-migration-items.md` aligne
 
 ## Upstream Policy
 
-- Keep the Node.js upstream repository under `vendor/mikuproject` using `git subtree`.
-- Treat `vendor/mikuproject` as read-only upstream reference unless there is an explicit reason to patch it.
+- Keep the Node.js upstream repository under `vendor/miku-project` using `git subtree`.
+- Treat `vendor/miku-project` as read-only upstream reference unless there is an explicit reason to patch it.
 - Use the checksum-fixed `miku-ms-office-core-java` Release JAR under `vendor/miku-ms-office-core-java/` for product-neutral Office ZIP package reading. Keep document semantics in this repository.
 - Keep Java implementation and Java-specific specs outside `vendor/`.
 - Keep `workplace/` out of Git tracking as a local working area; only `workplace/.gitkeep` is tracked to retain the directory.
@@ -59,13 +59,13 @@ This repository keeps `README.md` and `docs/remaining-migration-items.md` aligne
 ## Naming and Compatibility
 
 - The public repository, Maven artifact, runtime artifacts, and CLI product name use `miku-project`.
-- Java package names, the `MikuprojectCli` main class, `vendor/mikuproject/`, and established exchange-format identifiers such as `mikuproject_workbook_json` remain unchanged for compatibility and upstream traceability.
+- The vendored subtree also uses the canonical `vendor/miku-project/` path. Java package names, the `MikuprojectCli` main class, and established exchange-format identifiers such as `mikuproject_workbook_json` remain legacy compatibility and traceability identifiers.
 
 ## Testing Policy
 
 - Use `mvn test` as the primary test entrypoint.
 - Keep Java tests aligned with upstream test intent and upstream fixtures where possible.
-- Use upstream fixture files under `vendor/mikuproject/testdata` when they are useful as comparison material.
+- Use upstream fixture files under `vendor/miku-project/testdata` when they are useful as comparison material.
 
 ## Development Docs
 

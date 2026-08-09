@@ -43,32 +43,32 @@ repo top から入るときの入口は `README.md` の `Development Docs` 節�
 ## 現在の sample coverage
 
 - report bundle / public report API:
-  - `vendor/mikuproject/src/ts/core-api-report.ts`
+  - `vendor/miku-project/src/ts/core-api-report.ts`
 - unified import / external import:
-  - `vendor/mikuproject/src/ts/core-api-import.ts`
+  - `vendor/miku-project/src/ts/core-api-import.ts`
 - XML public entry:
-  - `vendor/mikuproject/src/ts/msproject-xml.ts`
+  - `vendor/miku-project/src/ts/msproject-xml.ts`
 - XML codec:
-  - `vendor/mikuproject/src/ts/msproject-codec.ts`
+  - `vendor/miku-project/src/ts/msproject-codec.ts`
 - model validation:
-  - `vendor/mikuproject/src/ts/msproject-validate.ts`
+  - `vendor/miku-project/src/ts/msproject-validate.ts`
 - AI view export / import:
-  - `vendor/mikuproject/src/ts/msproject-ai-views.ts`
+  - `vendor/miku-project/src/ts/msproject-ai-views.ts`
 - Mermaid export:
-  - `vendor/mikuproject/src/ts/msproject-mermaid.ts`
+  - `vendor/miku-project/src/ts/msproject-mermaid.ts`
 - workbook JSON / workbook wrapper:
-  - `vendor/mikuproject/src/ts/project-workbook-json.ts`
-  - `vendor/mikuproject/src/ts/core-api-workbook.ts`
+  - `vendor/miku-project/src/ts/project-workbook-json.ts`
+  - `vendor/miku-project/src/ts/core-api-workbook.ts`
 - workbook xlsx wrapper:
-  - `vendor/mikuproject/src/ts/core-api-workbook-xlsx.ts`
+  - `vendor/miku-project/src/ts/core-api-workbook-xlsx.ts`
 - project xlsx:
-  - `vendor/mikuproject/src/ts/project-xlsx.ts`
+  - `vendor/miku-project/src/ts/project-xlsx.ts`
 - SVG report:
-  - `vendor/mikuproject/src/ts/wbs-svg.ts`
+  - `vendor/miku-project/src/ts/wbs-svg.ts`
 - Markdown report:
-  - `vendor/mikuproject/src/ts/wbs-markdown.ts`
+  - `vendor/miku-project/src/ts/wbs-markdown.ts`
 - XLSX report:
-  - `vendor/mikuproject/src/ts/wbs-xlsx.ts`
+  - `vendor/miku-project/src/ts/wbs-xlsx.ts`
 
 report / workbook / import / AI view の主要導線は sample 記録がある状態になっている。
 現フェーズでは、新規機能追加ではなく、この sample 記録と既存実装 / test 対応のズレを小さく保つことを優先する。
@@ -99,19 +99,20 @@ diff summary:
   挙動差分:
     public CLI version text uses `miku-project 0.12.0`; the AI JSON spec identifier/text and the built-in sample project name use `miku-project`.
   命名差分:
-    upstream `a3385a5` makes `miku-project` canonical and keeps `mikuproject` as a Node CLI alias. Java keeps `MikuprojectCli`, its package, the vendored path, and exchange-format identifiers such as `mikuproject_workbook_json` as compatibility anchors.
+    upstream `a3385a5` makes `miku-project` canonical and keeps `mikuproject` as a Node CLI alias. The Node `v0.12.0` subtree now uses the canonical vendor, CLI, spec, and CLI-test paths. Java keeps `MikuprojectCli`, its package, and exchange-format identifiers such as `mikuproject_workbook_json` as compatibility anchors.
   未移植差分:
-    The fixed vendored snapshot still uses the old CLI/spec paths. Updating that subtree is a separate compatibility review; portable content changes are reviewed in the following records, while Node/browser UI and release-only changes remain outside Java scope.
+    Node/browser UI and release-only changes remain outside Java scope. Shared CLI and report behavior are checked by the Node parity suite against the updated subtree.
   Java 側独自拡張:
     None.
 
 follow-up:
   - 実施した確認:
     `mvn test -Dtest=MikuprojectCliTest,CoreApiImportTest,MsProjectSamplesTest,ProjectXlsxTest,WbsMarkdownTest,WbsSvgTest,MsProjectMermaidTest`
+    The updated `v0.12.0` subtree also passed `npm --prefix vendor/miku-project test` (25 files / 283 tests) and `MIKUPROJECT_RUN_NODE_PARITY=true mvn test` (132 tests, skip 0).
   - fixture:
     built-in sample project and the vendored AI JSON spec resource
   - 次回の確認観点:
-    When the subtree baseline reaches `a3385a5` or later, replace the old vendored CLI/spec paths and run the Node parity suite against that updated snapshot.
+    When the Node CLI or report implementation changes, update the subtree and run the Node parity suite against the new snapshot.
   - `docs/remaining-migration-items.md` への反映:
     2026-08-09 naming follow-up recorded in `TODO.md`.
 ```
@@ -248,16 +249,16 @@ follow-up:
   - 実施した確認:
     `mvn test -Dtest=MsProjectAiViewsTest,WbsMarkdownTest,WbsSvgTest`
   - fixture:
-    `vendor/mikuproject/testdata/hierarchy.xml` と holiday / date range を使う report fixtures
+    `vendor/miku-project/testdata/hierarchy.xml` と holiday / date range を使う report fixtures
   - 次回の確認観点:
     upstream が UID / date text 以外に locale-sensitive sort を導入した場合は、Java 側でも明示 comparator を追加する。
 ```
 
-## 2026-05-01 `vendor/mikuproject/scripts/mikuproject-cli.mjs`
+## 2026-05-01 `vendor/miku-project/scripts/miku-project-cli.mjs`
 
 ```text
 upstream file:
-  vendor/mikuproject/scripts/mikuproject-cli.mjs
+  vendor/miku-project/scripts/miku-project-cli.mjs
 
 java classes:
   jp.igapyon.mikuproject.cli.MikuprojectCli
@@ -288,11 +289,11 @@ follow-up:
     2026-05-01 時点の binary I/O 追随結果と focused test 通過結果を追加
 ```
 
-## 2026-08-06 `vendor/mikuproject/scripts/mikuproject-cli.mjs`
+## 2026-08-06 `vendor/miku-project/scripts/miku-project-cli.mjs`
 
 ```text
 upstream file:
-  vendor/mikuproject/scripts/mikuproject-cli.mjs
+  vendor/miku-project/scripts/miku-project-cli.mjs
 
 java classes:
   jp.igapyon.mikuproject.cli.MikuprojectCli
@@ -318,18 +319,18 @@ follow-up:
   - 実施した確認:
     `MIKUPROJECT_RUN_NODE_PARITY=true mvn -B test`
   - fixture:
-    `vendor/mikuproject/testdata/workbook-import-sample.json`、`dependency.xml`
+    `vendor/miku-project/testdata/workbook-import-sample.json`、`dependency.xml`
   - 次回の確認観点:
     CLI help、diagnostics schema、workbook JSON projection、report artifact の upstream 変更
 ```
 
 ## 記録サンプル
 
-### 2026-04-21 `vendor/mikuproject/src/ts/msproject-validate.ts`
+### 2026-04-21 `vendor/miku-project/src/ts/msproject-validate.ts`
 
 ```text
 upstream file:
-  vendor/mikuproject/src/ts/msproject-validate.ts
+  vendor/miku-project/src/ts/msproject-validate.ts
 
 java classes:
   jp.igapyon.mikuproject.msprojectxml.MsProjectValidate
@@ -364,11 +365,11 @@ follow-up:
     2026-04-21 時点で validation の upstream follow-up 実例を追加
 ```
 
-### 2026-04-21 `vendor/mikuproject/src/ts/msproject-codec.ts`
+### 2026-04-21 `vendor/miku-project/src/ts/msproject-codec.ts`
 
 ```text
 upstream file:
-  vendor/mikuproject/src/ts/msproject-codec.ts
+  vendor/miku-project/src/ts/msproject-codec.ts
 
 java classes:
   jp.igapyon.mikuproject.msprojectxml.MsProjectCodec
@@ -397,20 +398,20 @@ follow-up:
   - 実施した確認:
     `mvn test -Dtest=MsProjectXmlTest`
   - fixture:
-    `vendor/mikuproject/testdata/minimal.xml`
-    `vendor/mikuproject/testdata/hierarchy.xml`
-    `vendor/mikuproject/testdata/dependency.xml`
+    `vendor/miku-project/testdata/minimal.xml`
+    `vendor/miku-project/testdata/hierarchy.xml`
+    `vendor/miku-project/testdata/dependency.xml`
   - 次回の確認観点:
     upstream 側で XML field coverage、boolean / number parse、predecessor / baseline / timephasedData の codec 契約が変わった場合は再確認する
   - `docs/remaining-migration-items.md` への反映:
     2026-04-21 時点で XML codec の upstream follow-up 実例を追加
 ```
 
-### 2026-04-21 `vendor/mikuproject/src/ts/msproject-xml.ts`
+### 2026-04-21 `vendor/miku-project/src/ts/msproject-xml.ts`
 
 ```text
 upstream file:
-  vendor/mikuproject/src/ts/msproject-xml.ts
+  vendor/miku-project/src/ts/msproject-xml.ts
 
 java classes:
   jp.igapyon.mikuproject.msprojectxml.MsProjectXml
@@ -440,20 +441,20 @@ follow-up:
   - 実施した確認:
     `mvn test -Dtest=MsProjectXmlTest`
   - fixture:
-    `vendor/mikuproject/testdata/minimal.xml`
-    `vendor/mikuproject/testdata/hierarchy.xml`
-    `vendor/mikuproject/testdata/dependency.xml`
+    `vendor/miku-project/testdata/minimal.xml`
+    `vendor/miku-project/testdata/hierarchy.xml`
+    `vendor/miku-project/testdata/dependency.xml`
   - 次回の確認観点:
     upstream 側で public entry の normalize / ensureDefaultProjectCalendar / validate 契約、または round-trip fixture の期待が変わった場合は再確認する
   - `docs/remaining-migration-items.md` への反映:
     2026-04-21 時点で XML public entry の upstream follow-up 実例を追加
 ```
 
-### 2026-04-21 `vendor/mikuproject/src/ts/msproject-mermaid.ts`
+### 2026-04-21 `vendor/miku-project/src/ts/msproject-mermaid.ts`
 
 ```text
 upstream file:
-  vendor/mikuproject/src/ts/msproject-mermaid.ts
+  vendor/miku-project/src/ts/msproject-mermaid.ts
 
 java classes:
   jp.igapyon.mikuproject.msprojectxml.MsProjectMermaid
@@ -477,18 +478,18 @@ follow-up:
   - 実施した確認:
     `mvn test -Dtest=MsProjectMermaidTest`
   - fixture:
-    `vendor/mikuproject/testdata/hierarchy.xml`
+    `vendor/miku-project/testdata/hierarchy.xml`
   - 次回の確認観点:
     upstream 側で native dependency 判定条件、`dependency(note)` / `dependency(pseudo)` comment 文言、label sanitize 規則が変わった場合は再確認する
   - `docs/remaining-migration-items.md` への反映:
     2026-04-21 時点で Mermaid export の upstream follow-up 実例を追加
 ```
 
-### 2026-04-20 `vendor/mikuproject/src/ts/core-api-report.ts`
+### 2026-04-20 `vendor/miku-project/src/ts/core-api-report.ts`
 
 ```text
 upstream file:
-  vendor/mikuproject/src/ts/core-api-report.ts
+  vendor/miku-project/src/ts/core-api-report.ts
 
 java classes:
   jp.igapyon.mikuproject.coreapi.CoreApiReport
@@ -519,19 +520,19 @@ follow-up:
     `mvn test -Dtest=WbsMarkdownTest,WbsSvgTest,WbsXlsxTest,CoreApiPublicTest,MikuprojectCliTest`
     `MIKUPROJECT_RUN_NODE_PARITY=true mvn test -Dtest=MikuprojectNodeParityTest`
   - fixture:
-    `vendor/mikuproject/testdata/dependency.xml`
-    `vendor/mikuproject/testdata/hierarchy.xml`
+    `vendor/miku-project/testdata/dependency.xml`
+    `vendor/miku-project/testdata/hierarchy.xml`
   - 次回の確認観点:
     upstream 側で report bundle entry や option 契約が変わった場合は、Core API と CLI の両方を見直す。特に report dir / bundle / standalone `wbs.xlsx` の同等性が崩れていないかを再確認する
   - `docs/remaining-migration-items.md` への反映:
     2026-04-21 時点で report bundle / report dir / standalone `wbs.xlsx` の同等性回帰を反映
 ```
 
-### 2026-04-20 `vendor/mikuproject/src/ts/core-api-import.ts`
+### 2026-04-20 `vendor/miku-project/src/ts/core-api-import.ts`
 
 ```text
 upstream file:
-  vendor/mikuproject/src/ts/core-api-import.ts
+  vendor/miku-project/src/ts/core-api-import.ts
 
 java classes:
   jp.igapyon.mikuproject.coreapi.CoreApiImport
@@ -565,19 +566,19 @@ follow-up:
   - 実施した確認:
     `mvn test -Dtest=CoreApiImportTest`
   - fixture:
-    `vendor/mikuproject/testdata/dependency.xml`
-    `vendor/mikuproject/testdata/hierarchy.xml`
+    `vendor/miku-project/testdata/dependency.xml`
+    `vendor/miku-project/testdata/hierarchy.xml`
   - 次回の確認観点:
     upstream 側で `source.format` や `mode` 制約が変わった場合は、AI JSON import と external import の両方を見直す
   - `docs/remaining-migration-items.md` への反映:
     2026-04-20 時点では追加反映なし
 ```
 
-### 2026-04-20 `vendor/mikuproject/src/ts/msproject-ai-views.ts`
+### 2026-04-20 `vendor/miku-project/src/ts/msproject-ai-views.ts`
 
 ```text
 upstream file:
-  vendor/mikuproject/src/ts/msproject-ai-views.ts
+  vendor/miku-project/src/ts/msproject-ai-views.ts
 
 java classes:
   jp.igapyon.mikuproject.msprojectxml.MsProjectAiViews
@@ -609,18 +610,18 @@ follow-up:
     `mvn test -Dtest=MsProjectAiViewsTest`
     `mvn test -Dtest=MsProjectAiViewsTest,MikuprojectCliTest`
   - fixture:
-    `vendor/mikuproject/testdata/hierarchy.xml`
+    `vendor/miku-project/testdata/hierarchy.xml`
   - 次回の確認観点:
     upstream 側で Agent Skills 向け `project_draft_view` の生成規約が task 日付必須へ変わる、または zero duration 入力への warning 方針が追加された場合は、unit test と CLI export / runtime docs を見直す
   - `docs/remaining-migration-items.md` への反映:
     2026-04-21 時点で `project_draft_view` の task 日付 fallback 契約確認を TODO / test mapping に反映
 ```
 
-### 2026-04-20 `vendor/mikuproject/src/ts/wbs-svg.ts`
+### 2026-04-20 `vendor/miku-project/src/ts/wbs-svg.ts`
 
 ```text
 upstream file:
-  vendor/mikuproject/src/ts/wbs-svg.ts
+  vendor/miku-project/src/ts/wbs-svg.ts
 
 java classes:
   jp.igapyon.mikuproject.wbssvg.WbsSvg
@@ -657,19 +658,19 @@ follow-up:
     `mvn test -Dtest=WbsSvgTest,CoreApiPublicTest,MikuprojectCliTest`
   - fixture:
     sample project
-    `vendor/mikuproject/testdata/dependency.xml`
-    `vendor/mikuproject/testdata/hierarchy.xml`
+    `vendor/miku-project/testdata/dependency.xml`
+    `vendor/miku-project/testdata/hierarchy.xml`
   - 次回の確認観点:
     upstream 側で label mode、holiday 表示、monthly archive entry 構成が変わった場合は、unit / core API / CLI の 3 層を見直す。特に month span と `YYYY-MM.svg` 命名規則が変わっていないかを再確認する
   - `docs/remaining-migration-items.md` への反映:
     2026-04-21 時点で monthly calendar の 3 系統 coverage と file 名 / 非空確認を反映
 ```
 
-### 2026-04-20 `vendor/mikuproject/src/ts/wbs-markdown.ts`
+### 2026-04-20 `vendor/miku-project/src/ts/wbs-markdown.ts`
 
 ```text
 upstream file:
-  vendor/mikuproject/src/ts/wbs-markdown.ts
+  vendor/miku-project/src/ts/wbs-markdown.ts
 
 java classes:
   jp.igapyon.mikuproject.wbsmarkdown.WbsMarkdown
@@ -701,19 +702,19 @@ follow-up:
   - 実施した確認:
     `mvn test -Dtest=WbsMarkdownTest,MikuprojectCliTest`
   - fixture:
-    `vendor/mikuproject/testdata/hierarchy.xml`
-    `vendor/mikuproject/testdata/dependency.xml`
+    `vendor/miku-project/testdata/hierarchy.xml`
+    `vendor/miku-project/testdata/dependency.xml`
   - 次回の確認観点:
     upstream 側で summary 行、tree 表示、display / progress option が変わった場合は、unit と CLI の両方を見直す
   - `docs/remaining-migration-items.md` への反映:
     2026-04-20 時点では追加反映なし
 ```
 
-### 2026-04-20 `vendor/mikuproject/src/ts/wbs-xlsx.ts`
+### 2026-04-20 `vendor/miku-project/src/ts/wbs-xlsx.ts`
 
 ```text
 upstream file:
-  vendor/mikuproject/src/ts/wbs-xlsx.ts
+  vendor/miku-project/src/ts/wbs-xlsx.ts
 
 java classes:
   jp.igapyon.mikuproject.wbsxlsx.WbsXlsx
@@ -746,19 +747,19 @@ follow-up:
   - 実施した確認:
     `mvn test -Dtest=WbsXlsxTest,CoreApiPublicTest,MikuprojectCliTest`
   - fixture:
-    `vendor/mikuproject/testdata/hierarchy.xml`
-    `vendor/mikuproject/testdata/dependency.xml`
+    `vendor/miku-project/testdata/hierarchy.xml`
+    `vendor/miku-project/testdata/dependency.xml`
   - 次回の確認観点:
     upstream 側で workbook layout、summary 行、display / holiday option が変わった場合は、unit / core API / CLI の 3 層を見直す
   - `docs/remaining-migration-items.md` への反映:
     2026-04-20 時点では追加反映なし
 ```
 
-### 2026-04-20 `vendor/mikuproject/src/ts/project-workbook-json.ts`
+### 2026-04-20 `vendor/miku-project/src/ts/project-workbook-json.ts`
 
 ```text
 upstream file:
-  vendor/mikuproject/src/ts/project-workbook-json.ts
+  vendor/miku-project/src/ts/project-workbook-json.ts
 
 java classes:
   jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJson
@@ -792,18 +793,18 @@ follow-up:
   - 実施した確認:
     `mvn test -Dtest=ProjectWorkbookJsonTest,CoreApiWorkbookTest`
   - fixture:
-    `vendor/mikuproject/testdata/hierarchy.xml`
+    `vendor/miku-project/testdata/hierarchy.xml`
   - 次回の確認観点:
     upstream 側で workbook JSON の schema、editable field、warning 契約が変わった場合は、unit と Core API wrapper の両方を見直す
   - `docs/remaining-migration-items.md` への反映:
     2026-04-20 時点では追加反映なし
 ```
 
-### 2026-04-20 `vendor/mikuproject/src/ts/core-api-workbook.ts`
+### 2026-04-20 `vendor/miku-project/src/ts/core-api-workbook.ts`
 
 ```text
 upstream file:
-  vendor/mikuproject/src/ts/core-api-workbook.ts
+  vendor/miku-project/src/ts/core-api-workbook.ts
 
 java classes:
   jp.igapyon.mikuproject.coreapi.CoreApiWorkbook
@@ -833,19 +834,19 @@ follow-up:
   - 実施した確認:
     `mvn test -Dtest=ProjectWorkbookJsonTest,ProjectXlsxTest,CoreApiWorkbookTest`
   - fixture:
-    `vendor/mikuproject/testdata/hierarchy.xml`
+    `vendor/miku-project/testdata/hierarchy.xml`
   - 次回の確認観点:
     upstream 側で workbook wrapper の公開面や round-trip 契約が変わった場合は、unit と Core API wrapper の両方を見直す
   - `docs/remaining-migration-items.md` への反映:
     2026-04-20 時点では追加反映なし
 ```
 
-### 2026-04-21 `vendor/mikuproject/src/ts/project-patch-json-entities.ts`
+### 2026-04-21 `vendor/miku-project/src/ts/project-patch-json-entities.ts`
 
 ```text
 upstream file:
-  vendor/mikuproject/src/ts/project-patch-json-entities.ts
-  vendor/mikuproject/src/ts/project-patch-json-tasks.ts
+  vendor/miku-project/src/ts/project-patch-json-entities.ts
+  vendor/miku-project/src/ts/project-patch-json-tasks.ts
 
 java classes:
   jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonEntities
@@ -873,19 +874,19 @@ follow-up:
     `mvn test -Dtest=ProjectPatchJsonTest,ProjectPatchJsonTasksTest`
     `mvn test -Dtest=ProjectPatchJsonTest,ProjectPatchJsonTasksTest,CoreApiWorkbookTest,MikuprojectCliTest`
   - fixture:
-    `vendor/mikuproject/testdata/dependency.xml`
-    `vendor/mikuproject/testdata/hierarchy.xml`
+    `vendor/miku-project/testdata/dependency.xml`
+    `vendor/miku-project/testdata/hierarchy.xml`
   - 次回の確認観点:
     upstream 側で delete 系 operation、warning scope / uid / label、changes の field 名が変わった場合は unit と CLI / Core API wrapper の両方を見直す
   - `docs/remaining-migration-items.md` への反映:
     2026-04-21 時点で Project Patch JSON delete 系 warning / changes 補強の確認結果を反映
 ```
 
-### 2026-04-20 `vendor/mikuproject/src/ts/project-xlsx.ts`
+### 2026-04-20 `vendor/miku-project/src/ts/project-xlsx.ts`
 
 ```text
 upstream file:
-  vendor/mikuproject/src/ts/project-xlsx.ts
+  vendor/miku-project/src/ts/project-xlsx.ts
 
 java classes:
   jp.igapyon.mikuproject.projectxlsx.ProjectXlsx
@@ -917,18 +918,18 @@ follow-up:
     `mvn test -Dtest=ProjectWorkbookJsonTest,ProjectXlsxTest,CoreApiWorkbookTest`
     `mvn test`
   - fixture:
-    `vendor/mikuproject/testdata/hierarchy.xml`
+    `vendor/miku-project/testdata/hierarchy.xml`
   - 次回の確認観点:
     upstream 側で workbook sheet 構成、editable field styling、sheet theme、round-trip 契約が変わった場合は、unit と Core API wrapper の両方を見直す。特に OOXML entry 構成、worksheet XML、style / validation / freezePane 契約が崩れていないかを再確認する
   - `docs/remaining-migration-items.md` への反映:
     2026-04-21 時点で report directory byte-level parity、Project XLSX layout 補強、OOXML 回帰テスト根拠を反映
 ```
 
-### 2026-04-20 `vendor/mikuproject/src/ts/core-api-workbook-xlsx.ts`
+### 2026-04-20 `vendor/miku-project/src/ts/core-api-workbook-xlsx.ts`
 
 ```text
 upstream file:
-  vendor/mikuproject/src/ts/core-api-workbook-xlsx.ts
+  vendor/miku-project/src/ts/core-api-workbook-xlsx.ts
 
 java classes:
   jp.igapyon.mikuproject.coreapi.CoreApiWorkbookXlsx
@@ -953,7 +954,7 @@ follow-up:
   - 実施した確認:
     `mvn test -Dtest=ProjectXlsxTest,CoreApiWorkbookTest`
   - fixture:
-    `vendor/mikuproject/testdata/hierarchy.xml`
+    `vendor/miku-project/testdata/hierarchy.xml`
   - 次回の確認観点:
     upstream 側で xlsx wrapper の公開面や encode / decode 契約が変わった場合は、unit と Core API wrapper の両方を見直す
   - `docs/remaining-migration-items.md` への反映:

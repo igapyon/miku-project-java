@@ -14,10 +14,8 @@ import java.util.regex.Pattern;
 import jp.igapyon.mikuproject.model.ProjectModel;
 
 public class CoreApiAiJson {
-    // The fixed vendored snapshot predates the public miku-project rename.
-    // Keep its resource filename internal while returning the current public
-    // specification text and identifier.
-    private static final String VENDORED_AI_JSON_SPEC_RESOURCE = "mikuproject-ai-json-spec.md";
+    // The vendored Node v0.12.0 resource already uses the public name.
+    private static final String VENDORED_AI_JSON_SPEC_RESOURCE = "miku-project-ai-json-spec.md";
     private static final Pattern VERSION_PATTERN = Pattern.compile("^- Version:\\s*`([^`]+)`", Pattern.MULTILINE);
 
     private final CoreApiAiJsonUtil util = new CoreApiAiJsonUtil();
@@ -34,7 +32,7 @@ public class CoreApiAiJson {
             while ((length = in.read(buffer)) != -1) {
                 out.write(buffer, 0, length);
             }
-            return canonicalizePublicProductName(new String(out.toByteArray(), StandardCharsets.UTF_8));
+            return new String(out.toByteArray(), StandardCharsets.UTF_8);
         } catch (IOException ex) {
             throw new IllegalStateException("AI JSON spec text resource を読み込めません: " + VENDORED_AI_JSON_SPEC_RESOURCE, ex);
         }
@@ -87,10 +85,4 @@ public class CoreApiAiJson {
         return "unknown";
     }
 
-    private String canonicalizePublicProductName(String text) {
-        return text
-                .replace("mikuproject AI JSON Prompt / Spec", "miku-project AI JSON Prompt / Spec")
-                .replace("`mikuproject`", "`miku-project`")
-                .replace("mikuproject ai ", "miku-project ai ");
-    }
 }

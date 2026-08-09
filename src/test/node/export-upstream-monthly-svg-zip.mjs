@@ -6,12 +6,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { loadMikuprojectCoreApi } from "../../../vendor/mikuproject/scripts/lib/core-api-loader.mjs";
+import { loadMikuprojectCoreApi } from "../../../vendor/miku-project/scripts/lib/core-api-loader.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "../../..");
-const vendorRoot = path.resolve(repoRoot, "vendor/mikuproject");
+const vendorRoot = path.resolve(repoRoot, "vendor/miku-project");
 
 const [xmlPath, outputZip] = process.argv.slice(2);
 if (!xmlPath || !outputZip) {

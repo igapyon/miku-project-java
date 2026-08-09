@@ -1249,7 +1249,7 @@ public class MsProjectXmlTest {
     }
 
     private String readVendorTestdata(String name) throws IOException {
-        return new String(Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", name)),
+        return new String(Files.readAllBytes(Paths.get("vendor", "miku-project", "testdata", name)),
                 StandardCharsets.UTF_8);
     }
 

@@ -80,9 +80,9 @@
               <outputDirectory>${project.build.outputDirectory}/jp/igapyon/mikuproject/coreapi</outputDirectory>
               <resources>
                 <resource>
-                  <directory>${project.basedir}/vendor/mikuproject/docs</directory>
+                  <directory>${project.basedir}/vendor/miku-project/docs</directory>
                   <includes>
-                    <include>mikuproject-ai-json-spec.md</include>
+                    <include>miku-project-ai-json-spec.md</include>
                   </includes>
                 </resource>
               </resources>

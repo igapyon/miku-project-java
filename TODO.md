@@ -4,7 +4,7 @@
 
 - この `TODO.md` は Java 版 CLI 中心の移植計画を扱う
 - ここでは「今後の判断」や「完了条件」を優先して残し、個々の確認結果や通過ログの正本は `docs/remaining-migration-items.md` に寄せる
-- `vendor/mikuproject/docs/TODO.md` は upstream 機能差分、仕様制約、入出力の未整理事項を扱う
+- `vendor/miku-project/docs/TODO.md` は upstream 機能差分、仕様制約、入出力の未整理事項を扱う
 
 ## 最重要
 
@@ -118,8 +118,14 @@
   - applied: upstream content commits `8c5043f` / `7e5d283` were reviewed. Java's standard ZIP reader already handles DEFLATE, XML sanitizer behavior already matches valid Unicode / invalid XML character handling, and deterministic Java string ordering already matches the upstream ordering change. Added focused regressions for XML whitespace / controls and DEFLATE ZIP input.
   - applied: `miku-ms-office-core-java` `v0.6.0` is vendored as a checksum-fixed Maven repository artifact. `ExcelIoZip.unpackZip` now delegates package reading to `ZipPackage`; product ZIP write stays local to preserve Node report artifact byte parity.
   - applied: Java companion version and public CLI version are aligned to the current Node upstream release `0.12.0`.
-  - compatibility: public names move to `miku-project`; `jp.igapyon.mikuproject`, `MikuprojectCli`, `vendor/mikuproject/`, and established exchange-format identifiers such as `mikuproject_workbook_json` remain unchanged
+  - compatibility: public names move to `miku-project`; `jp.igapyon.mikuproject`, `MikuprojectCli`, and established exchange-format identifiers such as `mikuproject_workbook_json` remain unchanged
   - maintenance uplift: the approved explicit Java build-JDK item is already satisfied by the Release workflow; checksum and staged-artifact controls remain a separate change because this migration renames public artifacts
+
+- 2026-08-09 | miku-project-java | canonical vendor subtree update
+  - applied: upgraded the vendored Node baseline from `0.8.0` / `245deaa` to `0.12.0` / `48ec367`, then applied the focused Node CLI-test rename `f437cbf`
+  - applied: renamed the subtree directory to `vendor/miku-project`; the CLI and its paired test are now `scripts/miku-project-cli.mjs` and `tests/miku-project-cli.test.js`
+  - compatibility: Java package names, `MikuprojectCli`, environment-variable names, and established wire-format IDs remain unchanged; public CLI, artifact, vendored-path, and Node source names use `miku-project`
+  - verification: `npm --prefix vendor/miku-project test` passed (25 files / 283 tests); `MIKUPROJECT_RUN_NODE_PARITY=true mvn test` passed (132 tests, skip 0); `mvn package -DskipTests` produced the JAR and distribution ZIP
 
 - 2026-08-06 | mikuproject-java | Java CLI runtime / repository operation | `workplace/` の除外規則を `workplace/.gitkeep` のみ追跡する規約へ明確化
   - 適用: `.gitignore` を `workplace/*` と `!workplace/.gitkeep` に更新し、README の運用説明も同期
@@ -192,7 +198,7 @@
 
 ## 完了済みメモ
 
-- [x] `vendor/mikuproject` に Node.js upstream を subtree で保持する
+- [x] `vendor/miku-project` に Node.js upstream を subtree で保持する
 - [x] `workplace/` は Git 管理外のローカル作業スペースとして扱う
 - [x] Java package の基底名を `jp.igapyon.mikuproject` にする
 - [x] Java のターゲットを `1.8` にする

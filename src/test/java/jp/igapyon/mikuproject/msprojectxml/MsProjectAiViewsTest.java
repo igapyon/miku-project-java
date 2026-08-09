@@ -270,7 +270,7 @@ public class MsProjectAiViewsTest {
     }
 
     private String readVendorTestdata(String fileName) throws IOException {
-        byte[] bytes = Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", fileName));
+        byte[] bytes = Files.readAllBytes(Paths.get("vendor", "miku-project", "testdata", fileName));
         return new String(bytes, StandardCharsets.UTF_8);
     }
 }

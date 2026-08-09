@@ -1,7 +1,7 @@
 # Third-Party Notices
 
-`vendor/mikuproject` is the Apache-2.0 licensed upstream project vendored as a
-Git subtree. Its license is retained at `vendor/mikuproject/LICENSE`.
+`vendor/miku-project` is the Apache-2.0 licensed upstream project vendored as a
+Git subtree. Its license is retained at `vendor/miku-project/LICENSE`.
 
 `vendor/miku-ms-office-core-java/jp/igapyon/miku-ms-office-core/0.6.0/miku-ms-office-core-0.6.0.jar` is the
 Apache-2.0 licensed Java companion package from

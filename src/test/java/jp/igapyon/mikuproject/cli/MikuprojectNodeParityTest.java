@@ -34,7 +34,7 @@ public class MikuprojectNodeParityTest {
         assumeNodeParityEnabled();
 
         Path xmlFile = Files.createTempFile("mikuproject-node-parity", ".xml");
-        Files.write(xmlFile, Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", "dependency.xml")));
+        Files.write(xmlFile, Files.readAllBytes(Paths.get("vendor", "miku-project", "testdata", "dependency.xml")));
         Path workbookFile = writeWorkbookJson(xmlFile);
         Path javaDir = Files.createTempDirectory("mikuproject-node-parity-java");
         Path nodeDir = Files.createTempDirectory("mikuproject-node-parity-node");
@@ -59,7 +59,7 @@ public class MikuprojectNodeParityTest {
         assumeNodeParityEnabled();
 
         Path xmlFile = Files.createTempFile("mikuproject-node-parity-bundle", ".xml");
-        Files.write(xmlFile, Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", "dependency.xml")));
+        Files.write(xmlFile, Files.readAllBytes(Paths.get("vendor", "miku-project", "testdata", "dependency.xml")));
         Path workbookFile = writeWorkbookJson(xmlFile);
         Path javaZip = Files.createTempFile("mikuproject-node-parity-bundle-java", ".zip");
         Path nodeZip = Files.createTempFile("mikuproject-node-parity-bundle-node", ".zip");
@@ -79,7 +79,7 @@ public class MikuprojectNodeParityTest {
         assumeNodeParityEnabled();
 
         Path xmlFile = Files.createTempFile("mikuproject-node-parity-monthly", ".xml");
-        Files.write(xmlFile, Files.readAllBytes(Paths.get("vendor", "mikuproject", "testdata", "dependency.xml")));
+        Files.write(xmlFile, Files.readAllBytes(Paths.get("vendor", "miku-project", "testdata", "dependency.xml")));
         Path workbookFile = writeWorkbookJson(xmlFile);
         Path javaZip = Files.createTempFile("mikuproject-node-parity-monthly-java", ".zip");
         Path nodeZip = Files.createTempFile("mikuproject-node-parity-monthly-node", ".zip");
@@ -99,18 +99,18 @@ public class MikuprojectNodeParityTest {
         assumeNodeParityEnabled();
 
         assertSharedCliResultEqualsNode(new String[] { "state", "summarize", "--in",
-                "vendor/mikuproject/testdata/workbook-import-sample.json" });
+                "vendor/miku-project/testdata/workbook-import-sample.json" });
         assertSharedCliResultEqualsNode(new String[] { "ai", "export", "bundle", "--in",
-                "vendor/mikuproject/testdata/workbook-import-sample.json", "--diagnostics", "json" });
+                "vendor/miku-project/testdata/workbook-import-sample.json", "--diagnostics", "json" });
         assertSharedCliResultEqualsNode(new String[] { "export", "workbook-json", "--in",
-                "vendor/mikuproject/testdata/workbook-import-sample.json", "--diagnostics", "json" });
+                "vendor/miku-project/testdata/workbook-import-sample.json", "--diagnostics", "json" });
     }
 
     private void assumeNodeParityEnabled() {
         assumeTrue("true".equalsIgnoreCase(System.getenv("MIKUPROJECT_RUN_NODE_PARITY")),
                 "set MIKUPROJECT_RUN_NODE_PARITY=true to run Node upstream parity");
-        assumeTrue(Files.isDirectory(Paths.get("vendor", "mikuproject", "node_modules")),
-                "run npm --prefix vendor/mikuproject ci before Node upstream parity");
+        assumeTrue(Files.isDirectory(Paths.get("vendor", "miku-project", "node_modules")),
+                "run npm --prefix vendor/miku-project ci before Node upstream parity");
     }
 
     private void runNode(String script, String input, String output) throws IOException, InterruptedException {
@@ -132,7 +132,7 @@ public class MikuprojectNodeParityTest {
 
         List<String> command = new ArrayList<String>();
         command.add("node");
-        command.add("vendor/mikuproject/scripts/mikuproject-cli.mjs");
+        command.add("vendor/miku-project/scripts/miku-project-cli.mjs");
         Collections.addAll(command, args);
         Process process = new ProcessBuilder(command).directory(Paths.get(".").toFile()).start();
         byte[] nodeOut = readAll(process.getInputStream());
