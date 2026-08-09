@@ -25,7 +25,7 @@ public class MsProjectMermaidTest {
         String mermaid = xml.exportMermaidGantt(model);
 
         assertTrue(mermaid.contains("gantt"));
-        assertTrue(mermaid.contains("title mikuproject開発"));
+        assertTrue(mermaid.contains("title miku-project開発"));
         assertTrue(mermaid.contains("section 基盤整備"));
     }
 

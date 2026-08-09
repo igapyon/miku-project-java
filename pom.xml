@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>miku-project</artifactId>
-  <version>0.8.4</version>
+  <version>0.12.0</version>
   <packaging>jar</packaging>
 
   <name>miku-project-java</name>
@@ -19,9 +19,22 @@
     <maven.compiler.release></maven.compiler.release>
     <project.build.outputTimestamp>2025-01-01T00:00:00Z</project.build.outputTimestamp>
     <junit.jupiter.version>5.14.1</junit.jupiter.version>
+    <miku.ms.office.core.version>0.6.0</miku.ms.office.core.version>
   </properties>
 
+  <repositories>
+    <repository>
+      <id>miku-ms-office-core-java-vendor</id>
+      <url>file://${project.basedir}/vendor/miku-ms-office-core-java</url>
+    </repository>
+  </repositories>
+
   <dependencies>
+    <dependency>
+      <groupId>jp.igapyon</groupId>
+      <artifactId>miku-ms-office-core</artifactId>
+      <version>${miku.ms.office.core.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
@@ -116,6 +129,14 @@
             <configuration>
               <createDependencyReducedPom>false</createDependencyReducedPom>
               <shadedArtifactAttached>false</shadedArtifactAttached>
+              <filters>
+                <filter>
+                  <artifact>jp.igapyon:miku-ms-office-core</artifact>
+                  <excludes>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                  </excludes>
+                </filter>
+              </filters>
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>jp.igapyon.mikuproject.cli.MikuprojectCli</mainClass>

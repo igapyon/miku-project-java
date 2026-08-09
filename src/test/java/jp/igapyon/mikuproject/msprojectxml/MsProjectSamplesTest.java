@@ -20,7 +20,7 @@ public class MsProjectSamplesTest {
 
         ProjectModel model = samples.buildSampleProjectModel();
 
-        assertEquals("mikuproject開発", model.project.name);
+        assertEquals("miku-project開発", model.project.name);
         assertEquals("2026-03-23T09:00:00", model.project.currentDate);
         assertEquals("2026-03-23T09:00:00", model.project.statusDate);
         assertEquals(Integer.valueOf(480), model.project.minutesPerDay);
@@ -44,9 +44,9 @@ public class MsProjectSamplesTest {
         ProjectModel reparsed = xml.importFromXml(xmlText);
 
         assertNotNull(xmlText);
-        assertTrue(xmlText.contains("<Name>mikuproject開発</Name>"));
+        assertTrue(xmlText.contains("<Name>miku-project開発</Name>"));
         assertTrue(xmlText.contains("<CurrentDate>2026-03-23T09:00:00</CurrentDate>"));
-        assertEquals("mikuproject開発", reparsed.project.name);
+        assertEquals("miku-project開発", reparsed.project.name);
         assertEquals("2026-03-23T09:00:00", reparsed.project.currentDate);
         assertEquals(13, reparsed.tasks.size());
         assertFalse(reparsed.calendars.isEmpty());

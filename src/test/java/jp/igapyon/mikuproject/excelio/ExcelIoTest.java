@@ -9,9 +9,13 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.junit.jupiter.api.Test;
 
@@ -98,6 +102,56 @@ public class ExcelIoTest {
 
         assertEquals("😀 🐇 𠮷野家", imported.sheets.get(0).rows.get(0).cells.get(0).value);
         assertEquals("beforemiddleafter", imported.sheets.get(0).rows.get(0).cells.get(1).value);
+    }
+
+    @Test
+    public void preservesXmlWhitespaceAndRemovesXmlControlCharacters() {
+        XlsxWorkbookCodec codec = new XlsxWorkbookCodec();
+        XlsxWorkbookLike workbook = new XlsxWorkbookLike();
+        XlsxSheetLike sheet = new XlsxSheetLike();
+        sheet.name = "Project";
+        XlsxRowLike row = new XlsxRowLike();
+        XlsxCellLike controlCharacters = new XlsxCellLike();
+        controlCharacters.value = "ok\u0000bad\u0008text";
+        XlsxCellLike xmlWhitespace = new XlsxCellLike();
+        xmlWhitespace.value = "line1\nline2\tend";
+        row.cells.add(controlCharacters);
+        row.cells.add(xmlWhitespace);
+        sheet.rows.add(row);
+        workbook.sheets.add(sheet);
+
+        XlsxWorkbookLike imported = codec.importWorkbook(codec.exportWorkbook(workbook));
+
+        assertEquals("okbadtext", imported.sheets.get(0).rows.get(0).cells.get(0).value);
+        assertEquals("line1\nline2\tend", imported.sheets.get(0).rows.get(0).cells.get(1).value);
+    }
+
+    @Test
+    public void unpacksDeflatedZipEntriesForExternalPackages() throws IOException {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (ZipOutputStream output = new ZipOutputStream(bytes)) {
+            output.putNextEntry(new ZipEntry("[Content_Types].xml"));
+            output.write(ExcelIoUtil.encodeUtf8("<Types></Types>"));
+            output.closeEntry();
+        }
+
+        Map<String, byte[]> entries = new ExcelIoZip().unpackZip(bytes.toByteArray());
+
+        assertEquals("<Types></Types>", ExcelIoUtil.decodeUtf8(entries.get("[Content_Types].xml")));
+    }
+
+    @Test
+    public void normalizesZipEntryPathsThroughMikuMsOfficeCore() throws IOException {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (ZipOutputStream output = new ZipOutputStream(bytes)) {
+            output.putNextEntry(new ZipEntry("xl/./workbook.xml"));
+            output.write(ExcelIoUtil.encodeUtf8("<workbook/>"));
+            output.closeEntry();
+        }
+
+        Map<String, byte[]> entries = new ExcelIoZip().unpackZip(bytes.toByteArray());
+
+        assertEquals("<workbook/>", ExcelIoUtil.decodeUtf8(entries.get("xl/workbook.xml")));
     }
 
     @Test

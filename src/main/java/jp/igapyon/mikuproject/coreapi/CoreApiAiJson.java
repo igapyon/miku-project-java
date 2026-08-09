@@ -14,16 +14,19 @@ import java.util.regex.Pattern;
 import jp.igapyon.mikuproject.model.ProjectModel;
 
 public class CoreApiAiJson {
-    private static final String AI_JSON_SPEC_RESOURCE = "mikuproject-ai-json-spec.md";
+    // The fixed vendored snapshot predates the public miku-project rename.
+    // Keep its resource filename internal while returning the current public
+    // specification text and identifier.
+    private static final String VENDORED_AI_JSON_SPEC_RESOURCE = "mikuproject-ai-json-spec.md";
     private static final Pattern VERSION_PATTERN = Pattern.compile("^- Version:\\s*`([^`]+)`", Pattern.MULTILINE);
 
     private final CoreApiAiJsonUtil util = new CoreApiAiJsonUtil();
     private final CoreApiAiJsonImport imports = new CoreApiAiJsonImport();
 
     public String getAiJsonSpecText() {
-        try (InputStream in = CoreApiAiJson.class.getResourceAsStream(AI_JSON_SPEC_RESOURCE)) {
+        try (InputStream in = CoreApiAiJson.class.getResourceAsStream(VENDORED_AI_JSON_SPEC_RESOURCE)) {
             if (in == null) {
-                throw new IllegalStateException("AI JSON spec text resource が見つかりません: " + AI_JSON_SPEC_RESOURCE);
+                throw new IllegalStateException("AI JSON spec text resource が見つかりません: " + VENDORED_AI_JSON_SPEC_RESOURCE);
             }
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             byte[] buffer = new byte[8192];
@@ -31,15 +34,15 @@ public class CoreApiAiJson {
             while ((length = in.read(buffer)) != -1) {
                 out.write(buffer, 0, length);
             }
-            return new String(out.toByteArray(), StandardCharsets.UTF_8);
+            return canonicalizePublicProductName(new String(out.toByteArray(), StandardCharsets.UTF_8));
         } catch (IOException ex) {
-            throw new IllegalStateException("AI JSON spec text resource を読み込めません: " + AI_JSON_SPEC_RESOURCE, ex);
+            throw new IllegalStateException("AI JSON spec text resource を読み込めません: " + VENDORED_AI_JSON_SPEC_RESOURCE, ex);
         }
     }
 
     public CoreApiAiJsonSpec getAiJsonSpec() {
         CoreApiAiJsonSpec spec = new CoreApiAiJsonSpec();
-        spec.id = "mikuproject-ai-json-spec";
+        spec.id = "miku-project-ai-json-spec";
         spec.text = getAiJsonSpecText();
         spec.version = detectAiJsonSpecVersion(spec.text);
         return spec;
@@ -82,5 +85,12 @@ public class CoreApiAiJson {
             return matcher.group(1);
         }
         return "unknown";
+    }
+
+    private String canonicalizePublicProductName(String text) {
+        return text
+                .replace("mikuproject AI JSON Prompt / Spec", "miku-project AI JSON Prompt / Spec")
+                .replace("`mikuproject`", "`miku-project`")
+                .replace("mikuproject ai ", "miku-project ai ");
     }
 }

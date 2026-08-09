@@ -762,10 +762,10 @@ follow-up:
   - `jp.igapyon.mikuproject.coreapi.CoreApiAiJson`
   - `jp.igapyon.mikuproject.coreapi.CoreApiAiJsonSpec`
 - 責務:
-  - `mikuproject-ai-json-spec` の安定取得
+  - `miku-project-ai-json-spec` の安定取得
   - version 抽出
-  - Java 側では実行時に classpath / JAR 内リソースとして内包された `mikuproject-ai-json-spec.md` を参照
-  - 元 Markdown は Maven の `process-resources` で `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` から `target/classes/jp/igapyon/mikuproject/coreapi/` へコピーする
+  - Java 側では実行時に classpath / JAR 内リソースとして内包された本文を参照し、公開製品名だけを current upstream に合わせる
+  - 固定 vendored snapshot の元 Markdown は `vendor/mikuproject/docs/mikuproject-ai-json-spec.md`。subtree 更新時は upstream の `docs/miku-project-ai-json-spec.md` へ切り替える
 
 ### `vendor/mikuproject/src/ts/core-api-msproject-ai.ts`
 
@@ -929,10 +929,21 @@ follow-up:
 
 - Java 側 class:
   - `jp.igapyon.mikuproject.excelio.ExcelIoZip`
+  - `jp.igapyon.mikumsofficecore.ZipPackage`（`miku-ms-office-core-java`）
 - 責務:
   - zip pack
-  - zip unpack
+  - zip unpack（`miku-ms-office-core-java` による stored / DEFLATE input と OPC path normalize）
   - entry list helper
+
+### `vendor/mikuproject/src/ts/excel-io-util.ts`
+
+- Java 側 class:
+  - `jp.igapyon.mikuproject.excelio.ExcelIoUtil`
+  - `jp.igapyon.mikuproject.excelio.ExcelIoWorksheetBuild`
+- 責務:
+  - UTF-8 text / byte helper
+  - XML text escaping
+  - XML 1.0 valid character sanitizer（supplementary Unicode を保持）
 
 ### `vendor/mikuproject/src/ts/excel-io-normalize.ts`
 
@@ -967,6 +978,7 @@ follow-up:
 - 責務:
   - worksheet XML build
   - columns / rows / cells / mergedRanges の出力
+  - inline text の XML 1.0 sanitizer
 
 ### `vendor/mikuproject/src/ts/excel-io-worksheet-parse.ts`
 
