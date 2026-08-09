@@ -117,6 +117,7 @@
   - applied: upstream naming commit `a3385a5` is followed for the Java public CLI/version text, AI JSON spec ID/text, and built-in sample project name
   - applied: upstream content commits `8c5043f` / `7e5d283` were reviewed. Java's standard ZIP reader already handles DEFLATE, XML sanitizer behavior already matches valid Unicode / invalid XML character handling, and deterministic Java string ordering already matches the upstream ordering change. Added focused regressions for XML whitespace / controls and DEFLATE ZIP input.
   - applied: `miku-ms-office-core-java` `v0.6.0` is vendored as a checksum-fixed Maven repository artifact. `ExcelIoZip.unpackZip` now delegates package reading to `ZipPackage`; product ZIP write stays local to preserve Node report artifact byte parity.
+  - applied: Java companion version and public CLI version are aligned to the current Node upstream release `0.12.0`.
   - compatibility: public names move to `miku-project`; `jp.igapyon.mikuproject`, `MikuprojectCli`, `vendor/mikuproject/`, and established exchange-format identifiers such as `mikuproject_workbook_json` remain unchanged
   - maintenance uplift: the approved explicit Java build-JDK item is already satisfied by the Release workflow; checksum and staged-artifact controls remain a separate change because this migration renames public artifacts
 

@@ -97,7 +97,7 @@ tests:
 
 diff summary:
   挙動差分:
-    public CLI version text, AI JSON spec identifier/text, and the built-in sample project name use `miku-project`.
+    public CLI version text uses `miku-project 0.12.0`; the AI JSON spec identifier/text and the built-in sample project name use `miku-project`.
   命名差分:
     upstream `a3385a5` makes `miku-project` canonical and keeps `mikuproject` as a Node CLI alias. Java keeps `MikuprojectCli`, its package, the vendored path, and exchange-format identifiers such as `mikuproject_workbook_json` as compatibility anchors.
   未移植差分:

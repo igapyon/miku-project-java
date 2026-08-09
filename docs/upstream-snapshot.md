@@ -6,7 +6,7 @@
 - Vendored path: `vendor/mikuproject`
 - Upstream package version in the vendored snapshot: `0.8.0`
 - Vendored upstream commit: `245deaa99d6d2ba970969a9359ce003386da3472`
-- Java companion version: `0.8.4`
+- Java companion version: `0.12.0`
 - Checked: 2026-08-09
 
 `vendor/mikuproject` is a Git subtree and is read-only for ordinary Java
