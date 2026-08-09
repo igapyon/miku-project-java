@@ -1331,7 +1331,7 @@ public class MikuprojectCli {
     }
 
     private void printVersion(PrintStream out) {
-        out.println(runtimeVersion());
+        out.println("miku-project " + runtimeVersion());
     }
 
     private String runtimeVersion() {

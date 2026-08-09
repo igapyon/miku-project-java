@@ -43,6 +43,7 @@ This repository keeps `README.md` and `docs/remaining-migration-items.md` aligne
 
 - Keep the Node.js upstream repository under `vendor/mikuproject` using `git subtree`.
 - Treat `vendor/mikuproject` as read-only upstream reference unless there is an explicit reason to patch it.
+- Use the checksum-fixed `miku-ms-office-core-java` Release JAR under `vendor/miku-ms-office-core-java/` for product-neutral Office ZIP package reading. Keep document semantics in this repository.
 - Keep Java implementation and Java-specific specs outside `vendor/`.
 - Keep `workplace/` out of Git tracking as a local working area; only `workplace/.gitkeep` is tracked to retain the directory.
 
@@ -172,5 +173,5 @@ Supported commands:
 
 Notes:
 
-- `ai spec` returns the Markdown spec embedded in the built classpath / JAR. Runtime execution does not read `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` by relative path.
+- `ai spec` returns the public `miku-project-ai-json-spec` Markdown embedded in the built classpath / JAR. Runtime execution does not read the vendored source by relative path.
 - `export-daily-svg` and report directory daily SVG output place the timeline origin at the earliest task start date in the model, so projects outside the historical sample month still render inside the SVG viewBox. If every task has the same zero-duration date, the output is valid but all bars will naturally stack on the same day.

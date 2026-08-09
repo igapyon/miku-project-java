@@ -83,10 +83,10 @@ Node.js upstream CLI と共有する command では、標準入力 / 標準出�
 
 ## 実行時リソース
 
-`ai spec` は、ビルド済み classpath / JAR 内に含まれる `mikuproject-ai-json-spec.md` を出力する。
-実行時にカレントディレクトリ上の `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` は参照しない。
+`ai spec` は、ビルド済み classpath / JAR 内の公開仕様 `miku-project-ai-json-spec` を出力する。
+実行時にカレントディレクトリ上の vendored source は参照しない。
 
-この Markdown は Maven の `process-resources` で `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` から `target/classes/jp/igapyon/mikuproject/coreapi/mikuproject-ai-json-spec.md` へコピーされる。
+固定 vendored snapshot は旧ファイル名 `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` を持つため、Maven の `process-resources` で classpath にコピーした本文を読み、公開製品名だけを `miku-project` へ正規化する。`mikuproject_workbook_json` などの確立済み交換形式 ID は変更しない。
 そのため、配布済み `miku-project.jar` は任意のカレントディレクトリから `java -jar miku-project.jar ai spec` を実行できる。
 
 ## report SVG の注意

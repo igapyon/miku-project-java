@@ -66,7 +66,7 @@ public class MsProjectSamples {
 
     private ProjectInfo buildProjectInfo() {
         ProjectInfo project = new ProjectInfo();
-        project.name = "mikuproject開発";
+        project.name = "miku-project開発";
         project.startDate = "2026-03-16T09:00:00";
         project.finishDate = "2026-04-01T18:00:00";
         project.scheduleFromStart = true;
