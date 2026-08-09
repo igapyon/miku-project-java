@@ -8,7 +8,7 @@ const FAST_SUITE = [
   "tests/mikuproject-msproject-xml-roundtrip.test.js",
   "tests/mikuproject-project-workbook-json.test.js",
   "tests/mikuproject-project-xlsx.test.js",
-  "tests/mikuproject-cli.test.js",
+  "tests/miku-project-cli.test.js",
   "tests/mikuproject-wbs-markdown.test.js",
   "tests/mikuproject-wbs-xlsx.test.js",
   "tests/mikuproject-single-html.test.js",
@@ -61,7 +61,11 @@ vitestArgs.push(...SUITES[requestedSuite]);
 
 const result = spawnSync(process.execPath, vitestArgs, {
   stdio: "inherit",
-  cwd: process.cwd()
+  cwd: process.cwd(),
+  env: {
+    ...process.env,
+    TZ: "Asia/Tokyo"
+  }
 });
 
 process.exit(result.status ?? 1);

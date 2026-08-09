@@ -33,7 +33,7 @@ async function main() {
   const rawArgv = process.argv.slice(2);
   const { command, options } = parseArgs(rawArgv);
   if (options.version) {
-    process.stdout.write(`mikuproject ${getCliVersion()}\n`);
+    process.stdout.write(`miku-project ${getCliVersion()}\n`);
     return;
   }
   if (options.help || command.length === 0) {
@@ -881,7 +881,7 @@ function buildPatchDiagnosticsText(result, contextLabel) {
     changes_summary: summarizeChanges(result.changes || [])
   });
 
-  lines.push(`[mikuproject-cli] ${contextLabel} patch_json status=${status} changes=${changeCount} warnings=${warningCount}`);
+  lines.push(`[miku-project-cli] ${contextLabel} patch_json status=${status} changes=${changeCount} warnings=${warningCount}`);
   for (const warning of result.warnings || []) {
     lines.push(`[warning] ${formatWarning(warning)}`);
   }
@@ -1289,7 +1289,7 @@ function formatValidationOutput(report, diagnosticsFormat) {
   }
 
   const lines = [
-    `[mikuproject-cli] validate-patch ok=${report.ok ? "true" : "false"} status=${report.status} warnings=${report.warnings.length} errors=${report.errors.length} changes=${report.changes_summary.total_changes}`
+    `[miku-project-cli] validate-patch ok=${report.ok ? "true" : "false"} status=${report.status} warnings=${report.warnings.length} errors=${report.errors.length} changes=${report.changes_summary.total_changes}`
   ];
   for (const error of report.errors) {
     lines.push(`[error] ${error.message}`);
@@ -1362,30 +1362,73 @@ function writeOutput(output, options) {
 
 function writeHelp(stream) {
   stream.write([
+    "miku-project - local MS Project XML bridge for WBS, AI workflows, and reports",
+    "",
     "Usage:",
-    "  mikuproject --version",
-    "  mikuproject ai spec",
-    "  mikuproject ai export project-overview [--in workbook.json|-] [--diagnostics text|json] [--out overview.editjson|-]",
-    "  mikuproject ai export task-edit [--in workbook.json|-] [--task-uid 123] [--select auto|first-task|uid] [--diagnostics text|json] [--out task.editjson|-]",
-    "  mikuproject ai export phase-detail [--in workbook.json|-] [--phase-uid 100] [--select auto|first-phase|uid] [--mode scoped|full] [--root-task-uid 123] [--max-depth 2] [--diagnostics text|json] [--out phase.editjson|-]",
-    "  mikuproject ai export bundle [--in workbook.json|-] [--diagnostics text|json] [--out bundle.editjson|-]",
-    "  mikuproject ai detect-kind [--in document.json|-] [--diagnostics text|json]",
-    "  mikuproject ai validate-patch --state workbook.json [--in patch.json] [--diagnostics text|json]",
-    "  mikuproject state from-draft [--in draft.json|-] [--out workbook.json|-]",
-    "  mikuproject state summarize [--in workbook.json|-] [--diagnostics text|json]",
-    "  mikuproject state diff --before workbook.before.json --after workbook.after.json [--diagnostics text|json]",
-    "  mikuproject state apply-patch --state workbook.json|- [--in patch.json|-] [--diagnostics text|json] [--out workbook.next.json|-]",
-    "  mikuproject import xlsx (--in workbook.xlsx|--in-base64 -) [--diagnostics text|json] [--out workbook.json|-]",
-    "  mikuproject export workbook-json [--in workbook.json|-] [--diagnostics text|json] [--out workbook.json|-]",
-    "  mikuproject export xml [--in workbook.json|-] [--diagnostics text|json] [--out project.xml|-]",
-    "  mikuproject export xlsx [--in workbook.json|-] [--diagnostics text|json] (--out project.xlsx|--out-base64 -)",
-    "  mikuproject report wbs-xlsx [--in workbook.json|-] [--diagnostics text|json] (--out report.xlsx|--out-base64 -)",
-    "  mikuproject report daily-svg [--in workbook.json|-] [--diagnostics text|json] [--out report.svg|-]",
-    "  mikuproject report weekly-svg [--in workbook.json|-] [--diagnostics text|json] [--out report.svg|-]",
-    "  mikuproject report monthly-calendar-svg [--in workbook.json|-] [--diagnostics text|json] (--out report.zip|--out-base64 -)",
-    "  mikuproject report all [--in workbook.json|-] [--diagnostics text|json] (--out report-bundle.zip|--out-base64 -)",
-    "  mikuproject report wbs-markdown [--in workbook.json|-] [--diagnostics text|json] [--out report.md|-]",
-    "  mikuproject report mermaid [--in workbook.json|-] [--diagnostics text|json] [--out report.mmd|-]"
+    "  miku-project --version",
+    "  miku-project ai spec",
+    "  miku-project ai export project-overview [--in workbook.json|-] [--diagnostics text|json] [--out overview.editjson|-]",
+    "  miku-project ai export task-edit [--in workbook.json|-] [--task-uid 123] [--select auto|first-task|uid] [--diagnostics text|json] [--out task.editjson|-]",
+    "  miku-project ai export phase-detail [--in workbook.json|-] [--phase-uid 100] [--select auto|first-phase|uid] [--mode scoped|full] [--root-task-uid 123] [--max-depth 2] [--diagnostics text|json] [--out phase.editjson|-]",
+    "  miku-project ai export bundle [--in workbook.json|-] [--diagnostics text|json] [--out bundle.editjson|-]",
+    "  miku-project ai detect-kind [--in document.json|-] [--diagnostics text|json]",
+    "  miku-project ai validate-patch --state workbook.json [--in patch.json] [--diagnostics text|json]",
+    "  miku-project state from-draft [--in draft.json|-] [--out workbook.json|-]",
+    "  miku-project state summarize [--in workbook.json|-] [--diagnostics text|json]",
+    "  miku-project state diff --before workbook.before.json --after workbook.after.json [--diagnostics text|json]",
+    "  miku-project state apply-patch --state workbook.json|- [--in patch.json|-] [--diagnostics text|json] [--out workbook.next.json|-]",
+    "  miku-project import xlsx (--in workbook.xlsx|--in-base64 -) [--diagnostics text|json] [--out workbook.json|-]",
+    "  miku-project export workbook-json [--in workbook.json|-] [--diagnostics text|json] [--out workbook.json|-]",
+    "  miku-project export xml [--in workbook.json|-] [--diagnostics text|json] [--out project.xml|-]",
+    "  miku-project export xlsx [--in workbook.json|-] [--diagnostics text|json] (--out project.xlsx|--out-base64 -)",
+    "  miku-project report wbs-xlsx [--in workbook.json|-] [--diagnostics text|json] (--out report.xlsx|--out-base64 -)",
+    "  miku-project report daily-svg [--in workbook.json|-] [--diagnostics text|json] [--out report.svg|-]",
+    "  miku-project report weekly-svg [--in workbook.json|-] [--diagnostics text|json] [--out report.svg|-]",
+    "  miku-project report monthly-calendar-svg [--in workbook.json|-] [--diagnostics text|json] (--out report.zip|--out-base64 -)",
+    "  miku-project report all [--in workbook.json|-] [--diagnostics text|json] (--out report-bundle.zip|--out-base64 -)",
+    "  miku-project report wbs-markdown [--in workbook.json|-] [--diagnostics text|json] [--out report.md|-]",
+    "  miku-project report mermaid [--in workbook.json|-] [--diagnostics text|json] [--out report.mmd|-]",
+    "",
+    "Description:",
+    "  Read local MS Project-related data, then inspect, validate, transform, or export it.",
+    "  The CLI is the artifact-based path for AI projection, patch validation, application, and diff workflows.",
+    "",
+    "Default behavior:",
+    "  Text and JSON commands write their primary result to stdout unless --out <path> is supplied.",
+    "  Where the Usage form permits it, --in - or an omitted text input reads UTF-8 text from stdin.",
+    "  --diagnostics defaults to text. Use --diagnostics json for structured diagnostics on stderr.",
+    "",
+    "Inputs:",
+    "  File paths resolve from the current working directory. Use - only where the Usage form allows stdin.",
+    "  XLSX binary stdin requires --in-base64 -. JSON, XML, and text inputs use --in <path> or stdin as shown.",
+    "",
+    "Outputs:",
+    "  JSON, XML, SVG, Markdown, and Mermaid text are written to stdout or --out <path>.",
+    "  XLSX and ZIP artifacts require --out <path>, or --out-base64 - for Base64 on stdout.",
+    "",
+    "Generated artifacts:",
+    "  This CLI writes only the output explicitly named by --out. Existing output files are generated artifacts, not source files.",
+    "  npm run build:cli-bundle regenerates bundle/miku-project.mjs and bundle/miku-project-sources.tgz; do not edit them by hand.",
+    "",
+    "Overwrite behavior:",
+    "  --out <path> overwrites an existing file without an interactive prompt.",
+    "",
+    "Machine-readable output contract:",
+    "  JSON commands emit their primary document on stdout or --out. With --diagnostics json, diagnostics are JSON on stderr.",
+    "  JSON field definitions are documented in docs/miku-project-ai-json-spec.md and docs/import-export-workflows.md.",
+    "",
+    "Diagnostics / warnings:",
+    "  Text diagnostics and usage errors go to stderr. Structured diagnostics include command, I/O, status, and error details.",
+    "",
+    "Exit codes:",
+    "  0 success; 1 processing or validation failure; 2 invalid command usage.",
+    "",
+    "Examples:",
+    "  miku-project --version",
+    "  miku-project ai spec",
+    "",
+    "References:",
+    "  README.md, docs/miku-project-ai-json-spec.md, docs/import-export-workflows.md"
   ].join("\n"));
   stream.write("\n");
 }
@@ -1397,7 +1440,7 @@ main().catch((error) => {
   if (diagnosticsFormat === "json") {
     process.stderr.write(`${JSON.stringify(buildErrorDiagnostics(rawArgv, error, exitCode), null, 2)}\n`);
   } else {
-    process.stderr.write(`[mikuproject-cli] ${error.message}\n`);
+    process.stderr.write(`[miku-project-cli] ${error.message}\n`);
   }
   process.exit(exitCode);
 });

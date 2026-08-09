@@ -28,6 +28,7 @@ export const CORE_API_MODULE_RELATIVE_PATHS = [
   "src/js/markdown-escape.js",
   "src/js/project-workbook-schema.js",
   "src/js/excel-io-util.js",
+  "src/js/ms-office-core.js",
   "src/js/excel-io-zip.js",
   "src/js/excel-io-normalize.js",
   "src/js/excel-io-package-xml.js",
@@ -157,6 +158,7 @@ function clearMikuprojectGlobals() {
   delete globalThis.__mikuprojectMarkdownEscape;
   delete globalThis.__mikuprojectProjectWorkbookSchema;
   delete globalThis.__mikuprojectExcelIoUtil;
+  delete globalThis.__mikuprojectMsOfficeCore;
   delete globalThis.__mikuprojectExcelIoZip;
   delete globalThis.__mikuprojectExcelIoNormalize;
   delete globalThis.__mikuprojectExcelIoPackageXml;
@@ -202,6 +204,7 @@ function clearMikuprojectGlobals() {
   delete globalThis.__mikuprojectWbsXlsx;
   delete globalThis.__mikuprojectNativeSvg;
   delete globalThis.__mikuprojectWbsMarkdown;
+  delete globalThis.__mikuProjectCoreApi;
   delete globalThis.__mikuprojectCoreApi;
 }
 
@@ -254,11 +257,11 @@ export function loadMikuprojectCoreApi(options = {}) {
     .join("\n");
   new Function(combinedCode)();
 
-  const api = globalThis.__mikuprojectCoreApi;
+  const api = globalThis.__mikuProjectCoreApi || globalThis.__mikuprojectCoreApi;
   if (!api) {
     restoreWindowGlobals();
     dom.window.close();
-    throw new Error("Failed to boot __mikuprojectCoreApi");
+    throw new Error("Failed to boot __mikuProjectCoreApi");
   }
 
   return {
