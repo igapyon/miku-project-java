@@ -29,6 +29,10 @@ const excelIoUtilCode = readFileSync(
   path.resolve(__dirname, "../src/js/excel-io-util.js"),
   "utf8"
 );
+const msOfficeCoreCode = readFileSync(
+  path.resolve(__dirname, "../src/js/ms-office-core.js"),
+  "utf8"
+);
 const excelIoCode = readFileSync(
   path.resolve(__dirname, "../src/js/excel-io.js"),
   "utf8"
@@ -377,7 +381,7 @@ const mainCode = readFileSync(
   path.resolve(__dirname, "../src/js/main.js"),
   "utf8"
 );
-const bootPageCode = `${typesCode}\n${markdownEscapeCode}\n${aiJsonUtilCode}\n${mainUtilCode}\n${excelIoUtilCode}\n${excelIoZipCode}\n${excelIoNormalizeCode}\n${excelIoPackageXmlCode}\n${excelIoWorksheetBuildCode}\n${excelIoWorksheetParseCode}\n${excelIoWorkbookParseCode}\n${excelIoWorkbookBuildCode}\n${excelIoStylesBuildCode}\n${excelIoStylesParseCode}\n${excelIoCode}\n${msProjectAiViewsCode}\n${msProjectCalendarCode}\n${msProjectSamplesCode}\n${msProjectCsvCode}\n${msProjectValidateHelpersCode}\n${msProjectValidateCode}\n${msProjectXmlDomCode}\n${msProjectCodecCode}\n${msProjectMermaidCode}\n${msProjectXmlCode}\n${projectWorkbookSchemaCode}\n${projectXlsxImportUtilCode}\n${projectXlsxImportProjectCode}\n${projectXlsxImportCalendarsCode}\n${projectXlsxImportEntitiesCode}\n${projectXlsxImportCode}\n${projectXlsxExportUtilCode}\n${projectXlsxExportProjectCode}\n${projectXlsxExportEntitiesCode}\n${projectXlsxExportCalendarsCode}\n${projectXlsxExportCode}\n${projectXlsxCode}\n${projectWorkbookJsonValidateCode}\n${projectWorkbookJsonImportCode}\n${projectWorkbookJsonExportCode}\n${projectWorkbookJsonCode}\n${projectPatchJsonUtilCode}\n${projectPatchJsonLinksCode}\n${projectPatchJsonTasksCode}\n${projectPatchJsonEntitiesCode}\n${projectPatchJsonUpdatesCode}\n${projectPatchJsonCoreCode}\n${projectPatchJsonCode}\n${wbsDatebandCode}\n${wbsXlsxBaseCode}\n${wbsXlsxTaskmetaCode}\n${wbsXlsxLayoutCode}\n${wbsXlsxSectionsCode}\n${wbsXlsxCellsCode}\n${wbsXlsxExportCode}\n${wbsXlsxPublicCode}\n${wbsXlsxCode}\n${wbsMarkdownCode}\n${wbsSvgZipCode}\n${wbsSvgBarsCode}\n${wbsSvgViewportCode}\n${wbsSvgAxisCode}\n${wbsSvgScaffoldCode}\n${wbsSvgLabelsCode}\n${wbsSvgCalendarCode}\n${wbsSvgTimelineCode}\n${wbsSvgRenderCode}\n${wbsSvgPublicCode}\n${nativeSvgCode}\n${mainIoCode}\n${mainImportCode}\n${mainExportCode}\n${mainInputEventsCode}\n${mainButtonEventsCode}\n${mainEventsCode}\n${mainPreviewCode}\n${mainUiCode}\n${mainSupportCode}\n${mainSamplesCode}\n${mainDownloadsCode}\n${mainOutputActionsCode}\n${mainImportActionsCode}\n${mainXmlActionsCode}\n${mainArchiveActionsCode}\n${mainSaveStateCode}\n${mainTabActionsCode}\n${mainPreviewActionsCode}\n${mainTransformCode}\n${mainFlowCode}\n${mainModelCode}\n${mainRenderCode}\n${mainCode}`;
+const bootPageCode = `${typesCode}\n${markdownEscapeCode}\n${aiJsonUtilCode}\n${mainUtilCode}\n${excelIoUtilCode}\n${msOfficeCoreCode}\n${excelIoZipCode}\n${excelIoNormalizeCode}\n${excelIoPackageXmlCode}\n${excelIoWorksheetBuildCode}\n${excelIoWorksheetParseCode}\n${excelIoWorkbookParseCode}\n${excelIoWorkbookBuildCode}\n${excelIoStylesBuildCode}\n${excelIoStylesParseCode}\n${excelIoCode}\n${msProjectAiViewsCode}\n${msProjectCalendarCode}\n${msProjectSamplesCode}\n${msProjectCsvCode}\n${msProjectValidateHelpersCode}\n${msProjectValidateCode}\n${msProjectXmlDomCode}\n${msProjectCodecCode}\n${msProjectMermaidCode}\n${msProjectXmlCode}\n${projectWorkbookSchemaCode}\n${projectXlsxImportUtilCode}\n${projectXlsxImportProjectCode}\n${projectXlsxImportCalendarsCode}\n${projectXlsxImportEntitiesCode}\n${projectXlsxImportCode}\n${projectXlsxExportUtilCode}\n${projectXlsxExportProjectCode}\n${projectXlsxExportEntitiesCode}\n${projectXlsxExportCalendarsCode}\n${projectXlsxExportCode}\n${projectXlsxCode}\n${projectWorkbookJsonValidateCode}\n${projectWorkbookJsonImportCode}\n${projectWorkbookJsonExportCode}\n${projectWorkbookJsonCode}\n${projectPatchJsonUtilCode}\n${projectPatchJsonLinksCode}\n${projectPatchJsonTasksCode}\n${projectPatchJsonEntitiesCode}\n${projectPatchJsonUpdatesCode}\n${projectPatchJsonCoreCode}\n${projectPatchJsonCode}\n${wbsDatebandCode}\n${wbsXlsxBaseCode}\n${wbsXlsxTaskmetaCode}\n${wbsXlsxLayoutCode}\n${wbsXlsxSectionsCode}\n${wbsXlsxCellsCode}\n${wbsXlsxExportCode}\n${wbsXlsxPublicCode}\n${wbsXlsxCode}\n${wbsMarkdownCode}\n${wbsSvgZipCode}\n${wbsSvgBarsCode}\n${wbsSvgViewportCode}\n${wbsSvgAxisCode}\n${wbsSvgScaffoldCode}\n${wbsSvgLabelsCode}\n${wbsSvgCalendarCode}\n${wbsSvgTimelineCode}\n${wbsSvgRenderCode}\n${wbsSvgPublicCode}\n${nativeSvgCode}\n${mainIoCode}\n${mainImportCode}\n${mainExportCode}\n${mainInputEventsCode}\n${mainButtonEventsCode}\n${mainEventsCode}\n${mainPreviewCode}\n${mainUiCode}\n${mainSupportCode}\n${mainSamplesCode}\n${mainDownloadsCode}\n${mainOutputActionsCode}\n${mainImportActionsCode}\n${mainXmlActionsCode}\n${mainArchiveActionsCode}\n${mainSaveStateCode}\n${mainTabActionsCode}\n${mainPreviewActionsCode}\n${mainTransformCode}\n${mainFlowCode}\n${mainModelCode}\n${mainRenderCode}\n${mainCode}`;
 const bootPageRunner = new Function(bootPageCode);
 function mountFullDom() {
   document.body.innerHTML = `
@@ -410,7 +414,7 @@ function mountFullDom() {
     <input id="phaseDetailRootUidInput" type="text" />
     <input id="phaseDetailMaxDepthInput" type="text" />
     <div id="statusMessage"></div>
-    <div class="md-top-tabs" role="tablist" aria-label="mikuproject sections">
+    <div class="md-top-tabs" role="tablist" aria-label="miku-project sections">
       <button type="button" class="md-top-tab is-active" data-tab="input" role="tab" aria-selected="true" aria-controls="tabPanelInput">
         <span class="md-top-tab-no">1</span>
         <span class="md-top-tab-label">Input</span>
@@ -450,16 +454,16 @@ function mountFullDom() {
         <div class="md-note-accordion__body">
           <section class="md-note-card md-note-card--accent">
             <div class="md-panel-actions">
-              <button id="copyAiPromptBtnPane" type="button">mikuproject 用の生成AIプロンプト</button>
+              <button id="copyAiPromptBtnPane" type="button">miku-project 用の生成AIプロンプト</button>
               <button id="importProjectDraftBtn" type="button">貼り付けた JSON を取り込む</button>
               <lht-help-tooltip label="新規生成AI連携の説明" wide>
                 <p>(i) まず生成AIに 生成AIプロンプト を読み込ませます。</p>
               </lht-help-tooltip>
               <button id="loadProjectDraftSampleBtn" type="button">サンプル</button>
             </div>
-            <template id="aiPromptTemplate"># mikuproject AI JSON Spec
+            <template id="aiPromptTemplate"># miku-project AI JSON Spec
 
-あなたはこれから mikuproject とやりとりします。</template>
+あなたはこれから miku-project とやりとりします。</template>
             <div class="md-form-grid">
               <textarea id="projectDraftImportInput"></textarea>
             </div>
@@ -602,7 +606,7 @@ function mountMinimalDom() {
     </div>
     <section id="tabPanelInput" class="md-tab-panel" data-tab-panel="input">
       <textarea id="xmlInput"></textarea>
-      <template id="aiPromptTemplate"># mikuproject AI JSON Spec</template>
+      <template id="aiPromptTemplate"># miku-project AI JSON Spec</template>
       <textarea id="projectDraftImportInput"></textarea>
       <div id="xmlSaveState"></div>
     </section>
@@ -660,7 +664,7 @@ async function flushAsyncWork() {
 }
 
 
-describe("mikuproject main", () => {
+describe("miku-project main", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
     Object.defineProperty(URL, "createObjectURL", {
@@ -741,7 +745,7 @@ describe("mikuproject main", () => {
     expect(document.getElementById("tabPanelInput").hidden).toBe(true);
     expect(document.getElementById("tabPanelTransform").hidden).toBe(false);
     expect(document.getElementById("tabPanelOutput").hidden).toBe(true);
-    expect(document.getElementById("summaryProjectName").textContent).toBe("mikuproject開発");
+    expect(document.getElementById("summaryProjectName").textContent).toBe("miku-project開発");
     expect(document.getElementById("mermaidOutput").value).toContain("gantt");
     expect(document.getElementById("nativeSvgPreview").innerHTML).toContain("<svg");
 
@@ -756,18 +760,18 @@ describe("mikuproject main", () => {
 
     parseXmlViaHook();
 
-    expect(document.getElementById("summaryProjectName").textContent).toBe("mikuproject開発");
+    expect(document.getElementById("summaryProjectName").textContent).toBe("miku-project開発");
     expect(document.getElementById("summaryTaskCount").textContent).toBe("13");
     expect(document.getElementById("summaryResourceCount").textContent).toBe("1");
     expect(document.getElementById("summaryAssignmentCount").textContent).toBe("2");
     expect(document.getElementById("summaryCalendarCount").textContent).toBe("1");
-    expect(document.getElementById("modelOutput").value).toContain("\"name\": \"mikuproject開発\"");
+    expect(document.getElementById("modelOutput").value).toContain("\"name\": \"miku-project開発\"");
     expect(document.getElementById("modelOutput").value).toContain("\"name\": \"基盤整備\"");
     expect(document.getElementById("modelOutput").value).toContain("\"name\": \"架空検討フェーズ【架空】\"");
     expect(document.getElementById("modelOutput").value).toContain("\"name\": \"Mikuku\"");
     expect(document.getElementById("modelOutput").value).toContain("\"initials\": \"M\"");
     expect(document.getElementById("modelOutput").value).toContain("\"name\": \"Standard\"");
-    expect(document.getElementById("projectPreview").textContent).toContain("mikuproject開発");
+    expect(document.getElementById("projectPreview").textContent).toContain("miku-project開発");
     expect(document.getElementById("projectPreview").textContent).toContain("Calendar=1 (Standard)");
     expect(document.getElementById("taskPreview").textContent).toContain("初期実装（MS Project XML 調査・基軸フォーマット選定・内部モデルの概要確定）");
     expect(document.getElementById("resourcePreview").textContent).toContain("Mikuku");

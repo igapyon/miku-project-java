@@ -21,6 +21,10 @@ const excelIoCode = readFileSync(
   path.resolve(__dirname, "../src/js/excel-io.js"),
   "utf8"
 );
+const msOfficeCoreCode = readFileSync(
+  path.resolve(__dirname, "../src/js/ms-office-core.js"),
+  "utf8"
+);
 const excelIoZipCode = readFileSync(
   path.resolve(__dirname, "../src/js/excel-io-zip.js"),
   "utf8"
@@ -151,7 +155,7 @@ const dependencyXml = readFileSync(
 );
 
 function bootModules() {
-  new Function(`${typesCode}\n${excelIoUtilCode}\n${excelIoZipCode}\n${excelIoNormalizeCode}\n${excelIoPackageXmlCode}\n${excelIoWorksheetBuildCode}\n${excelIoWorksheetParseCode}\n${excelIoWorkbookParseCode}\n${excelIoWorkbookBuildCode}\n${excelIoStylesBuildCode}\n${excelIoStylesParseCode}\n${excelIoCode}\n${msProjectAiViewsCode}\n${msProjectCalendarCode}\n${msProjectSamplesCode}\n${msProjectCsvCode}\n${msProjectValidateHelpersCode}\n${msProjectValidateCode}\n${msProjectXmlDomCode}\n${msProjectCodecCode}\n${msProjectMermaidCode}\n${msProjectXmlCode}\n${projectWorkbookSchemaCode}\n${projectXlsxImportUtilCode}\n${projectXlsxImportProjectCode}\n${projectXlsxImportCalendarsCode}\n${projectXlsxImportEntitiesCode}\n${projectXlsxImportCode}\n${projectXlsxExportUtilCode}\n${projectXlsxExportProjectCode}\n${projectXlsxExportEntitiesCode}\n${projectXlsxExportCalendarsCode}\n${projectXlsxExportCode}\n${projectXlsxCode}`)();
+  new Function(`${typesCode}\n${excelIoUtilCode}\n${msOfficeCoreCode}\n${excelIoZipCode}\n${excelIoNormalizeCode}\n${excelIoPackageXmlCode}\n${excelIoWorksheetBuildCode}\n${excelIoWorksheetParseCode}\n${excelIoWorkbookParseCode}\n${excelIoWorkbookBuildCode}\n${excelIoStylesBuildCode}\n${excelIoStylesParseCode}\n${excelIoCode}\n${msProjectAiViewsCode}\n${msProjectCalendarCode}\n${msProjectSamplesCode}\n${msProjectCsvCode}\n${msProjectValidateHelpersCode}\n${msProjectValidateCode}\n${msProjectXmlDomCode}\n${msProjectCodecCode}\n${msProjectMermaidCode}\n${msProjectXmlCode}\n${projectWorkbookSchemaCode}\n${projectXlsxImportUtilCode}\n${projectXlsxImportProjectCode}\n${projectXlsxImportCalendarsCode}\n${projectXlsxImportEntitiesCode}\n${projectXlsxImportCode}\n${projectXlsxExportUtilCode}\n${projectXlsxExportProjectCode}\n${projectXlsxExportEntitiesCode}\n${projectXlsxExportCalendarsCode}\n${projectXlsxExportCode}\n${projectXlsxCode}`)();
   return {
     excelIo: globalThis.__mikuprojectExcelIo,
     xml: globalThis.__mikuprojectXml,
@@ -174,7 +178,7 @@ const SAMPLE_FIRST_HOLIDAY_NAME = "春分の日";
 const SAMPLE_FIRST_HOLIDAY_DATE = "2026-03-20";
 const EDITABLE_FILL = "#FDE7C7";
 
-describe("mikuproject project xlsx", () => {
+describe("miku-project project xlsx", () => {
   it("converts ProjectModel into workbook sheets", () => {
     const { xml, projectXlsx } = bootModules();
     const model = xml.importMsProjectXml(xml.SAMPLE_XML);
@@ -204,7 +208,7 @@ describe("mikuproject project xlsx", () => {
     expect(workbook.sheets[0].rows[1].cells[1].fillColor).toBe("#BFD7EA");
     expect(workbook.sheets[0].rows[2].cells[0].value).toBe("Field");
     expect(workbook.sheets[0].rows[3].cells[0].value).toBe("Name");
-    expect(workbook.sheets[0].rows[3].cells[1].value).toBe("mikuproject開発");
+    expect(workbook.sheets[0].rows[3].cells[1].value).toBe("miku-project開発");
     expect(workbook.sheets[0].rows[3].cells[1].fillColor).toBe(EDITABLE_FILL);
     expect(workbook.sheets[0].rows[4].cells[1].fillColor).toBe(EDITABLE_FILL);
     expect(workbook.sheets[0].rows[5].cells[1].fillColor).toBe(EDITABLE_FILL);
@@ -624,8 +628,8 @@ describe("mikuproject project xlsx", () => {
     const result = projectXlsx.importProjectWorkbookDetailed(workbook, model);
 
     expect(result.changes).toEqual([
-      { scope: "project", uid: "project", label: "mikuproject開発", field: "Name", before: "mikuproject開発", after: "Renamed Project" },
-      { scope: "project", uid: "project", label: "mikuproject開発", field: "MinutesPerDay", before: 480, after: 420 }
+      { scope: "project", uid: "project", label: "miku-project開発", field: "Name", before: "miku-project開発", after: "Renamed Project" },
+      { scope: "project", uid: "project", label: "miku-project開発", field: "MinutesPerDay", before: 480, after: 420 }
     ]);
   });
 

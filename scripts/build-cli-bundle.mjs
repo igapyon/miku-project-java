@@ -4,8 +4,8 @@ import zlib from "node:zlib";
 
 const ROOT = process.cwd();
 const args = parseArgs(process.argv.slice(2));
-const outFile = path.resolve(args.out || path.join(ROOT, "bundle", "mikuproject.mjs"));
-const sourcesOutFile = path.resolve(args["sources-out"] || path.join(path.dirname(outFile), "mikuproject-sources.tgz"));
+const outFile = path.resolve(args.out || path.join(ROOT, "bundle", "miku-project.mjs"));
+const sourcesOutFile = path.resolve(args["sources-out"] || path.join(path.dirname(outFile), "miku-project-sources.tgz"));
 const CORE_API_MODULE_RELATIVE_PATHS = readCoreApiModuleRelativePaths();
 
 const XMLDOM_MODULE_RELATIVE_PATHS = [
@@ -17,7 +17,7 @@ const XMLDOM_MODULE_RELATIVE_PATHS = [
   "node_modules/@xmldom/xmldom/lib/index.js"
 ];
 
-const SOURCE_ARCHIVE_ROOT = "mikuproject-sources";
+const SOURCE_ARCHIVE_ROOT = "miku-project-sources";
 const SOURCE_ARCHIVE_PATHS = [
   "package.json",
   "package-lock.json",
@@ -28,7 +28,7 @@ const SOURCE_ARCHIVE_PATHS = [
   "CONTRIBUTORS.md",
   "CODE_OF_CONDUCT.md",
   "index-src.html",
-  "mikuproject-src.html",
+  "miku-project-src.html",
   "docs",
   "lht-cmn",
   "scripts",
@@ -71,7 +71,7 @@ function parseArgs(argv) {
 
 function assertRequiredFilesExist() {
   const requiredFiles = [
-    "scripts/mikuproject-cli.mjs",
+    "scripts/miku-project-cli.mjs",
     ...CORE_API_MODULE_RELATIVE_PATHS,
     ...XMLDOM_MODULE_RELATIVE_PATHS
   ];
@@ -89,7 +89,7 @@ function assertRequiredFilesExist() {
 
 function buildSingleMjsRuntime() {
   const packageJson = JSON.parse(readRepoFile("package.json"));
-  const cliSource = stripCliImports(readRepoFile("scripts/mikuproject-cli.mjs"));
+  const cliSource = stripCliImports(readRepoFile("scripts/miku-project-cli.mjs"));
   const coreModuleSources = Object.fromEntries(
     CORE_API_MODULE_RELATIVE_PATHS.map((relativePath) => [relativePath, readRepoFile(relativePath)])
   );
@@ -245,10 +245,10 @@ function requireBundledXmldom(request, parentId = "/node_modules/@xmldom/xmldom/
     .join("\n");
   new Function(combinedCode)();
 
-  const api = globalThis.__mikuprojectCoreApi;
+  const api = globalThis.__mikuProjectCoreApi || globalThis.__mikuprojectCoreApi;
   if (!api) {
     restoreWindowGlobals();
-    throw new Error("Failed to boot __mikuprojectCoreApi");
+    throw new Error("Failed to boot __mikuProjectCoreApi");
   }
 
   return {
@@ -324,13 +324,13 @@ function collectSourceArchiveFiles() {
       files.push(relativePath);
     }
   }
-  return files.sort((a, b) => a.localeCompare(b));
+  return files.sort(compareNormalizedRelativePaths);
 }
 
 function collectFilesRecursive(relativeDir, files) {
   const absoluteDir = path.resolve(ROOT, relativeDir);
   const entries = fs.readdirSync(absoluteDir, { withFileTypes: true })
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => compareUtf16CodeUnits(toPosixPath(a.name), toPosixPath(b.name)));
   for (const entry of entries) {
     const relativePath = path.join(relativeDir, entry.name);
     if (entry.name === ".DS_Store") {
@@ -359,8 +359,8 @@ function buildTarFileEntry(name, data, mode) {
   header[156] = "0".charCodeAt(0);
   writeTarString(header, "ustar", 257, 6);
   writeTarString(header, "00", 263, 2);
-  writeTarString(header, "mikuproject", 265, 32);
-  writeTarString(header, "mikuproject", 297, 32);
+  writeTarString(header, "miku-project", 265, 32);
+  writeTarString(header, "miku-project", 297, 32);
   writeTarString(header, prefixPart, 345, 155);
 
   let checksum = 0;
@@ -417,6 +417,20 @@ function getArchiveMode(absolutePath) {
 
 function toPosixPath(relativePath) {
   return relativePath.split(path.sep).join("/");
+}
+
+function compareNormalizedRelativePaths(left, right) {
+  return compareUtf16CodeUnits(toPosixPath(left), toPosixPath(right));
+}
+
+function compareUtf16CodeUnits(left, right) {
+  if (left < right) {
+    return -1;
+  }
+  if (left > right) {
+    return 1;
+  }
+  return 0;
 }
 
 function readRepoFile(relativePath) {

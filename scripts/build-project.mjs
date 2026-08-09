@@ -1,8 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
+import { transform } from "esbuild";
 import { buildSingleHtmlFromSource } from "./lib/single-html.mjs";
 
 const ROOT = process.cwd();
+const MS_OFFICE_CORE_VENDOR_PATH = "src/vendor/miku-ms-office-core-0.5.0.1.mjs";
 const args = new Set(process.argv.slice(2));
 const buildJs = !args.has("--html-only");
 const buildHtml = !args.has("--js-only");
@@ -14,9 +16,9 @@ const TARGETS = [
     outHtml: "index.html"
   },
   {
-    id: "mikuproject",
-    srcHtml: "mikuproject-src.html",
-    outHtml: "mikuproject.html",
+    id: "miku-project",
+    srcHtml: "miku-project-src.html",
+    outHtml: "miku-project.html",
     tsOrder: [
       "src/ts/types.ts",
       "src/ts/markdown-escape.ts",
@@ -134,6 +136,7 @@ const TARGETS = [
 const tsModule = await loadTypeScriptModule();
 
 if (buildJs) {
+  await generateMsOfficeCoreAdapter();
   for (const target of TARGETS) {
     transpileTypeScript(target, tsModule);
   }
@@ -158,6 +161,24 @@ async function loadTypeScriptModule() {
   } catch (_error) {
     return null;
   }
+}
+
+async function generateMsOfficeCoreAdapter() {
+  const vendorPath = path.resolve(ROOT, MS_OFFICE_CORE_VENDOR_PATH);
+  const outputPath = path.resolve(ROOT, "src/js/ms-office-core.js");
+  const source = fs.readFileSync(vendorPath, "utf8");
+  const result = await transform(source, {
+    format: "iife",
+    globalName: "__mikuMsOfficeCoreRelease",
+    target: "es2019"
+  });
+  const adapter = `${result.code}
+(() => {
+  (globalThis).__mikuprojectMsOfficeCore = __mikuMsOfficeCoreRelease;
+})();
+`;
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+  fs.writeFileSync(outputPath, adapter, "utf8");
 }
 
 function transpileTypeScript(target, tsModule) {
@@ -218,7 +239,7 @@ function formatBuildDate(date) {
 }
 
 function loadAiPromptText() {
-  const promptPath = path.resolve(ROOT, "docs/mikuproject-ai-json-spec.md");
+  const promptPath = path.resolve(ROOT, "docs/miku-project-ai-json-spec.md");
   return fs.readFileSync(promptPath, "utf8");
 }
 

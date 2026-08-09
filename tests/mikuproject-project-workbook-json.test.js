@@ -21,6 +21,10 @@ const excelIoCode = readFileSync(
   path.resolve(__dirname, "../src/js/excel-io.js"),
   "utf8"
 );
+const msOfficeCoreCode = readFileSync(
+  path.resolve(__dirname, "../src/js/ms-office-core.js"),
+  "utf8"
+);
 const excelIoZipCode = readFileSync(
   path.resolve(__dirname, "../src/js/excel-io-zip.js"),
   "utf8"
@@ -167,14 +171,14 @@ const dependencyXml = readFileSync(
 );
 
 function bootModules() {
-  new Function(`${typesCode}\n${excelIoUtilCode}\n${excelIoZipCode}\n${excelIoNormalizeCode}\n${excelIoPackageXmlCode}\n${excelIoWorksheetBuildCode}\n${excelIoWorksheetParseCode}\n${excelIoWorkbookParseCode}\n${excelIoWorkbookBuildCode}\n${excelIoStylesBuildCode}\n${excelIoStylesParseCode}\n${excelIoCode}\n${msProjectAiViewsCode}\n${msProjectCalendarCode}\n${msProjectSamplesCode}\n${msProjectCsvCode}\n${msProjectValidateHelpersCode}\n${msProjectValidateCode}\n${msProjectXmlDomCode}\n${msProjectCodecCode}\n${msProjectMermaidCode}\n${msProjectXmlCode}\n${projectWorkbookSchemaCode}\n${projectXlsxImportUtilCode}\n${projectXlsxImportProjectCode}\n${projectXlsxImportCalendarsCode}\n${projectXlsxImportEntitiesCode}\n${projectXlsxImportCode}\n${projectXlsxExportUtilCode}\n${projectXlsxExportProjectCode}\n${projectXlsxExportEntitiesCode}\n${projectXlsxExportCalendarsCode}\n${projectXlsxExportCode}\n${projectXlsxCode}\n${projectWorkbookJsonValidateCode}\n${projectWorkbookJsonImportCode}\n${projectWorkbookJsonExportCode}\n${projectWorkbookJsonCode}`)();
+  new Function(`${typesCode}\n${excelIoUtilCode}\n${msOfficeCoreCode}\n${excelIoZipCode}\n${excelIoNormalizeCode}\n${excelIoPackageXmlCode}\n${excelIoWorksheetBuildCode}\n${excelIoWorksheetParseCode}\n${excelIoWorkbookParseCode}\n${excelIoWorkbookBuildCode}\n${excelIoStylesBuildCode}\n${excelIoStylesParseCode}\n${excelIoCode}\n${msProjectAiViewsCode}\n${msProjectCalendarCode}\n${msProjectSamplesCode}\n${msProjectCsvCode}\n${msProjectValidateHelpersCode}\n${msProjectValidateCode}\n${msProjectXmlDomCode}\n${msProjectCodecCode}\n${msProjectMermaidCode}\n${msProjectXmlCode}\n${projectWorkbookSchemaCode}\n${projectXlsxImportUtilCode}\n${projectXlsxImportProjectCode}\n${projectXlsxImportCalendarsCode}\n${projectXlsxImportEntitiesCode}\n${projectXlsxImportCode}\n${projectXlsxExportUtilCode}\n${projectXlsxExportProjectCode}\n${projectXlsxExportEntitiesCode}\n${projectXlsxExportCalendarsCode}\n${projectXlsxExportCode}\n${projectXlsxCode}\n${projectWorkbookJsonValidateCode}\n${projectWorkbookJsonImportCode}\n${projectWorkbookJsonExportCode}\n${projectWorkbookJsonCode}`)();
   return {
     xml: globalThis.__mikuprojectXml,
     projectWorkbookJson: globalThis.__mikuprojectProjectWorkbookJson
   };
 }
 
-describe("mikuproject project workbook json", () => {
+describe("miku-project project workbook json", () => {
   it("exports workbook json with fixed format and sheets", () => {
     const { xml, projectWorkbookJson } = bootModules();
     const model = xml.importMsProjectXml(xml.SAMPLE_XML);
@@ -191,7 +195,7 @@ describe("mikuproject project workbook json", () => {
       "Calendars",
       "NonWorkingDays"
     ]);
-    expect(documentLike.sheets.Project[0]).toEqual({ Field: "Name", Value: "mikuproject開発" });
+    expect(documentLike.sheets.Project[0]).toEqual({ Field: "Name", Value: "miku-project開発" });
     expect(documentLike.sheets.Tasks[0].UID).toBe("1");
     expect(documentLike.sheets.Tasks[0].Name).toBe("基盤整備");
     expect(documentLike.sheets.Resources[0].Name).toBe("Mikuku");
