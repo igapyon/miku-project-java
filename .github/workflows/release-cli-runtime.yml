@@ -55,10 +55,10 @@ jobs:
 
           rm -rf release-assets
           mkdir release-assets
-          cp target/mikuproject.jar "release-assets/mikuproject-${VERSION}.jar"
-          cp target/mikuproject-sources.jar "release-assets/mikuproject-sources-${VERSION}.jar"
-          test -s "release-assets/mikuproject-${VERSION}.jar"
-          test -s "release-assets/mikuproject-sources-${VERSION}.jar"
+          cp target/miku-project.jar "release-assets/miku-project-${VERSION}.jar"
+          cp target/miku-project-sources.jar "release-assets/miku-project-sources-${VERSION}.jar"
+          test -s "release-assets/miku-project-${VERSION}.jar"
+          test -s "release-assets/miku-project-sources-${VERSION}.jar"
 
       - name: Set up Java 8 for runtime verification
         uses: actions/setup-java@v4
@@ -67,7 +67,7 @@ jobs:
           java-version: "8"
 
       - name: Verify CLI runtime asset
-        run: java -jar release-assets/mikuproject-[0-9]*.jar --version
+        run: java -jar release-assets/miku-project-[0-9]*.jar --version
 
       - name: Upload CLI runtime to GitHub Release
         uses: softprops/action-gh-release@v2

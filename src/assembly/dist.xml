@@ -8,14 +8,14 @@
   <includeBaseDirectory>false</includeBaseDirectory>
   <files>
     <file>
-      <source>${project.build.directory}/mikuproject.jar</source>
+      <source>${project.build.directory}/miku-project.jar</source>
       <outputDirectory>/</outputDirectory>
-      <destName>mikuproject.jar</destName>
+      <destName>miku-project.jar</destName>
     </file>
     <file>
-      <source>${project.build.directory}/mikuproject-sources.jar</source>
+      <source>${project.build.directory}/miku-project-sources.jar</source>
       <outputDirectory>/</outputDirectory>
-      <destName>mikuproject-sources.jar</destName>
+      <destName>miku-project-sources.jar</destName>
     </file>
     <file>
       <source>${project.basedir}/README.md</source>

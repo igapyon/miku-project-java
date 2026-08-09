@@ -2,7 +2,7 @@
 
 ## 目的
 
-この文書は、Java 版 `mikuproject` の STEP1 において、`ProjectModel` の初期移植としてどこから実装するかを整理した設計メモである。
+この文書は、Java 版 `miku-project` の STEP1 において、`ProjectModel` の初期移植としてどこから実装するかを整理した設計メモである。
 
 前提として、Java 版でも最終的には Node.js 版 upstream の `ProjectModel` 思想を引き継ぐ。
 この文書は対象を削るためのものではなく、実装順序を明確にするためのものである。

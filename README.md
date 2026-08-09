@@ -1,10 +1,10 @@
-# mikuproject-java
+# miku-project-java
 
-Java port workspace for `mikuproject`.
+Java port workspace for `miku-project`.
 
 ## Purpose
 
-This repository is a Java 1.8 based port of `mikuproject`.
+This repository is a Java 1.8 based port of `miku-project`.
 
 The Java port does not try to redesign the upstream project into a Java-first architecture at the initial stage.
 The primary goal is to preserve the upstream Node.js structure, naming, and intent closely enough that upstream changes remain traceable.
@@ -54,6 +54,11 @@ This repository keeps `README.md` and `docs/remaining-migration-items.md` aligne
 - Do not over-optimize for modern Java style when it harms migration traceability.
 - When upstream uses scratch logic, prefer mirroring that logic first.
 - When upstream uses external libraries, evaluate corresponding Java libraries case by case.
+
+## Naming and Compatibility
+
+- The public repository, Maven artifact, runtime artifacts, and CLI product name use `miku-project`.
+- Java package names, the `MikuprojectCli` main class, `vendor/mikuproject/`, and established exchange-format identifiers such as `mikuproject_workbook_json` remain unchanged for compatibility and upstream traceability.
 
 ## Testing Policy
 
@@ -108,21 +113,21 @@ The Java port now includes a practical CLI entrypoint covering the main Java run
 
 The distributable runtime artifact is a single fat jar produced by `mvn package`.
 
-- `target/mikuproject.jar`
+- `target/miku-project.jar`
 
 `mvn package` also produces a sources jar and distribution archive.
 
-- `target/mikuproject-sources.jar`
-- `target/mikuproject-dist.zip`
+- `target/miku-project-sources.jar`
+- `target/miku-project-dist.zip`
 
 The expected execution path is:
 
-- `java -jar target/mikuproject.jar ...`
+- `java -jar target/miku-project.jar ...`
 
 The distribution zip contains:
 
-- `mikuproject.jar`
-- `mikuproject-sources.jar`
+- `miku-project.jar`
+- `miku-project-sources.jar`
 - `README.md`
 - `LICENSE`
 - `docs/runtime-java-cli.md`

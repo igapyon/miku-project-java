@@ -28,7 +28,7 @@
   - `mikuproject-skills` 紹介記事や upstream sample では `planned_start` / `planned_finish` を含む例があるが、現時点で task ごとの日付を必須とする契約までは固定されていない
   - upstream `msproject-ai-views.ts` と Java `MsProjectAiViews` はどちらも task 日付未指定を許容し、`project.planned_start` または `project.planned_finish` を起点に import する
   - そのため 2泊3日など期間を持つ計画でも Agent Skills 側が task 日付を落とすと、全 task が同一日時 / zero duration に寄り得る。Java 側で自動補完する話とは分けて、warning 方針の論点として残す
-- [x] mikuproject-java 側で zero duration task が大量に来たときの warning 方針を検討する
+- [x] miku-project-java 側で zero duration task が大量に来たときの warning 方針を検討する
   - 方針は import 導線ごとの個別 warning ではなく、共通 `ProjectModel` validation warning として扱う
   - 現時点では `validate-xml` / `validateProjectModel(...)` で、placeholder / summary / milestone を除く複数 task が同一 `start` / `finish` かつ zero duration に潰れている場合に warning を返す
   - workbook JSON / AI JSON / XML import 自体の戻り warning へ混ぜるのは見送り、既存の validation 導線と runtime docs に揃える
@@ -110,6 +110,12 @@
     - 2026-04-21 時点で `ExcelIoTest` が OOXML zip entry / worksheet XML / data validation / freeze pane / formula を確認し、`ProjectXlsxTest` が主要セル style、data validation、sheet theme、Settings section / merged range を確認済み
 
 ### メンテナンス記録
+
+- 2026-08-09 | miku-project-java | canonical naming migration (#37)
+  - baseline: default branch `devel`, target HEAD `482bf175515daed233b4be3254515677a360e473`, latest Release `v0.8.3.4`, vendored upstream `245deaa99d6d2ba970969a9359ce003386da3472`
+  - applied: GitHub repository rename was performed by a human; local `origin` and `mikuproject` remotes now use `igapyon/miku-project-java` and `igapyon/miku-project`
+  - compatibility: public names move to `miku-project`; `jp.igapyon.mikuproject`, `MikuprojectCli`, `vendor/mikuproject/`, and established exchange-format identifiers remain unchanged
+  - maintenance uplift: the approved explicit Java build-JDK item is already satisfied by the Release workflow; checksum and staged-artifact controls remain a separate change because this migration renames public artifacts
 
 - 2026-08-06 | mikuproject-java | Java CLI runtime / repository operation | `workplace/` の除外規則を `workplace/.gitkeep` のみ追跡する規約へ明確化
   - 適用: `.gitignore` を `workplace/*` と `!workplace/.gitkeep` に更新し、README の運用説明も同期

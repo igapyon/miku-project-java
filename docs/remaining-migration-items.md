@@ -358,6 +358,6 @@ Java 版では、Node.js 版 upstream の仕様を次の 2 つに分けて扱う
 - Java CLI は Agent Skills からの利用を優先し、正規契約では command group / named option を使う
 - 旧 CLI にあった batch command 群は正規契約から外し、README / help では扱わない
 - 現フェーズでは、batch command を増やすことは優先しない
-- Java CLI の正式配布成果物は `mvn package` で生成される単一 fat jar とし、想定パスは `target/mikuproject.jar` とする
-- `mvn package` で追跡・レビュー用の `target/mikuproject-sources.jar` も生成する
-- 利用側向けの配布パッケージとして `target/mikuproject-dist.zip` を生成し、`mikuproject.jar`, `mikuproject-sources.jar`, `README.md`, `LICENSE`, `docs/runtime-java-cli.md` を同梱する
+- Java CLI の正式配布成果物は `mvn package` で生成される単一 fat jar とし、想定パスは `target/miku-project.jar` とする
+- `mvn package` で追跡・レビュー用の `target/miku-project-sources.jar` も生成する
+- 利用側向けの配布パッケージとして `target/miku-project-dist.zip` を生成し、`miku-project.jar`, `miku-project-sources.jar`, `README.md`, `LICENSE`, `docs/runtime-java-cli.md` を同梱する

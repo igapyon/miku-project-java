@@ -1,7 +1,7 @@
 # miku-soft Reference
 
-`mikuproject-java` is a layer 20 Java application and a layer 30 Java
-straight-conversion companion of [`mikuproject`](https://github.com/igapyon/mikuproject).
+`miku-project-java` is a layer 20 Java application and a layer 30 Java
+straight-conversion companion of [`miku-project`](https://github.com/igapyon/miku-project).
 
 ## Shared reference
 
