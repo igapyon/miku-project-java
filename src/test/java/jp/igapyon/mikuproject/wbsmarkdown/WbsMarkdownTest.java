@@ -29,7 +29,7 @@ public class WbsMarkdownTest {
         assertTrue(markdown.contains("# サマリ"));
         assertTrue(markdown.indexOf("# WBS ツリー") < markdown.indexOf("# WBS テーブル"));
         assertTrue(markdown.indexOf("# WBS テーブル") < markdown.indexOf("# サマリ"));
-        assertTrue(markdown.contains("| プロジェクト名 | mikuproject開発 |"));
+        assertTrue(markdown.contains("| プロジェクト名 | miku-project開発 |"));
         assertTrue(markdown.contains("```text"));
         assertTrue(markdown.contains("1 基盤整備 (3/16 - 3/17): 100%"));
         assertTrue(markdown.contains("┗　1.1 着手 (3/16): 100%"));

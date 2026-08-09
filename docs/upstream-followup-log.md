@@ -73,6 +73,186 @@ repo top から入るときの入口は `README.md` の `Development Docs` 節�
 report / workbook / import / AI view の主要導線は sample 記録がある状態になっている。
 現フェーズでは、新規機能追加ではなく、この sample 記録と既存実装 / test 対応のズレを小さく保つことを優先する。
 
+## 2026-08-09 `scripts/miku-project-cli.mjs` / `docs/miku-project-ai-json-spec.md`
+
+```text
+upstream files:
+  scripts/miku-project-cli.mjs
+  docs/miku-project-ai-json-spec.md
+  src/ts/msproject-samples.ts
+
+java classes:
+  jp.igapyon.mikuproject.cli.MikuprojectCli
+  jp.igapyon.mikuproject.coreapi.CoreApiAiJson
+  jp.igapyon.mikuproject.msprojectxml.MsProjectSamples
+
+tests:
+  MikuprojectCliTest.printsVersion
+  CoreApiImportTest.importsAiJsonTextAndExposesAiJsonSpec
+  MsProjectSamplesTest.buildSampleProjectModelCreatesExpectedSample
+  ProjectXlsxTest.convertsProjectModelIntoWorkbookSheets
+  WbsMarkdownTest.exportsOneMarkdownDocumentWithTreeFirstAndTableAfterIt
+  WbsSvgTest.exportsDailyAndWeeklySvg
+  MsProjectMermaidTest.exportsMermaidFromSampleProject
+
+diff summary:
+  挙動差分:
+    public CLI version text uses `miku-project 0.12.0`; the AI JSON spec identifier/text and the built-in sample project name use `miku-project`.
+  命名差分:
+    upstream `a3385a5` makes `miku-project` canonical and keeps `mikuproject` as a Node CLI alias. Java keeps `MikuprojectCli`, its package, the vendored path, and exchange-format identifiers such as `mikuproject_workbook_json` as compatibility anchors.
+  未移植差分:
+    The fixed vendored snapshot still uses the old CLI/spec paths. Updating that subtree is a separate compatibility review; portable content changes are reviewed in the following records, while Node/browser UI and release-only changes remain outside Java scope.
+  Java 側独自拡張:
+    None.
+
+follow-up:
+  - 実施した確認:
+    `mvn test -Dtest=MikuprojectCliTest,CoreApiImportTest,MsProjectSamplesTest,ProjectXlsxTest,WbsMarkdownTest,WbsSvgTest,MsProjectMermaidTest`
+  - fixture:
+    built-in sample project and the vendored AI JSON spec resource
+  - 次回の確認観点:
+    When the subtree baseline reaches `a3385a5` or later, replace the old vendored CLI/spec paths and run the Node parity suite against that updated snapshot.
+  - `docs/remaining-migration-items.md` への反映:
+    2026-08-09 naming follow-up recorded in `TODO.md`.
+```
+
+## 2026-08-09 `src/ts/excel-io-zip.ts`
+
+```text
+upstream file:
+  src/ts/excel-io-zip.ts
+
+java classes:
+  jp.igapyon.mikuproject.excelio.ExcelIoZip
+  jp.igapyon.mikuproject.excelio.XlsxWorkbookCodec
+
+tests:
+  ExcelIoTest.unpacksDeflatedZipEntriesForExternalPackages
+
+diff summary:
+  挙動差分:
+    upstream `8c5043f` は browser/Node の非同期 ZIP 読み込みを miku-ms-office-core へ共通化した。Java は標準の `ZipInputStream` により stored / DEFLATE の両方を同期的に読めるため、同じ XLSX package input 契約を追加ライブラリなしで満たす。DEFLATE entry の回帰を追加した。
+  命名差分:
+    Java は `ExcelIoZip` / `XlsxWorkbookCodec` に責務を分け、miku-ms-office-core module 名を公開しない。
+  未移植差分:
+    browser の asynchronous API と shared module packaging は Java CLI の対象外である。
+  Java 側独自拡張:
+    deterministic stored ZIP 出力は既存の Java artifact parity 契約として維持する。
+
+follow-up:
+  - 実施した確認:
+    `mvn test -Dtest=ExcelIoTest`
+  - fixture:
+    JDK `ZipOutputStream` が生成する DEFLATE entry
+  - 次回の確認観点:
+    upstream が ZIP64、暗号化、または追加の compression method を入力契約に含めた場合は Java standard library の対応範囲を再確認する。
+```
+
+## 2026-08-09 `miku-ms-office-core-java` `v0.6.0`
+
+```text
+upstream companion:
+  https://github.com/igapyon/miku-ms-office-core-java
+  Release v0.6.0
+
+java classes:
+  jp.igapyon.mikuproject.excelio.ExcelIoZip
+  jp.igapyon.mikumsofficecore.ZipPackage
+
+tests:
+  ExcelIoTest.unpacksDeflatedZipEntriesForExternalPackages
+  ExcelIoTest.normalizesZipEntryPathsThroughMikuMsOfficeCore
+  ProjectXlsxTest
+  WbsXlsxTest
+
+diff summary:
+  挙動差分:
+    `ExcelIoZip.unpackZip` は miku-ms-office-core-java の `ZipPackage.readZipPackage` を使う。DEFLATE input、OPC package path normalize、structured package diagnostics を共通 core へ寄せた。
+  命名差分:
+    product-side の `ExcelIoZip` public API は維持し、low-level core class を Java application の API surface へ直接露出しない。
+  未移植差分:
+    core の generic OPC relationship / content type API は、現時点では既存の product-side XLSX parser と重複するため置換していない。
+  Java 側独自拡張:
+    ZIP write は Node report artifact との byte-level parity を守る既存 `ExcelIoZip` に残す。
+
+follow-up:
+  - 実施した確認:
+    `mvn test -Dtest=ExcelIoTest,ProjectXlsxTest,WbsXlsxTest,CoreApiWorkbookTest,MikuprojectCliTest`
+  - artifact:
+    `jp.igapyon:miku-ms-office-core:0.6.0`
+    SHA-256 `d25392727d9449e5001b9024b888f0ce09962c9fb977c18613731f37027b0a77`
+  - 次回の確認観点:
+    product-side XLSX parser が generic OPC relationship / content-type helper を必要とした時点で、重複する helper を core API へ段階的に委譲する。
+```
+
+## 2026-08-09 `src/ts/excel-io-util.ts` / `src/ts/excel-io-worksheet-build.ts`
+
+```text
+upstream files:
+  src/ts/excel-io-util.ts
+  src/ts/excel-io-worksheet-build.ts
+
+java classes:
+  jp.igapyon.mikuproject.excelio.ExcelIoWorksheetBuild
+
+tests:
+  ExcelIoTest.preservesSupplementaryUnicodeAndRemovesInvalidXmlCharacters
+  ExcelIoTest.preservesXmlWhitespaceAndRemovesXmlControlCharacters
+
+diff summary:
+  挙動差分:
+    upstream `7e5d283` の XML 1.0 sanitizer（補助平面 Unicode と TAB/LF/CR を保持し、不正 surrogate / noncharacter / control character を除去）は Java に既に実装済みだった。上流と同じ control character と XML whitespace の回帰観点を追加した。
+  命名差分:
+    なし。
+  未移植差分:
+    なし。
+  Java 側独自拡張:
+    なし。
+
+follow-up:
+  - 実施した確認:
+    `mvn test -Dtest=ExcelIoTest`
+  - fixture:
+    `😀 🐇 𠮷野家`、XML whitespace、invalid surrogate / noncharacter / control character
+  - 次回の確認観点:
+    XML 生成対象が worksheet text 以外へ広がる場合は、その field でも XML 1.0 sanitizer を通す必要があるか確認する。
+```
+
+## 2026-08-09 `src/ts/msproject-ai-views.ts` / `src/ts/msproject-calendar.ts`
+
+```text
+upstream files:
+  src/ts/msproject-ai-views.ts
+  src/ts/msproject-calendar.ts
+
+java classes:
+  jp.igapyon.mikuproject.msprojectxml.MsProjectAiViews
+  jp.igapyon.mikuproject.msprojectxml.MsProjectCalendar
+
+tests:
+  MsProjectAiViewsTest.buildsProjectDraftRequestAndImportsPredecessorMappingFromProjectDraftView
+  WbsMarkdownTest
+  WbsSvgTest
+
+diff summary:
+  挙動差分:
+    upstream `7e5d283` は runtime locale に依存しない lexical ordering を明示した。Java は task UID を `String.compareTo`、date text を `Collections.sort` で順序付けており、同じ UTF-16 lexical ordering を既に満たす。
+  命名差分:
+    なし。
+  未移植差分:
+    なし。
+  Java 側独自拡張:
+    なし。
+
+follow-up:
+  - 実施した確認:
+    `mvn test -Dtest=MsProjectAiViewsTest,WbsMarkdownTest,WbsSvgTest`
+  - fixture:
+    `vendor/mikuproject/testdata/hierarchy.xml` と holiday / date range を使う report fixtures
+  - 次回の確認観点:
+    upstream が UID / date text 以外に locale-sensitive sort を導入した場合は、Java 側でも明示 comparator を追加する。
+```
+
 ## 2026-05-01 `vendor/mikuproject/scripts/mikuproject-cli.mjs`
 
 ```text

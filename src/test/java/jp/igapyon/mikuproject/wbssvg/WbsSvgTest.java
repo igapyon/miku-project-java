@@ -32,7 +32,7 @@ public class WbsSvgTest {
         String weeklySvg = xml.exportWeeklyNativeSvg(model);
 
         assertTrue(dailySvg.contains("<svg"));
-        assertTrue(dailySvg.contains("mikuproject開発"));
+        assertTrue(dailySvg.contains("miku-project開発"));
         assertTrue(dailySvg.contains("class=\"grid\""));
         assertTrue(dailySvg.contains(">3/16</text>"));
         assertTrue(weeklySvg.contains("<svg"));

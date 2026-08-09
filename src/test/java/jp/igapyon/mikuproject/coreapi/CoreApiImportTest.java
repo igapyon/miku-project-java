@@ -5,6 +5,7 @@
 package jp.igapyon.mikuproject.coreapi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -99,8 +100,12 @@ public class CoreApiImportTest {
         assertEquals("workbook_json", parsedImport.result.kind);
         assertEquals("merge", parsedImport.result.mode);
         assertEquals("Core API text import", parsedImport.result.model.project.name);
-        assertEquals("mikuproject-ai-json-spec", spec.id);
+        assertEquals("miku-project-ai-json-spec", spec.id);
         assertTrue(spec.version != null && !spec.version.isEmpty());
+        assertTrue(spec.text.startsWith("# miku-project AI JSON Prompt / Spec"));
+        assertFalse(spec.text.contains("`mikuproject`"));
+        assertFalse(spec.text.contains("mikuproject ai "));
+        assertTrue(spec.text.contains("`mikuproject_workbook_json`"));
         assertTrue(spec.text.contains("project_draft_view"));
         assertEquals(spec.text, api.getAiJsonSpecText());
         assertTrue(api.getAiJsonSpecText().contains("Patch JSON"));

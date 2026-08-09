@@ -37,7 +37,7 @@ public class ProjectXlsxTest {
         assertEquals("Project", workbook.sheets.get(0).rows.get(0).cells.get(0).value);
         assertEquals("Field", workbook.sheets.get(0).rows.get(2).cells.get(0).value);
         assertEquals("Name", workbook.sheets.get(0).rows.get(3).cells.get(0).value);
-        assertEquals("mikuproject開発", workbook.sheets.get(0).rows.get(3).cells.get(1).value);
+        assertEquals("miku-project開発", workbook.sheets.get(0).rows.get(3).cells.get(1).value);
         assertEquals("Tasks", workbook.sheets.get(1).name);
         assertEquals("Tasks", workbook.sheets.get(1).rows.get(0).cells.get(0).value);
         assertEquals(Double.valueOf(26d), workbook.sheets.get(0).columns.get(0).width);

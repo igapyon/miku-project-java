@@ -12,8 +12,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.CRC32;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+
+import jp.igapyon.mikumsofficecore.OfficeDiagnostic;
+import jp.igapyon.mikumsofficecore.ZipPackage;
+import jp.igapyon.mikumsofficecore.ZipReadResult;
 
 public class ExcelIoZip {
     public static final int ZERO_MOD_TIME = 0;
@@ -54,33 +56,29 @@ public class ExcelIoZip {
     }
 
     public Map<String, byte[]> unpackZip(byte[] bytes) {
+        ZipReadResult readResult = ZipPackage.readZipPackage(bytes);
+        if (!readResult.getDiagnostics().isEmpty()) {
+            throw new IllegalArgumentException("zip の展開に失敗しました: " + formatDiagnostics(readResult));
+        }
         Map<String, byte[]> result = new LinkedHashMap<String, byte[]>();
-        ZipInputStream input = null;
-        try {
-            input = new ZipInputStream(new ByteArrayInputStream(bytes));
-            ZipEntry entry;
-            byte[] buffer = new byte[4096];
-            while ((entry = input.getNextEntry()) != null) {
-                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                int read;
-                while ((read = input.read(buffer)) >= 0) {
-                    stream.write(buffer, 0, read);
-                }
-                result.put(entry.getName(), stream.toByteArray());
-                input.closeEntry();
+        for (jp.igapyon.mikumsofficecore.ZipEntry entry : readResult.getEntries()) {
+            result.put(entry.getPath(), entry.getData());
+        }
+        return result;
+    }
+
+    private String formatDiagnostics(ZipReadResult readResult) {
+        StringBuilder builder = new StringBuilder();
+        for (OfficeDiagnostic diagnostic : readResult.getDiagnostics()) {
+            if (builder.length() > 0) {
+                builder.append("; ");
             }
-            return result;
-        } catch (IOException ex) {
-            throw new IllegalArgumentException("zip の展開に失敗しました", ex);
-        } finally {
-            if (input != null) {
-                try {
-                    input.close();
-                } catch (IOException ex) {
-                    // ignore
-                }
+            builder.append(diagnostic.getCode()).append(": ").append(diagnostic.getMessage());
+            if (diagnostic.getPath() != null) {
+                builder.append(" (").append(diagnostic.getPath()).append(")");
             }
         }
+        return builder.toString();
     }
 
     public List<String> listEntries(byte[] bytes) {

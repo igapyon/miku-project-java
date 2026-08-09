@@ -39,7 +39,7 @@ public class ProjectWorkbookJsonTest {
         assertEquals(Integer.valueOf(1), document.version);
         assertEquals("[Project, Tasks, Resources, Assignments, Calendars, NonWorkingDays]", document.sheets.keySet().toString());
         assertEquals("Name", document.sheets.get("Project").get(0).get("Field"));
-        assertEquals("mikuproject開発", document.sheets.get("Project").get(0).get("Value"));
+        assertEquals("miku-project開発", document.sheets.get("Project").get(0).get("Value"));
         assertEquals("基盤整備", document.sheets.get("Tasks").get(0).get("Name"));
         assertTrue(document.sheets.get("Tasks").get(0).get("UID") != null);
         assertEquals("Mikuku", document.sheets.get("Resources").get(0).get("Name"));
