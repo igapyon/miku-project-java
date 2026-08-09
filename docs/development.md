@@ -4,7 +4,7 @@
 
 追随運用文書群の入口は `README.md` の `Development Docs` 節にも置いており、読み順もそこに合わせている。
 
-`mikuproject-java` は、`vendor/mikuproject` に保持した Node.js 版 upstream を参照しながら、Java 版へ移植していく。
+`miku-project-java` は、`vendor/mikuproject` に保持した Node.js 版 upstream を参照しながら、Java 版へ移植していく。
 
 現在は、主要導線の新規追加よりも、既存実装の確認、TODO / docs 整理、移植済み範囲の検証、upstream 差分確認を優先する保守フェーズとして扱う。
 新しい command や API を増やす前に、既存範囲が upstream 対応表、test 対応表、follow-up log とずれていないかを確認する。
@@ -19,10 +19,10 @@ Java 版では内部モデル、MS Project XML、関連ロジック、CLI、テ�
 ただし、Maven 採用も Java 側独自の構造最適化を進めるためではなく、Java 1.8 前提の最小限の開発土台として扱う。
 
 Java CLI の正式配布成果物は、`mvn package` で生成される単一 jar とする。
-想定パスは `target/mikuproject.jar` とし、`java -jar` を正規実行経路として扱う。
+想定パスは `target/miku-project.jar` とし、`java -jar` を正規実行経路として扱う。
 この成果物は downstream 連携を考慮し、fat jar 前提で維持する。
-`mvn package` では追跡・レビュー用の `target/mikuproject-sources.jar` も生成する。
-配布パッケージとしては、`target/mikuproject-dist.zip` も生成し、`mikuproject-sources.jar` と利用側向け文書 `docs/runtime-java-cli.md` を同梱する。
+`mvn package` では追跡・レビュー用の `target/miku-project-sources.jar` も生成する。
+配布パッケージとしては、`target/miku-project-dist.zip` も生成し、`miku-project-sources.jar` と利用側向け文書 `docs/runtime-java-cli.md` を同梱する。
 
 AI JSON 仕様 Markdown は、実行時には classpath / JAR 内リソースとして扱う。
 元ファイルは `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` に置き、Maven の `process-resources` で `target/classes/jp/igapyon/mikuproject/coreapi/mikuproject-ai-json-spec.md` へコピーする。
@@ -209,7 +209,7 @@ Java には多くの有用なライブラリがあるが、移植初期段階で
 
 Java package の基底は `jp.igapyon.mikuproject` とする。
 
-`mikuproject-java` のような別名は package へ持ち込まない。
+`miku-project-java` のような別名は package へ持ち込まない。
 Java 側の package は製品名ベースで統一する。
 
 下位 package も、可能な限り upstream の責務名から自然に読み替えた構造を優先する。

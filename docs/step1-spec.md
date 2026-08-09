@@ -2,7 +2,7 @@
 
 ## 現在の位置づけ
 
-この文書は、Java 版 `mikuproject` の STEP1 で採用した設計判断と current implementation の基準をまとめる文書である。
+この文書は、Java 版 `miku-project` の STEP1 で採用した設計判断と current implementation の基準をまとめる文書である。
 冒頭の `STEP1 のスコープ` は初期実装の最小範囲を示すものであり、現在の未実装リストではない。
 
 現在は、XML round-trip を土台に、workbook JSON / XLSX、AI JSON、patch JSON、CLI、SVG / Markdown / Mermaid などの周辺導線も Java 側に実装済みである。
@@ -10,14 +10,14 @@
 
 ## 目的
 
-Java 版 `mikuproject` の STEP1 では、`MS Project XML` の意味的ラウンドトリップを成立させることを目的とする。
+Java 版 `miku-project` の STEP1 では、`MS Project XML` の意味的ラウンドトリップを成立させることを目的とする。
 
 ここでいう意味的ラウンドトリップとは、少なくとも次を満たすことである。
 
 - `MS Project XML` を読める
 - 必要な情報を内部モデルへ落とせる
 - 内部モデルから `MS Project XML` を再生成できる
-- 再生成した `MS Project XML` を Java 版 `mikuproject` 自身で再読込できる
+- 再生成した `MS Project XML` を Java 版 `miku-project` 自身で再読込できる
 - 主要フィールドが壊れず往復できる
 
 目標は XML テキストの完全一致ではなく、意味的に往復できることである。

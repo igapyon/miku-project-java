@@ -2,21 +2,23 @@
 
 ## Compatibility source
 
-- Upstream repository: <https://github.com/igapyon/mikuproject>
+- Upstream repository: <https://github.com/igapyon/miku-project>
 - Vendored path: `vendor/mikuproject`
 - Upstream package version in the vendored snapshot: `0.8.0`
-- Java companion version: `0.8.3`
-- Checked: 2026-08-06
+- Vendored upstream commit: `245deaa99d6d2ba970969a9359ce003386da3472`
+- Java companion version: `0.8.4`
+- Checked: 2026-08-09
 
 `vendor/mikuproject` is a Git subtree and is read-only for ordinary Java
 maintenance. The initial subtree import recorded upstream commit
-`9257d1991244ac8277cc489b1cabb680d1e1fb8b`; the last target-repository commit
-that updated vendored CLI behavior is
-`c8df3a24d121f55673275de47ac00240122acef0`.
+`9257d1991244ac8277cc489b1cabb680d1e1fb8b`; the vendored snapshot used by the
+current Java compatibility baseline is
+`245deaa99d6d2ba970969a9359ce003386da3472`, incorporated by target-repository
+commit `c8df3a24d121f55673275de47ac00240122acef0`.
 
-The exact upstream commit for that later update was not retained in the target
-repository history. Record it with the next subtree update so a future Java
-maintenance change has a precise upstream revision anchor.
+The local `mikuproject` remote uses
+`git@github.com:igapyon/miku-project.git`; do not rely on the old GitHub
+redirect when fetching future subtree updates.
 
 ## Verification anchor
 

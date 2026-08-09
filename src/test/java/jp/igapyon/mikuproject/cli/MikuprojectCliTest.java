@@ -74,7 +74,7 @@ public class MikuprojectCliTest {
         int exitCode = cli.run(new String[] { "--version" }, stream(out), stream(err));
 
         assertEquals(0, exitCode);
-        assertEquals("mikuproject-java 0.8.3\n", text(out));
+        assertEquals("0.8.4\n", text(out));
         assertEquals("", text(err));
     }
 

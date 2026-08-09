@@ -36,7 +36,7 @@ import jp.igapyon.mikuproject.wbssvg.WbsSvg.MonthlyCalendarSvgArchive;
 import jp.igapyon.mikuproject.wbsxlsx.WbsXlsx.WbsExportOptions;
 
 public class MikuprojectCli {
-    public static final String VERSION = "0.8.3";
+    public static final String VERSION = "0.8.4";
     private static final String[] NODE_TASK_HEADERS = { "UID", "ID", "Name", "OutlineLevel", "OutlineNumber", "WBS", "Start",
             "Finish", "Duration", "PercentComplete", "PercentWorkComplete", "Milestone", "Summary", "Critical", "CalendarUID",
             "Predecessors", "Notes" };
@@ -717,7 +717,7 @@ public class MikuprojectCli {
             return;
         }
         Map<?, ?> changesSummary = (Map<?, ?>) report.get("changes_summary");
-        out.println("[mikuproject-cli] validate-patch ok=true status=" + report.get("status") + " warnings="
+        out.println("[miku-project-cli] validate-patch ok=true status=" + report.get("status") + " warnings="
                 + report.get("warning_count") + " errors=0 changes=" + changesSummary.get("total_changes"));
         for (PatchWarning warning : result.warnings) {
             out.println("[warning] " + formatPatchWarning(warning));
@@ -756,7 +756,7 @@ public class MikuprojectCli {
     private void outPatchDiagnosticsText(String context, Map<String, Object> diagnostics, List<PatchWarning> warnings,
             PrintStream err) {
         Map<?, ?> changesSummary = (Map<?, ?>) diagnostics.get("changes_summary");
-        err.println("[mikuproject-cli] " + context + " patch_json status=" + diagnostics.get("status") + " changes="
+        err.println("[miku-project-cli] " + context + " patch_json status=" + diagnostics.get("status") + " changes="
                 + changesSummary.get("total_changes") + " warnings=" + diagnostics.get("warning_count"));
         for (PatchWarning warning : warnings) {
             err.println("[warning] " + formatPatchWarning(warning));
@@ -1331,7 +1331,7 @@ public class MikuprojectCli {
     }
 
     private void printVersion(PrintStream out) {
-        out.println("mikuproject-java " + runtimeVersion());
+        out.println(runtimeVersion());
     }
 
     private String runtimeVersion() {
@@ -1368,7 +1368,7 @@ public class MikuprojectCli {
     }
 
     private void printUsage(PrintStream out) {
-        out.println("mikuproject-java CLI");
+        out.println("miku-project CLI");
         out.println("Usage:");
         out.println("Shared Node-compatible commands:");
         out.println("  --version");

@@ -8,6 +8,13 @@ repo top から入るときの入口は `README.md` の `Development Docs` 節�
 移植作業では、Java 側の作りやすさよりも upstream 追随時の見通しを重視する。
 そのため、どの Java class がどの upstream file を受け持つかを、先に明示しておく。
 
+## Public Name and Mapping Boundary
+
+The public product name is `miku-project`, while the mappings in this document
+intentionally retain `vendor/mikuproject/`, `jp.igapyon.mikuproject`, and
+`MikuprojectCli`. These are compatibility and upstream-traceability identifiers,
+not stale public repository or artifact names.
+
 ## 差分確認テンプレート
 
 upstream 更新追随で 1 file を確認するときは、少なくとも次の形でメモすると追跡しやすい。

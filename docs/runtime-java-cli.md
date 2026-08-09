@@ -2,28 +2,28 @@
 
 ## 目的
 
-この文書は、`mikuproject-java` の Java CLI 実行物を downstream や利用側へ受け渡す際の前提と、CLI の実行方法を整理するための文書である。
+この文書は、`miku-project-java` の Java CLI 実行物を downstream や利用側へ受け渡す際の前提と、CLI の実行方法を整理するための文書である。
 
 ## 配布成果物
 
-`mikuproject-java` は、`mvn package` により次の配布成果物を生成する。
+`miku-project-java` は、`mvn package` により次の配布成果物を生成する。
 
-- `target/mikuproject.jar`
-- `target/mikuproject-sources.jar`
-- `target/mikuproject-dist.zip`
+- `target/miku-project.jar`
+- `target/miku-project-sources.jar`
+- `target/miku-project-dist.zip`
 
 このうち runtime の正式成果物は次である。
 
-- `target/mikuproject.jar`
+- `target/miku-project.jar`
 
-`target/mikuproject-dist.zip` は、利用側へ受け渡しやすい配布パッケージとして扱う。
+`target/miku-project-dist.zip` は、利用側へ受け渡しやすい配布パッケージとして扱う。
 
-## `mikuproject-dist.zip` の内容
+## `miku-project-dist.zip` の内容
 
 現在の `dist.zip` には次を含める。
 
-- `mikuproject.jar`
-- `mikuproject-sources.jar`
+- `miku-project.jar`
+- `miku-project-sources.jar`
 - `README.md`
 - `LICENSE`
 - `docs/runtime-java-cli.md`
@@ -34,17 +34,17 @@
 
 将来 runtime dependency が増えた場合でも、downstream 側の受け取り物がぶれないよう、この成果物は fat jar として維持する。
 
-`mikuproject-sources.jar` は追跡・レビュー用の同伴成果物であり、通常の CLI 実行には使用しない。
+`miku-project-sources.jar` は追跡・レビュー用の同伴成果物であり、通常の CLI 実行には使用しない。
 
 ## downstream 連携
 
-downstream 側は、`mikuproject-java` から次のものを受け取る前提とする。
+downstream 側は、`miku-project-java` から次のものを受け取る前提とする。
 
-- `target/mikuproject.jar`
+- `target/miku-project.jar`
   または
-- `target/mikuproject-dist.zip`
+- `target/miku-project-dist.zip`
 
-downstream 側では、`dist.zip` から `mikuproject.jar` を bundle へコピーするか、直接 `target/mikuproject.jar` を受け取る。
+downstream 側では、`dist.zip` から `miku-project.jar` を bundle へコピーするか、直接 `target/miku-project.jar` を受け取る。
 
 正規実行経路は次のとおり。
 
@@ -52,7 +52,7 @@ downstream 側では、`dist.zip` から `mikuproject.jar` を bundle へコピ�
 
 ## CLI 利用の前提
 
-CLI は `java -jar mikuproject.jar <command> ...` の形で実行する。
+CLI は `java -jar miku-project.jar <command> ...` の形で実行する。
 
 代表的な command は次である。
 
@@ -87,7 +87,7 @@ Node.js upstream CLI と共有する command では、標準入力 / 標準出�
 実行時にカレントディレクトリ上の `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` は参照しない。
 
 この Markdown は Maven の `process-resources` で `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` から `target/classes/jp/igapyon/mikuproject/coreapi/mikuproject-ai-json-spec.md` へコピーされる。
-そのため、配布済み `mikuproject.jar` は任意のカレントディレクトリから `java -jar mikuproject.jar ai spec` を実行できる。
+そのため、配布済み `miku-project.jar` は任意のカレントディレクトリから `java -jar miku-project.jar ai spec` を実行できる。
 
 ## report SVG の注意
 

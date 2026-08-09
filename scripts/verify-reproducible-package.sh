@@ -11,10 +11,10 @@ trap cleanup EXIT HUP INT TERM
 
 cd "$verify_root"
 mvn -B clean package
-cp target/mikuproject.jar target/mikuproject-sources.jar target/mikuproject-dist.zip "$verify_first"
+cp target/miku-project.jar target/miku-project-sources.jar target/miku-project-dist.zip "$verify_first"
 mvn -B clean package
-cp target/mikuproject.jar target/mikuproject-sources.jar target/mikuproject-dist.zip "$verify_second"
+cp target/miku-project.jar target/miku-project-sources.jar target/miku-project-dist.zip "$verify_second"
 
-for verify_file in mikuproject.jar mikuproject-sources.jar mikuproject-dist.zip; do
+for verify_file in miku-project.jar miku-project-sources.jar miku-project-dist.zip; do
   cmp "$verify_first/$verify_file" "$verify_second/$verify_file"
 done

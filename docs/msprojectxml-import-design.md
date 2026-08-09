@@ -2,7 +2,7 @@
 
 ## 目的
 
-この文書は、Java 版 `mikuproject` の STEP1 における
+この文書は、Java 版 `miku-project` の STEP1 における
 `MS Project XML -> ProjectModel`
 の最小 import 設計を整理した設計メモである。
 
