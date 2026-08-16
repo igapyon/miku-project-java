@@ -1,27 +1,28 @@
 {
-  "name": "mikuproject",
-  "version": "0.8.0",
+  "name": "miku-project",
+  "version": "1.0.4",
   "private": true,
   "description": "Local HTML tool for MS Project XML round-trip experiments.",
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
-    "mikuproject": "scripts/mikuproject-cli.mjs"
+    "miku-project": "scripts/miku-project-cli.mjs",
+    "mikuproject": "scripts/miku-project-cli.mjs"
   },
   "scripts": {
-    "build": "npm run build:web && npm run build:cli-bundle && npm run test:fast",
-    "build:js": "node scripts/build-project.mjs --js-only",
-    "build:html": "node scripts/build-project.mjs --html-only",
-    "build:web": "node scripts/build-project.mjs",
+    "build": "npm run build:core && npm run build:browser-runtime && npm run build:cli-bundle && npm run test:fast",
+    "build:core": "node scripts/build-core.mjs",
+    "build:browser-runtime": "node scripts/build-browser-runtime.mjs",
     "build:cli-bundle": "node scripts/build-cli-bundle.mjs",
-    "build:app": "npm run build:web && npm run build:xlsx-sample",
-    "cli": "node scripts/mikuproject-cli.mjs",
-    "build:full": "npm run build:web && npm run build:cli-bundle && npm run test:full",
+    "build:cli-v1-runtime": "node scripts/build-cli-v1-runtime.mjs",
+    "verify:cli-v1-release-candidate": "node scripts/verify-cli-v1-release-candidate.mjs",
+    "generate:cli-v1-schema-validators": "node scripts/generate-cli-v1-schema-validators.mjs",
+    "check:cli-v1-schema-validators": "node scripts/check-cli-v1-schema-validators.mjs",
+    "cli": "node scripts/miku-project-cli.mjs",
+    "build:full": "npm run build:core && npm run build:browser-runtime && npm run build:cli-bundle && npm run test:full",
     "build:xlsx-sample": "node scripts/build-project-xlsx-sample.mjs",
     "test": "node scripts/run-tests.mjs all",
     "test:fast": "node scripts/run-tests.mjs fast",
-    "test:ui": "node scripts/run-tests.mjs ui",
-    "test:extended": "node scripts/run-tests.mjs extended",
     "test:full": "node scripts/run-tests.mjs full",
     "test:all": "node scripts/run-tests.mjs all"
   },
@@ -29,9 +30,13 @@
     "@xmldom/xmldom": "^0.8.10"
   },
   "overrides": {
-    "vite": "7.3.2"
+    "vite": "7.3.5",
+    "esbuild": "^0.28.1"
   },
   "devDependencies": {
+    "ajv": "8.17.1",
+    "ajv-formats": "3.0.1",
+    "esbuild": "^0.28.1",
     "jsdom": "^26.1.0",
     "typescript": "^5.8.2",
     "vitest": "^3.2.4"

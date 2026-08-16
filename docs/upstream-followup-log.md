@@ -73,6 +73,44 @@ repo top から入るときの入口は `README.md` の `Development Docs` 節�
 report / workbook / import / AI view の主要導線は sample 記録がある状態になっている。
 現フェーズでは、新規機能追加ではなく、この sample 記録と既存実装 / test 対応のズレを小さく保つことを優先する。
 
+## 2026-08-16 `miku-project` `v1.0.4` subtree integration
+
+```text
+upstream files:
+  package.json
+  scripts/miku-project-cli.mjs
+  docs/miku-project-ai-json-spec.md
+
+java classes:
+  jp.igapyon.mikuproject.cli.MikuprojectCli
+  jp.igapyon.mikuproject.cli.MikuprojectNodeParityTest
+  jp.igapyon.mikuproject.coreapi.CoreApiAiJson
+
+tests:
+  MikuprojectNodeParityTest
+  MikuprojectCliTest
+  ContractSnapshotVerifierTest
+
+diff summary:
+  挙動差分:
+    Node `v1.0.4` retains the legacy shared-command behavior covered by the parity suite. The Node parity suite compared report artifacts and shared text CLI stdout, stderr, and exit codes successfully against the Java runtime.
+  命名差分:
+    The canonical Node executable moved from `scripts/mikuproject-cli.mjs` to `scripts/miku-project-cli.mjs`; the upstream package retains `mikuproject` as an alias. The AI JSON specification Markdown likewise uses the `miku-project-` filename. Maven resource copying and the parity launcher now use the renamed paths.
+  未移植差分:
+    The moving `v1.0.4` subtree is not the authority for Java v1 commands. The Gate G4-approved `vendor/miku-project-contract/v1.0.3/` snapshot remains immutable until a separately reviewed contract release is added.
+  Java 側独自拡張:
+    None.
+
+follow-up:
+  - 実施した確認:
+    `mvn clean test` (176 tests, failures 0, errors 0, skipped 4)
+    `MIKUPROJECT_RUN_NODE_PARITY=true mvn test` (176 tests, failures 0, errors 0, skipped 0)
+  - fixture:
+    `vendor/mikuproject/testdata/workbook-import-sample.json` and `dependency.xml`
+  - 次回の確認観点:
+    A Gate-approved Node contract change must be imported as a new immutable snapshot directory; never replace `v1.0.3` in place.
+```
+
 ## 2026-08-09 `scripts/miku-project-cli.mjs` / `docs/miku-project-ai-json-spec.md`
 
 ```text

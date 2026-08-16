@@ -8,9 +8,27 @@
 
 ## 最重要
 
+### Gate G5へ向けたv1 Java CLI適合
+
+詳細は[docs/v1-contract-snapshot.md](docs/v1-contract-snapshot.md)と親repositoryの`miku-project` v1 implementation planを参照する。既存`vendor/mikuproject/`はhistorical portのlegacy referenceであり、新v1の仕様正本ではない。
+
+- [x] `ZB-P5-A1` Node `v1.0.3` tag / revisionからallowlistだけを抽出し、tag identity確認後はfull revisionだけを読んで`vendor/miku-project-contract/v1.0.3/`へimmutable snapshotとcanonical `SOURCE.json`を生成するimporterを追加した。完全一致する既存snapshotはmetadata不変no-op、それ以外はhard errorとし、exclusive directory creation・repository外/symlink親拒否・ownership確認済みfailure cleanupで既存treeを上書きしない
+- [x] `ZB-P5-A2` Java testでsnapshotのsource identity、corpus digest、member set、exact directory topology、`SOURCE.json` raw SHA-256外側pin、regular/non-symlink、size、SHA-256を検証し、extra / missing / tampered / symlink / fractional size / rewritten manifestを拒否する。Node importer testは正常install、metadata不変の同一rerun、既存tree / empty directory、tag / revision、working tree、確認後tag移動、出力path、symlink親、deterministic manifest、Git symlink、marker / member / manifest failure cleanup、unknown file / empty directory保全を検証する（12 tests）。repository-wide `sh scripts/test-all.sh`をRelease workflowでも実行する
+- [x] `ZB-P5-A3` README、upstream snapshot / CLI mapping、development notesでv1 snapshotとlegacy subtreeのauthorityを分離した。P5-Aは2026-08-14に最終レビューを通過し、承認済みである
+- [x] `ZB-P5-B1` `suite-index.json` / `contract-cases.json` loaderをtest-side harnessに追加した。public entrypointはP5-A snapshot verifier後のimmutable treeだけを読み、30 workflow caseと31 contract/binding caseを型付きで読み出す。unknown field、case ID重複、path escape、allowlist外参照をfail-closedにした（2026-08-14、focused 8 tests、Node 12 tests + Java 148 tests成功）
+- [x] `ZB-P5-B2` result / diagnostic / artifact / runtime manifestの四Schema registryをJava 8 test-sideで実装した。checked-in positive example、代表negative example、JSON Schema layerの18 mutation caseを検証し、未対応語彙と登録外refはfail-closedにする
+- [x] `ZB-P5-B3` canonical JSON / SHA-256とcase materializerをtest-sideに追加し、`cross-artifact-binding` 13 caseで`RB-001`〜`RB-006`、`RB-011`、`RB-012`を実入力から検証した。`exact-json` / `semantic-state` / `semantic-cross-runtime` / `byte-same-runtime` / `artifact-topology` / `runtime-integrity`も別assertion boundaryとしてtestし、Node live outputやJava固有goldenをoracleにしない（2026-08-14、Node 12 tests + Java 161 tests、failure/error 0、skip 4）
+- [x] `ZB-P5-B4` P5-B harnessを再技術reviewした。前回review後に見つけたwhole-object JSON textによるsemantic collection整列を、Node参照実装どおりdependency tuple / UID / Unicode scalar順の共通domain-aware canonicalizerへ置換し、digestと`exact-json` / `semantic-state` / `semantic-cross-runtime`へ適用した。summary taskと`summary = false`だがchildを持つschema-valid ProjectionのRB-012 negative testを追加した。focused test、`sh scripts/test-all.sh`（Node importer 12 tests、Java 164 tests、failure/error 0、skip 4）、snapshot post-verification（8 tests）、両repoの`git diff --check`を2026-08-15に成功させた。P5-Bは同日に人が承認した
+- [ ] `ZB-P5-C1` `validate`を最初のv1 vertical sliceとして実装し、初回・再技術reviewのJava側指摘を修正した。再技術reviewと人の承認を待つ。`CU-USAGE-001`の現行Node/Java source挙動はcorpusどおり一致したが、frozen `v1.0.3` release/snapshotは修正前なのでcross-runtime / Gate G5の適合をここで主張しない
+  - legacy `MikuprojectCli`を変更せず、isolated `MikuProjectV1Validate`だけが厳格な`validate --project <path|-> [--result <path|->]`を受ける。v1 runtime manifest launcherは未実装なので、callerがSHA-256を検証済みの`VerifiedRuntime`を渡せない場合はproject inputを読む前に`runtime.manifest-invalid` / exit 3でfail closedにする
+  - direct regular XML / stdin、UTF-8（先頭BOMのnormalizationを含む）、MS Project XML subset、semantic validation、canonical semantic-state SHA-256、構造化JSON result / diagnostic、exclusive-create `--result`を実装した。artifact-set directoryはP5-C5 `verify-artifact`まで明示的に未対応である
+  - 再reviewでは、`CU-USAGE-001`をservice prefixなしのwhole CLI argvとして直接実行し、option scope / option locationを固定した。percent欠落を`S-I008`、欠損dependency endpointを`S-I008`、既存でないendpointを`S-I014`に分離し、Java整数をNode `Number.isSafeInteger`と同じ`0`〜`2^53-1`に広げた。resource / assignment / calendarのunknown・calendar参照はUID付きdiagnostic pathへ揃え、巨大outline levelは入力member数で上限を設けてallocationをfail-safeにした
+  - 固定corpusの`command = cli`、`arguments = ["--unknown-option"]`、`cli.unknown-option`を正本とし、現行Node parserも先頭unknown long optionをoption scope / option location付き`cli.unknown-option`に修正した。Java serviceと現行Node sourceの挙動は一致する。snapshotは改変せず、後続Node corrective releaseと新snapshotでreference identityを更新する
+  - immutable v1.0.3 corpusの`CV-VALID-001`、hierarchy valid、invalid、unsupported、hierarchy invalid、`CU-USAGE-001`、runtime failure、malformed XML、result overwrite拒否に加え、初回・再review回帰をfocused 12 testsで確認した。Nodeのargv / XML adapter / R1 integration関連20 testsと全体`npm test`、`sh scripts/test-all.sh`のNode importer 12 tests、Java 176 tests（failures / errors 0、skipped 4）、snapshot post-verification 8 testsが成功した。これはP5-C1の人による承認、またはcorrective release identityを含むcross-runtime適合をまだ意味しない
+
 ### 現在フェーズの運用方針
 
-- 新規機能追加ではなく、既存実装の確認、TODO / docs 整理、移植済み範囲の検証や差分確認に限定して進める
+- historical portでは、新規機能追加ではなく、既存実装の確認、TODO / docs 整理、移植済み範囲の検証や差分確認に限定して進める。v1 CLIは上記Gate G5工程に限り新規適合実装を行う
 - `docs/remaining-migration-items.md`, `docs/upstream-class-mapping.md`, `docs/upstream-test-mapping.md`, `docs/upstream-followup-log.md` の整合を保つ
 - 既存 command / API / fixture 回帰の不足が見つかった場合は、機能追加ではなく既存仕様の不足またはバグとして扱う
 

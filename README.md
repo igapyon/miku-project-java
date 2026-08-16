@@ -12,8 +12,13 @@ The primary goal is to preserve the upstream Node.js structure, naming, and inte
 The Java port targets the CLI-oriented feature set that can run in the Java runtime.
 Browser/Web UI related behavior is kept out of scope for this repository.
 
-In other words, the port is intended to be a straight conversion first.
+In other words, the historical port is intended to be a straight conversion first.
 Java-specific redesign should be treated as a later step, after the corresponding upstream behavior has been carried over and remains traceable.
+
+The Gate G4-approved v1 CLI is a separate migration stream. Its authority is
+the immutable [v1 contract snapshot](docs/v1-contract-snapshot.md), not the
+moving historical subtree. Existing progress percentages below describe the
+legacy port and do not claim v1 conformance.
 
 Current STEP1 scope is focused on:
 
@@ -42,7 +47,8 @@ This repository keeps `README.md` and `docs/remaining-migration-items.md` aligne
 ## Upstream Policy
 
 - Keep the Node.js upstream repository under `vendor/mikuproject` using `git subtree`.
-- Treat `vendor/mikuproject` as read-only upstream reference unless there is an explicit reason to patch it.
+- Treat `vendor/mikuproject` as read-only legacy upstream reference unless there is an explicit reason to patch it. Do not use it as the v1 contract authority.
+- Keep each Gate-approved v1 contract input under `vendor/miku-project-contract/<release>/` with a canonical `SOURCE.json`. The first snapshot is `v1.0.3`; see [v1 contract snapshot](docs/v1-contract-snapshot.md).
 - Use the checksum-fixed `miku-ms-office-core-java` Release JAR under `vendor/miku-ms-office-core-java/` for product-neutral Office ZIP package reading. Keep document semantics in this repository.
 - Keep Java implementation and Java-specific specs outside `vendor/`.
 - Keep `workplace/` out of Git tracking as a local working area; only `workplace/.gitkeep` is tracked to retain the directory.
@@ -63,9 +69,11 @@ This repository keeps `README.md` and `docs/remaining-migration-items.md` aligne
 
 ## Testing Policy
 
-- Use `mvn test` as the primary test entrypoint.
+- Use `mvn test` as the primary Java test entrypoint.
+- Use `sh scripts/test-all.sh` as the repository-wide test entrypoint; it runs the v1 contract importer tests and the full Java suite.
 - Keep Java tests aligned with upstream test intent and upstream fixtures where possible.
 - Use upstream fixture files under `vendor/mikuproject/testdata` when they are useful as comparison material.
+- For v1 work, use only `vendor/miku-project-contract/v1.0.3/` fixture, golden, Schema, and example inputs. Run `sh scripts/test-all.sh` before adding a v1 command slice.
 
 ## Development Docs
 
@@ -73,12 +81,13 @@ Use this section as the repo-top entrypoint for upstream tracking and migration 
 
 Suggested order:
 
-1. `docs/remaining-migration-items.md`
-2. `docs/miku-soft-reference.md`
-3. `docs/upstream-class-mapping.md`
-4. `docs/upstream-test-mapping.md`
-5. `docs/development.md`
-6. `docs/upstream-followup-log.md`
+1. `docs/v1-contract-snapshot.md` for the v1 Java CLI migration
+2. `docs/remaining-migration-items.md` for historical-port maintenance
+3. `docs/miku-soft-reference.md`
+4. `docs/upstream-class-mapping.md`
+5. `docs/upstream-test-mapping.md`
+6. `docs/development.md`
+7. `docs/upstream-followup-log.md`
 
 Suggested tracking flow:
 
