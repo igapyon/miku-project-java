@@ -14,10 +14,9 @@ import java.util.regex.Pattern;
 import jp.igapyon.mikuproject.model.ProjectModel;
 
 public class CoreApiAiJson {
-    // The fixed vendored snapshot predates the public miku-project rename.
-    // Keep its resource filename internal while returning the current public
-    // specification text and identifier.
-    private static final String VENDORED_AI_JSON_SPEC_RESOURCE = "mikuproject-ai-json-spec.md";
+    // Keep the upstream specification as a classpath resource so the runtime
+    // never depends on the vendored source directory.
+    private static final String VENDORED_AI_JSON_SPEC_RESOURCE = "miku-project-ai-json-spec.md";
     private static final Pattern VERSION_PATTERN = Pattern.compile("^- Version:\\s*`([^`]+)`", Pattern.MULTILINE);
 
     private final CoreApiAiJsonUtil util = new CoreApiAiJsonUtil();

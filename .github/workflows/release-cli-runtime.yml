@@ -35,8 +35,16 @@ jobs:
           java-version: "21"
           cache: maven
 
+      - name: Set up Node.js 24 for contract snapshot tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Test
+        run: sh scripts/test-all.sh
+
       - name: Build
-        run: mvn -B package
+        run: mvn -B -DskipTests package
 
       - name: Prepare release assets
         env:

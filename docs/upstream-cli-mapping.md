@@ -1,23 +1,42 @@
 # Upstream CLI Mapping
 
-## Contract boundary
+## v1 contract boundary
 
-The Node CLI at `vendor/mikuproject/scripts/mikuproject-cli.mjs` is the
-fixed-snapshot source of truth for every command listed as shared below. Java
-must preserve the command name, options, defaults, stdin/stdout behavior,
+The new v1 commands (`validate`, `inspect`, `plan-change`, `apply-change`, and
+`verify-artifact`) are defined by the immutable
+[`v1.0.3` contract snapshot](v1-contract-snapshot.md), its Schema, and its
+shared conformance corpus. `vendor/mikuproject` is not a v1 oracle, and Node
+live output is not the sole oracle. P5-C1 has an isolated `validate` command
+service under `jp.igapyon.mikuproject.v1`; it has remediated its initial and
+second technical-review findings and awaits re-review and human approval, and is not yet wired into the
+public JAR because P5-E owns the verified runtime-manifest launcher. The fixed
+corpus's `CU-USAGE-001` defines whole CLI argv `["--unknown-option"]` as
+`cli.unknown-option`. Java follows that immutable corpus, and the current Node
+source parser has been corrected to return the same option-scoped diagnostic.
+The frozen Node `v1.0.3` release still predates that correction, so a later
+Node release and snapshot must update the reference identity before
+cross-runtime / Gate G5 parity is claimed. The
+historical Java CLI command table below therefore still makes no public-v1
+compatibility claim. `inspect`, `plan-change`, `apply-change`, and
+`verify-artifact` remain unimplemented v1 command slices.
+
+## Legacy command boundary
+
+The Node CLI at `vendor/mikuproject/scripts/miku-project-cli.mjs` is the
+legacy compatibility source of truth for every command listed as shared below.
+Java must preserve the command name, options, defaults, stdin/stdout behavior,
 diagnostics, exit code, and generated artifact contract unless a difference is
-explicitly documented as a Java extension. Current upstream commit `a3385a5`
-renamed that file to `scripts/miku-project-cli.mjs` and made `miku-project` the
-canonical public command while retaining `mikuproject` as its Node alias. The
-Java public CLI follows the canonical name; the vendored parity runner remains
-on its fixed snapshot until a separate subtree upgrade.
+explicitly documented as a Java extension. Upstream commit `a3385a5` made
+`miku-project` the canonical public command while retaining `mikuproject` as
+its Node alias. The Java public CLI follows the canonical name, and the
+vendored parity runner invokes the canonical script.
 
 The Java `--help` output is intentionally not byte-identical to the Node help:
 it also advertises the Java-only commands below. The shared-command entries and
 their runtime behavior remain Node-compatible and must be covered by parity
 tests.
 
-## Shared Node and Java commands
+## Legacy shared Node and Java commands
 
 - `ai spec`, `ai detect-kind`, `ai export project-overview`, `ai export task-edit`, `ai export phase-detail`, `ai export bundle`, and `ai validate-patch`
 - `state from-draft`, `state summarize`, `state diff`, and `state apply-patch`
@@ -25,7 +44,7 @@ tests.
 - `export workbook-json`, `export xml`, and `export xlsx`
 - `report wbs-xlsx`, `report daily-svg`, `report weekly-svg`, `report monthly-calendar-svg`, `report all`, `report wbs-markdown`, and `report mermaid`
 
-## Java-only extensions
+## Legacy Java-only extensions
 
 The following commands are Java operational extensions and are not required to
 be present in the Node CLI:
@@ -45,7 +64,7 @@ be present in the Node CLI:
 Keep extensions in the Java CLI help, README, and Java-focused tests. Do not
 let their options or diagnostics alter the behavior of a shared command.
 
-## Verification
+## Legacy verification
 
 - `MikuprojectNodeParityTest` verifies report-directory, report-bundle, and
   monthly-SVG ZIP bytes when `MIKUPROJECT_RUN_NODE_PARITY=true`.

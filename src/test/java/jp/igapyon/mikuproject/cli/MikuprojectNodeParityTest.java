@@ -132,7 +132,7 @@ public class MikuprojectNodeParityTest {
 
         List<String> command = new ArrayList<String>();
         command.add("node");
-        command.add("vendor/mikuproject/scripts/mikuproject-cli.mjs");
+        command.add("vendor/mikuproject/scripts/miku-project-cli.mjs");
         Collections.addAll(command, args);
         Process process = new ProcessBuilder(command).directory(Paths.get(".").toFile()).start();
         byte[] nodeOut = readAll(process.getInputStream());

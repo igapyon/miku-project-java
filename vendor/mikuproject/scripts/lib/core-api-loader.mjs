@@ -5,99 +5,14 @@ import { fileURLToPath } from "node:url";
 
 import { JSDOM } from "jsdom";
 
+import { CORE_API_MODULE_RELATIVE_PATHS } from "./runtime-module-paths.mjs";
+
+export { CORE_API_MODULE_RELATIVE_PATHS } from "./runtime-module-paths.mjs";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DEFAULT_ROOT_DIR = path.resolve(__dirname, "../..");
 const require = createRequire(import.meta.url);
-
-export const CORE_API_MODULE_RELATIVE_PATHS = [
-  "src/js/types.js",
-  "src/js/ai-json-util.js",
-  "src/js/ai-json-spec.js",
-  "src/js/main-util.js",
-  "src/js/msproject-ai-views.js",
-  "src/js/msproject-calendar.js",
-  "src/js/msproject-samples.js",
-  "src/js/msproject-csv.js",
-  "src/js/msproject-validate-helpers.js",
-  "src/js/msproject-validate.js",
-  "src/js/msproject-xml-dom.js",
-  "src/js/msproject-codec.js",
-  "src/js/msproject-mermaid.js",
-  "src/js/msproject-xml.js",
-  "src/js/markdown-escape.js",
-  "src/js/project-workbook-schema.js",
-  "src/js/excel-io-util.js",
-  "src/js/excel-io-zip.js",
-  "src/js/excel-io-normalize.js",
-  "src/js/excel-io-package-xml.js",
-  "src/js/excel-io-worksheet-build.js",
-  "src/js/excel-io-worksheet-parse.js",
-  "src/js/excel-io-workbook-parse.js",
-  "src/js/excel-io-workbook-build.js",
-  "src/js/excel-io-styles-build.js",
-  "src/js/excel-io-styles-parse.js",
-  "src/js/excel-io.js",
-  "src/js/project-xlsx-import-util.js",
-  "src/js/project-xlsx-import-project.js",
-  "src/js/project-xlsx-import-calendars.js",
-  "src/js/project-xlsx-import-entities.js",
-  "src/js/project-xlsx-import.js",
-  "src/js/project-xlsx-export-util.js",
-  "src/js/project-xlsx-export-project.js",
-  "src/js/project-xlsx-export-entities.js",
-  "src/js/project-xlsx-export-calendars.js",
-  "src/js/project-xlsx-export.js",
-  "src/js/project-xlsx.js",
-  "src/js/project-workbook-json-validate.js",
-  "src/js/project-workbook-json-import.js",
-  "src/js/project-workbook-json-export.js",
-  "src/js/project-workbook-json.js",
-  "src/js/project-patch-json-util.js",
-  "src/js/project-patch-json-links.js",
-  "src/js/project-patch-json-tasks.js",
-  "src/js/project-patch-json-entities.js",
-  "src/js/project-patch-json-updates.js",
-  "src/js/project-patch-json-core.js",
-  "src/js/project-patch-json.js",
-  "src/js/core-api-msproject-ai.js",
-  "src/js/core-api-msproject.js",
-  "src/js/core-api-workbook-xlsx.js",
-  "src/js/core-api-workbook.js",
-  "src/js/core-api-ai-json-import.js",
-  "src/js/core-api-ai-json.js",
-  "src/js/core-api-external-binary.js",
-  "src/js/core-api-external-document.js",
-  "src/js/core-api-external-import.js",
-  "src/js/core-api-import.js",
-  "src/js/wbs-dateband.js",
-  "src/js/wbs-xlsx-base.js",
-  "src/js/wbs-xlsx-taskmeta.js",
-  "src/js/wbs-xlsx-layout.js",
-  "src/js/wbs-xlsx-sections.js",
-  "src/js/wbs-xlsx-cells.js",
-  "src/js/wbs-xlsx-export.js",
-  "src/js/wbs-xlsx-public.js",
-  "src/js/wbs-xlsx.js",
-  "src/js/wbs-svg-zip.js",
-  "src/js/wbs-svg-bars.js",
-  "src/js/wbs-svg-viewport.js",
-  "src/js/wbs-svg-axis.js",
-  "src/js/wbs-svg-scaffold.js",
-  "src/js/wbs-svg-labels.js",
-  "src/js/wbs-svg-calendar.js",
-  "src/js/wbs-svg-timeline.js",
-  "src/js/wbs-svg-render.js",
-  "src/js/wbs-svg-public.js",
-  "src/js/wbs-svg.js",
-  "src/js/wbs-markdown.js",
-  "src/js/core-api-report.js",
-  "src/js/core-api-report-adapters.js",
-  "src/js/core-api-report-public.js",
-  "src/js/core-api-registry.js",
-  "src/js/core-api-public.js",
-  "src/js/core-api.js"
-];
 
 function installWindowGlobals(window) {
   const previous = new Map();
@@ -157,6 +72,7 @@ function clearMikuprojectGlobals() {
   delete globalThis.__mikuprojectMarkdownEscape;
   delete globalThis.__mikuprojectProjectWorkbookSchema;
   delete globalThis.__mikuprojectExcelIoUtil;
+  delete globalThis.__mikuprojectMsOfficeCore;
   delete globalThis.__mikuprojectExcelIoZip;
   delete globalThis.__mikuprojectExcelIoNormalize;
   delete globalThis.__mikuprojectExcelIoPackageXml;
@@ -202,6 +118,7 @@ function clearMikuprojectGlobals() {
   delete globalThis.__mikuprojectWbsXlsx;
   delete globalThis.__mikuprojectNativeSvg;
   delete globalThis.__mikuprojectWbsMarkdown;
+  delete globalThis.__mikuProjectCoreApi;
   delete globalThis.__mikuprojectCoreApi;
 }
 
@@ -254,11 +171,11 @@ export function loadMikuprojectCoreApi(options = {}) {
     .join("\n");
   new Function(combinedCode)();
 
-  const api = globalThis.__mikuprojectCoreApi;
+  const api = globalThis.__mikuProjectCoreApi || globalThis.__mikuprojectCoreApi;
   if (!api) {
     restoreWindowGlobals();
     dom.window.close();
-    throw new Error("Failed to boot __mikuprojectCoreApi");
+    throw new Error("Failed to boot __mikuProjectCoreApi");
   }
 
   return {

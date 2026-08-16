@@ -1,33 +1,48 @@
 # Upstream Snapshot
 
+## v1 contract source
+
+The Gate G4-approved v1 Java CLI source of authority is the immutable
+`vendor/miku-project-contract/v1.0.3/` snapshot, not the historical
+`vendor/mikuproject` subtree.
+
+- Node reference release: `1.0.3`
+- source tag: `v1.0.3`
+- source revision: `693b4ecd7d4328d77f3b2eada9c4965a9c9b15f5`
+- contract version / fixture suite version: `1` / `1`
+- conformance corpus SHA-256: `f0b4a821f80f155ba01afc1fdf7c5d2fa6ca5e744bbd0090819e0d591f1c47a3`
+
+`SOURCE.json` inventories every imported contract document, Schema, example,
+fixture, and golden with its raw SHA-256. See [v1 contract snapshot](v1-contract-snapshot.md)
+for the importer, verifier, and update rule. The snapshot is immutable; a
+future contract change creates a new versioned snapshot directory.
+
 ## Compatibility source
 
 - Upstream repository: <https://github.com/igapyon/miku-project>
 - Vendored path: `vendor/mikuproject`
-- Upstream package version in the vendored snapshot: `0.8.0`
-- Vendored upstream commit: `245deaa99d6d2ba970969a9359ce003386da3472`
-- Java companion version: `0.12.0`
-- Checked: 2026-08-09
+- Upstream package version in the vendored snapshot: `1.0.4`
+- Vendored upstream commit: `dc6fe12310c38bfdba5ea3283c93500d027eac86`
+- Java companion version: `1.0.4`
+- Checked: 2026-08-16
 
 `vendor/mikuproject` is a Git subtree and is read-only for ordinary Java
 maintenance. The initial subtree import recorded upstream commit
 `9257d1991244ac8277cc489b1cabb680d1e1fb8b`; the vendored snapshot used by the
 current Java compatibility baseline is
-`245deaa99d6d2ba970969a9359ce003386da3472`, incorporated by target-repository
-commit `c8df3a24d121f55673275de47ac00240122acef0`.
+`dc6fe12310c38bfdba5ea3283c93500d027eac86` (tag `v1.0.4`), incorporated by
+target-repository merge commit `ab27348`.
 
 The local `mikuproject` remote uses
 `git@github.com:igapyon/miku-project.git`; do not rely on the old GitHub
 redirect when fetching future subtree updates.
 
 The public naming follow-up is anchored to upstream commit
-`a3385a5` (`miku-project 命名体系へ Main Application を移行`). Java applies
-its public CLI, AI JSON spec, sample-data, artifact, and repository naming
-without advancing the fixed vendored snapshot. `vendor/mikuproject`,
-`jp.igapyon.mikuproject`, and established exchange-format IDs remain
-compatibility anchors. A later subtree update must switch the vendored CLI and
-AI JSON spec paths to their renamed upstream paths as part of that separate
-compatibility review.
+`a3385a5` (`miku-project 命名体系へ Main Application を移行`). The v1.0.4
+subtree contains the renamed CLI and AI JSON specification paths. The Java
+resource copy and Node parity runner follow those paths, while
+`vendor/mikuproject`, `jp.igapyon.mikuproject`, and established exchange-format
+IDs remain compatibility anchors.
 
 The content follow-up is anchored to upstream commits `8c5043f`
 (`miku-ms-office-coreでXLSXパッケージ読み込みを共通化する`) and `7e5d283`
@@ -49,11 +64,13 @@ for ZIP package reading. The vendored Maven repository artifact is
 Java ZIP writing remains product-side because byte-level report parity fixes
 its current header and timestamp contract.
 
-## Verification anchor
+## Legacy verification anchor
 
-The fixed-snapshot Node CLI source of truth is
-`vendor/mikuproject/scripts/mikuproject-cli.mjs`. Current upstream renamed it
-to `scripts/miku-project-cli.mjs`; the vendored path remains until the subtree
-baseline is upgraded. Shared CLI behavior is mapped in
-`docs/upstream-cli-mapping.md`. Report artifact parity uses the vendored
-fixtures and the opt-in `MikuprojectNodeParityTest` suite.
+The legacy Node CLI source of truth is
+`vendor/mikuproject/scripts/miku-project-cli.mjs`. It retains `mikuproject` as
+a command alias while `miku-project` is canonical. Shared CLI behavior is
+mapped in `docs/upstream-cli-mapping.md`. Report artifact parity uses the
+vendored fixtures and the opt-in `MikuprojectNodeParityTest` suite.
+
+This legacy anchor does not define v1 command, result/diagnostic, conformance,
+or runtime-manifest behavior.

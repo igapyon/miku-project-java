@@ -1,5 +1,13 @@
 # Migration Status
 
+## Scope note
+
+This document tracks the historical Java port that follows the read-only
+`vendor/mikuproject` subtree. The Gate G4-approved v1 Java CLI uses the
+immutable [v1 contract snapshot](v1-contract-snapshot.md) instead; do not use
+this document's legacy command coverage or upstream file mapping as v1
+contract authority.
+
 ## 目的
 
 この文書は、Node.js upstream を基準にした Java 版移植の現在地と、保守フェーズで残る論点を整理するためのメモである。
@@ -222,6 +230,9 @@ upstream 更新追随では、カテゴリ単位ではなく `upstream file -> J
 - 2026-05-01 時点では、Java CLI の `export xlsx` / `report wbs-xlsx` / `report monthly-calendar-svg` / `report all` は binary artifact を `--out <path>` または `--out-base64 -` で出力する契約に寄せた。`--out -` や `--out` 省略による binary stdout は usage error とする
 - 2026-05-01 時点では、Java CLI の `import xlsx` は `--in <path>` に加えて `--in-base64 -` を受け、diagnostics JSON の io に `stdin_base64` / `stdout_base64` を記録する
 - 2026-05-01 時点では、上記 CLI 追随の focused 回帰として `mvn test -Dtest=MikuprojectCliTest` が `16` tests, `0` failures で通っている
+- 2026-08-16 時点では、`vendor/mikuproject` を `v1.0.4` (`dc6fe12310c38bfdba5ea3283c93500d027eac86`) まで追随した。canonical Node CLI と AI JSON specification の rename に合わせ、Java の resource copy と Node parity launcher を更新した
+- 2026-08-16 時点では、`mvn clean test` が `176` tests, `0` failures, `0` errors, `4` skipped で通っている。`MIKUPROJECT_RUN_NODE_PARITY=true mvn test` では同じ `176` tests が `0` skipped で通り、更新済み Node runtime との report artifact / shared text CLI parity を確認した
+- `v1.0.3` contract snapshot は不変のまま維持する。今後 Gate 承認済みの Node contract 更新を取り込む場合は、既存 tree を上書きせず、新しい release directory として追加する
 - 2026-04-21 時点では、`vendor/mikuproject/src/ts/msproject-validate.ts` を題材にした upstream follow-up 実例も追加し、同じく `mvn test -Dtest=MsProjectXmlTest` の validation focused tests を根拠に記録した
 - workbook を含む新しい保守回帰コマンドは `docs/development.md` / `docs/upstream-test-mapping.md` 側の正本に合わせて更新済みであり、次回のコード変更時にその単位で確認する
 - 残る論点は、これらの文書を使って upstream 更新 1 回分の実例を積み、過不足を詰めることである

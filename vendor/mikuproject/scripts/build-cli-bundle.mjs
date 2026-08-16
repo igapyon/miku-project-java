@@ -2,11 +2,16 @@ import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
 
+import { CORE_API_MODULE_RELATIVE_PATHS } from "./lib/runtime-module-paths.mjs";
+import { compareUnicodeScalars, sha256RawBytes } from "./lib/v1/cli-v1-canonical-json.mjs";
+
 const ROOT = process.cwd();
 const args = parseArgs(process.argv.slice(2));
-const outFile = path.resolve(args.out || path.join(ROOT, "bundle", "mikuproject.mjs"));
-const sourcesOutFile = path.resolve(args["sources-out"] || path.join(path.dirname(outFile), "mikuproject-sources.tgz"));
-const CORE_API_MODULE_RELATIVE_PATHS = readCoreApiModuleRelativePaths();
+const outFile = path.resolve(args.out || path.join(ROOT, "bundle", "miku-project.mjs"));
+const sourcesOutFile = path.resolve(args["sources-out"] || path.join(path.dirname(outFile), "miku-project-sources.tgz"));
+const v1RuntimeVersion = args["v1-runtime-version"] ?? null;
+const bundledPackageVersion = args["package-version"] ?? null;
+const v1RuntimeCorpusDigest = v1RuntimeVersion ? computeV1ConformanceCorpusDigest() : null;
 
 const XMLDOM_MODULE_RELATIVE_PATHS = [
   "node_modules/@xmldom/xmldom/lib/conventions.js",
@@ -17,7 +22,54 @@ const XMLDOM_MODULE_RELATIVE_PATHS = [
   "node_modules/@xmldom/xmldom/lib/index.js"
 ];
 
-const SOURCE_ARCHIVE_ROOT = "mikuproject-sources";
+const LEGACY_CLI_INTERNAL_MODULE_RELATIVE_PATHS = [
+  "scripts/lib/cli-errors.mjs",
+  "scripts/lib/cli-argv.mjs",
+  "scripts/lib/cli-io.mjs",
+  "scripts/lib/cli-diagnostics.mjs",
+  "scripts/lib/cli-presentation.mjs",
+  "scripts/lib/cli-command-utils.mjs",
+  "scripts/lib/cli-ai-commands.mjs",
+  "scripts/lib/cli-state-commands.mjs",
+  "scripts/lib/cli-exchange-commands.mjs",
+  "scripts/lib/cli-report-commands.mjs",
+  "scripts/lib/cli-legacy-router.mjs"
+];
+
+// v1 code uses its own module-local helper names (for example taskPath), so
+// the single-MJS bundle keeps it in a closure and exports only the public
+// entrypoint boundary. This preserves the source-module dependency graph
+// without making its private names collide with legacy CLI helpers.
+const V1_CLI_INTERNAL_MODULE_RELATIVE_PATHS = [
+  "scripts/generated/cli-v1-schema-validators.mjs",
+  "scripts/lib/v1/cli-v1-errors.mjs",
+  "scripts/lib/v1/cli-v1-canonical-json.mjs",
+  "scripts/lib/v1/cli-v1-argv.mjs",
+  "scripts/lib/v1/cli-v1-result.mjs",
+  "scripts/lib/v1/cli-v1-io.mjs",
+  "scripts/lib/v1/cli-v1-json-artifact.mjs",
+  "scripts/lib/v1/cli-v1-runtime-manifest.mjs",
+  "scripts/lib/v1/cli-v1-destination.mjs",
+  "scripts/lib/v1/cli-v1-xml-adapter.mjs",
+  "scripts/lib/v1/cli-v1-xml-encoder.mjs",
+  "scripts/lib/v1/cli-v1-semantic-validator.mjs",
+  "scripts/lib/v1/cli-v1-projection.mjs",
+  "scripts/lib/v1/cli-v1-change.mjs",
+  "scripts/lib/v1/cli-v1-r1-commands.mjs",
+  "scripts/lib/v1/cli-v1-apply.mjs",
+  "scripts/lib/v1/cli-v1-provenance.mjs",
+  "scripts/lib/v1/cli-v1-artifact-verifier.mjs",
+  "scripts/lib/v1/cli-v1-verify-artifact.mjs",
+  "scripts/lib/v1/cli-v1-publisher.mjs",
+  "scripts/lib/v1/cli-v1-router.mjs"
+];
+
+const CLI_INTERNAL_MODULE_RELATIVE_PATHS = [
+  ...LEGACY_CLI_INTERNAL_MODULE_RELATIVE_PATHS,
+  ...V1_CLI_INTERNAL_MODULE_RELATIVE_PATHS
+];
+
+const SOURCE_ARCHIVE_ROOT = "miku-project-sources";
 const SOURCE_ARCHIVE_PATHS = [
   "package.json",
   "package-lock.json",
@@ -27,10 +79,7 @@ const SOURCE_ARCHIVE_PATHS = [
   "CONTRIBUTING.md",
   "CONTRIBUTORS.md",
   "CODE_OF_CONDUCT.md",
-  "index-src.html",
-  "mikuproject-src.html",
   "docs",
-  "lht-cmn",
   "scripts",
   "src",
   "testdata",
@@ -66,12 +115,22 @@ function parseArgs(argv) {
     options[key] = value;
     index += 1;
   }
+  if (options["v1-runtime-version"] !== undefined && !isSemver(options["v1-runtime-version"])) {
+    throw new Error("--v1-runtime-version must be a SemVer value");
+  }
+  if (options["package-version"] !== undefined && !isSemver(options["package-version"])) {
+    throw new Error("--package-version must be a SemVer value");
+  }
+  if (options["package-version"] !== undefined && options["v1-runtime-version"] === undefined) {
+    throw new Error("--package-version is supported only with --v1-runtime-version");
+  }
   return options;
 }
 
 function assertRequiredFilesExist() {
   const requiredFiles = [
-    "scripts/mikuproject-cli.mjs",
+    "scripts/miku-project-cli.mjs",
+    ...CLI_INTERNAL_MODULE_RELATIVE_PATHS,
     ...CORE_API_MODULE_RELATIVE_PATHS,
     ...XMLDOM_MODULE_RELATIVE_PATHS
   ];
@@ -89,7 +148,14 @@ function assertRequiredFilesExist() {
 
 function buildSingleMjsRuntime() {
   const packageJson = JSON.parse(readRepoFile("package.json"));
-  const cliSource = stripCliImports(readRepoFile("scripts/mikuproject-cli.mjs"));
+  const packageVersion = bundledPackageVersion ?? (packageJson.version || "unknown");
+  const cliSource = stripCliImports(readRepoFile("scripts/miku-project-cli.mjs"));
+  const legacyCliInternalModuleSources = LEGACY_CLI_INTERNAL_MODULE_RELATIVE_PATHS
+    .map((relativePath) => stripCliModuleSyntax(readRepoFile(relativePath)))
+    .join("\n\n");
+  const v1CliInternalModuleSources = V1_CLI_INTERNAL_MODULE_RELATIVE_PATHS
+    .map((relativePath) => stripCliModuleSyntax(readRepoFile(relativePath)))
+    .join("\n\n");
   const coreModuleSources = Object.fromEntries(
     CORE_API_MODULE_RELATIVE_PATHS.map((relativePath) => [relativePath, readRepoFile(relativePath)])
   );
@@ -104,11 +170,15 @@ function buildSingleMjsRuntime() {
     "#!/usr/bin/env node",
     "",
     "import fs from \"node:fs\";",
+    "import fsPromises from \"node:fs/promises\";",
     "import path from \"node:path\";",
     "import { fileURLToPath } from \"node:url\";",
+    "import { createHash } from \"node:crypto\";",
     "import { Blob as NodeBlob, File as NodeFile } from \"node:buffer\";",
     "",
-    `const BUNDLED_PACKAGE_VERSION = ${JSON.stringify(packageJson.version || "unknown")};`,
+    `const BUNDLED_PACKAGE_VERSION = ${JSON.stringify(packageVersion)};`,
+    `const BUNDLED_V1_RUNTIME_VERSION = ${JSON.stringify(v1RuntimeVersion)};`,
+    `const BUNDLED_V1_CONFORMANCE_CORPUS_DIGEST = ${JSON.stringify(v1RuntimeCorpusDigest)};`,
     "",
     "const BUNDLED_CORE_API_MODULE_RELATIVE_PATHS = Object.freeze(",
     `${JSON.stringify(CORE_API_MODULE_RELATIVE_PATHS, null, 2)});`,
@@ -147,6 +217,8 @@ function requireBundledXmldom(request, parentId = "/node_modules/@xmldom/xmldom/
   new Function("require", "module", "exports", source)(localRequire, module, module.exports);
   return module.exports;
 }`,
+    "",
+    "const { DOMParser } = requireBundledXmldom(\"@xmldom/xmldom\");",
     "",
     String.raw`function createBundledXmlDomGlobals() {
   const xmldom = requireBundledXmldom("@xmldom/xmldom");
@@ -245,10 +317,10 @@ function requireBundledXmldom(request, parentId = "/node_modules/@xmldom/xmldom/
     .join("\n");
   new Function(combinedCode)();
 
-  const api = globalThis.__mikuprojectCoreApi;
+  const api = globalThis.__mikuProjectCoreApi || globalThis.__mikuprojectCoreApi;
   if (!api) {
     restoreWindowGlobals();
-    throw new Error("Failed to boot __mikuprojectCoreApi");
+    throw new Error("Failed to boot __mikuProjectCoreApi");
   }
 
   return {
@@ -260,8 +332,52 @@ function requireBundledXmldom(request, parentId = "/node_modules/@xmldom/xmldom/
   };
 }`,
     "",
+    legacyCliInternalModuleSources,
+    "",
+    "const BUNDLED_V1_RUNTIME = (() => {",
+    v1CliInternalModuleSources,
+    "return { recognizesV1Workflow, rejectUnreleasedV1Workflow, runV1VersionedRuntime };",
+    "})();",
+    "const { recognizesV1Workflow, rejectUnreleasedV1Workflow, runV1VersionedRuntime } = BUNDLED_V1_RUNTIME;",
     cliSource
   ].join("\n");
+}
+
+function isSemver(value) {
+  return typeof value === "string"
+    && /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(value);
+}
+
+function computeV1ConformanceCorpusDigest() {
+  const corpusRoot = path.join(ROOT, "testdata", "conformance", "v1");
+  const relativePaths = collectV1CorpusFiles(corpusRoot, corpusRoot).sort(compareUnicodeScalars);
+  const bytes = relativePaths.map((relativePath) => {
+    const digest = sha256RawBytes(fs.readFileSync(path.join(corpusRoot, relativePath))).value;
+    return `${digest}  ${relativePath}\n`;
+  }).join("");
+  return sha256RawBytes(Buffer.from(bytes, "utf8"));
+}
+
+function collectV1CorpusFiles(corpusRoot, currentDirectory) {
+  const files = [];
+  const entries = fs.readdirSync(currentDirectory, { withFileTypes: true })
+    .sort((left, right) => compareUnicodeScalars(left.name, right.name));
+  for (const entry of entries) {
+    const absolutePath = path.join(currentDirectory, entry.name);
+    const relativePath = path.relative(corpusRoot, absolutePath).split(path.sep).join("/");
+    if (entry.isSymbolicLink()) {
+      throw new Error(`v1 conformance corpus must not contain a symbolic link: ${relativePath}`);
+    }
+    if (entry.isDirectory()) {
+      files.push(...collectV1CorpusFiles(corpusRoot, absolutePath));
+      continue;
+    }
+    if (!entry.isFile()) {
+      throw new Error(`v1 conformance corpus must contain regular files only: ${relativePath}`);
+    }
+    files.push(relativePath);
+  }
+  return files;
 }
 
 function buildClearGlobalsFunctionSource() {
@@ -273,22 +389,17 @@ function buildClearGlobalsFunctionSource() {
   return match[0];
 }
 
-function readCoreApiModuleRelativePaths() {
-  const loaderSource = readRepoFile("scripts/lib/core-api-loader.mjs");
-  const match = loaderSource.match(/export const CORE_API_MODULE_RELATIVE_PATHS = (\[[\s\S]*?\n\]);/);
-  if (!match) {
-    throw new Error("core-api-loader.mjs から CORE_API_MODULE_RELATIVE_PATHS を抽出できませんでした");
-  }
-  return Function(`"use strict"; return ${match[1]};`)();
+function stripCliImports(source) {
+  return stripCliModuleSyntax(source)
+    .trimStart();
 }
 
-function stripCliImports(source) {
+function stripCliModuleSyntax(source) {
   return source
     .replace(/^#!.*\n/, "")
-    .split("\n")
-    .filter((line) => !line.startsWith("import "))
-    .join("\n")
-    .trimStart();
+    .replace(/^import\s+[\s\S]*?;\n/gm, "")
+    .replace(/^export\s*\{[\s\S]*?\};\n?/gm, "")
+    .replace(/^export\s+(?=(?:async\s+)?(?:class|function)|const|let|var)\b/gm, "");
 }
 
 function toXmldomModuleId(relativePath) {
@@ -324,13 +435,13 @@ function collectSourceArchiveFiles() {
       files.push(relativePath);
     }
   }
-  return files.sort((a, b) => a.localeCompare(b));
+  return files.sort(compareNormalizedRelativePaths);
 }
 
 function collectFilesRecursive(relativeDir, files) {
   const absoluteDir = path.resolve(ROOT, relativeDir);
   const entries = fs.readdirSync(absoluteDir, { withFileTypes: true })
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => compareUtf16CodeUnits(toPosixPath(a.name), toPosixPath(b.name)));
   for (const entry of entries) {
     const relativePath = path.join(relativeDir, entry.name);
     if (entry.name === ".DS_Store") {
@@ -359,8 +470,8 @@ function buildTarFileEntry(name, data, mode) {
   header[156] = "0".charCodeAt(0);
   writeTarString(header, "ustar", 257, 6);
   writeTarString(header, "00", 263, 2);
-  writeTarString(header, "mikuproject", 265, 32);
-  writeTarString(header, "mikuproject", 297, 32);
+  writeTarString(header, "miku-project", 265, 32);
+  writeTarString(header, "miku-project", 297, 32);
   writeTarString(header, prefixPart, 345, 155);
 
   let checksum = 0;
@@ -417,6 +528,20 @@ function getArchiveMode(absolutePath) {
 
 function toPosixPath(relativePath) {
   return relativePath.split(path.sep).join("/");
+}
+
+function compareNormalizedRelativePaths(left, right) {
+  return compareUtf16CodeUnits(toPosixPath(left), toPosixPath(right));
+}
+
+function compareUtf16CodeUnits(left, right) {
+  if (left < right) {
+    return -1;
+  }
+  if (left > right) {
+    return 1;
+  }
+  return 0;
 }
 
 function readRepoFile(relativePath) {

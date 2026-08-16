@@ -4,9 +4,9 @@
 
 追随運用文書群の入口は `README.md` の `Development Docs` 節にも置いており、読み順もそこに合わせている。
 
-`miku-project-java` は、`vendor/mikuproject` に保持した Node.js 版 upstream を参照しながら、Java 版へ移植していく。
+`miku-project-java` は、historical portでは`vendor/mikuproject`に保持したNode.js upstreamを参照しながらJava版へ移植していく。新v1 CLIでは[immutable contract snapshot](v1-contract-snapshot.md)を唯一の仕様入力とし、moving subtreeを追随しない。
 
-現在は、主要導線の新規追加よりも、既存実装の確認、TODO / docs 整理、移植済み範囲の検証、upstream 差分確認を優先する保守フェーズとして扱う。
+historical portは、主要導線の新規追加よりも、既存実装の確認、TODO / docs 整理、移植済み範囲の検証、upstream 差分確認を優先する保守フェーズとして扱う。v1はP5の承認済みcontract snapshotに対する新しい適合工程であり、この保守規則と混同しない。
 新しい command や API を増やす前に、既存範囲が upstream 対応表、test 対応表、follow-up log とずれていないかを確認する。
 
 このリポジトリでは、通常の新規 Java プロジェクトのように Java 側の都合だけで構成を最適化することを第一目的にしない。
@@ -25,13 +25,13 @@ Java CLI の正式配布成果物は、`mvn package` で生成される単一 ja
 配布パッケージとしては、`target/miku-project-dist.zip` も生成し、`miku-project-sources.jar` と利用側向け文書 `docs/runtime-java-cli.md` を同梱する。
 
 AI JSON 仕様 Markdown は、実行時には classpath / JAR 内リソースとして扱う。
-固定 vendored snapshot の元ファイル名は `vendor/mikuproject/docs/mikuproject-ai-json-spec.md` のままだが、公開する ID と本文の製品名は `miku-project-ai-json-spec` / `miku-project` に正規化する。
-API / CLI 実行時に `vendor/...` 相対パスを直接読む実装には戻さない。subtree を命名変更コミット以降へ更新する場合は、元ファイル名も `miku-project-ai-json-spec.md` へ追従する。
+vendored upstream の `vendor/mikuproject/docs/miku-project-ai-json-spec.md` を、公開 ID と本文の製品名 `miku-project-ai-json-spec` / `miku-project` のまま内包する。
+API / CLI 実行時に `vendor/...` 相対パスを直接読む実装には戻さない。
 
 自動テストは JUnit を使う。
 Java 1.8 前提でも利用可能な JUnit 系の現行版を第一候補とし、原則として JUnit 5 Jupiter を優先する。
 
-テスト実行の正本は `mvn test` とする。
+Java test実行の正本は`mvn test`とする。repository全体では`sh scripts/test-all.sh`を正本とし、v1 contract importerのNode testに続けて全Java testを実行する。
 素の `javac` は、主に `src/main/java` の簡易構文確認に使い、`src/test/java` の単発確認手段としては前提にしない。
 
 追随や保守で部分確認したいときは、`mvn test` に加えて次の targeted 実行を使ってよい。
@@ -52,6 +52,23 @@ Java 1.8 前提でも利用可能な JUnit 系の現行版を第一候補とし�
   - `MIKUPROJECT_RUN_NODE_PARITY=true mvn test`
 - runtime jar / sources jar / distribution zip reproducibility:
   - `sh scripts/verify-reproducible-package.sh`
+- v1 contract snapshot integrity:
+  - `sh scripts/test-all.sh`
+  - `mvn test -Dtest=ContractSnapshotVerifierTest`
+  - `node --test scripts/import-miku-project-contract-snapshot.test.mjs`
+- v1 conformance index loading:
+  - `mvn test -Dtest=ConformanceSuiteLoaderTest`
+- v1 Schema registry:
+  - `mvn test -Dtest=ConformanceSchemaRegistryTest`
+- v1 cross-artifact binding:
+  - `mvn test -Dtest=ConformanceBindingValidatorTest`
+- v1 comparison assertion boundaries:
+  - `mvn test -Dtest=ConformanceComparisonAssertionsTest`
+- v1 `validate` vertical slice (P5-C1):
+  - `mvn test -Dtest=MikuProjectV1ValidateTest`
+  - This exercises the isolated command service only. It does not make the
+    legacy public CLI a v1 launcher; P5-E supplies the manifest-verified JAR
+    entrypoint.
 
 upstream 更新追随で実行結果を差分確認へつなぐときは、次も併せて参照する。
 

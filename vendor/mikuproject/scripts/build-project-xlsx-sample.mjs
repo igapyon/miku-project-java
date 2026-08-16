@@ -6,6 +6,7 @@ const ROOT = process.cwd();
 const typesCode = fs.readFileSync(path.resolve(ROOT, "src/js/types.js"), "utf8");
 const markdownEscapeCode = fs.readFileSync(path.resolve(ROOT, "src/js/markdown-escape.js"), "utf8");
 const excelIoUtilCode = fs.readFileSync(path.resolve(ROOT, "src/js/excel-io-util.js"), "utf8");
+const msOfficeCoreCode = fs.readFileSync(path.resolve(ROOT, "src/js/ms-office-core.js"), "utf8");
 const excelIoZipCode = fs.readFileSync(path.resolve(ROOT, "src/js/excel-io-zip.js"), "utf8");
 const excelIoNormalizeCode = fs.readFileSync(path.resolve(ROOT, "src/js/excel-io-normalize.js"), "utf8");
 const excelIoPackageXmlCode = fs.readFileSync(path.resolve(ROOT, "src/js/excel-io-package-xml.js"), "utf8");
@@ -56,7 +57,7 @@ globalThis.DOMParser = dom.window.DOMParser;
 globalThis.XMLSerializer = dom.window.XMLSerializer;
 globalThis.Node = dom.window.Node;
 
-globalThis.eval(`${typesCode}\n${markdownEscapeCode}\n${excelIoUtilCode}\n${excelIoZipCode}\n${excelIoNormalizeCode}\n${excelIoPackageXmlCode}\n${excelIoWorksheetBuildCode}\n${excelIoWorksheetParseCode}\n${excelIoWorkbookParseCode}\n${excelIoWorkbookBuildCode}\n${excelIoStylesBuildCode}\n${excelIoStylesParseCode}\n${excelIoCode}\n${msProjectAiViewsCode}\n${msProjectCalendarCode}\n${msProjectSamplesCode}\n${msProjectCsvCode}\n${msProjectValidateHelpersCode}\n${msProjectValidateCode}\n${msProjectXmlDomCode}\n${msProjectCodecCode}\n${msProjectMermaidCode}\n${msProjectXmlCode}\n${projectWorkbookSchemaCode}\n${projectXlsxImportUtilCode}\n${projectXlsxImportProjectCode}\n${projectXlsxImportCalendarsCode}\n${projectXlsxImportEntitiesCode}\n${projectXlsxImportCode}\n${projectXlsxExportUtilCode}\n${projectXlsxExportProjectCode}\n${projectXlsxExportEntitiesCode}\n${projectXlsxExportCalendarsCode}\n${projectXlsxExportCode}\n${projectXlsxCode}\n${wbsDatebandCode}\n${wbsXlsxBaseCode}\n${wbsXlsxTaskmetaCode}\n${wbsXlsxLayoutCode}\n${wbsXlsxSectionsCode}\n${wbsXlsxCellsCode}\n${wbsXlsxExportCode}\n${wbsXlsxPublicCode}\n${wbsXlsxCode}\n${wbsMarkdownCode}`);
+globalThis.eval(`${typesCode}\n${markdownEscapeCode}\n${excelIoUtilCode}\n${msOfficeCoreCode}\n${excelIoZipCode}\n${excelIoNormalizeCode}\n${excelIoPackageXmlCode}\n${excelIoWorksheetBuildCode}\n${excelIoWorksheetParseCode}\n${excelIoWorkbookParseCode}\n${excelIoWorkbookBuildCode}\n${excelIoStylesBuildCode}\n${excelIoStylesParseCode}\n${excelIoCode}\n${msProjectAiViewsCode}\n${msProjectCalendarCode}\n${msProjectSamplesCode}\n${msProjectCsvCode}\n${msProjectValidateHelpersCode}\n${msProjectValidateCode}\n${msProjectXmlDomCode}\n${msProjectCodecCode}\n${msProjectMermaidCode}\n${msProjectXmlCode}\n${projectWorkbookSchemaCode}\n${projectXlsxImportUtilCode}\n${projectXlsxImportProjectCode}\n${projectXlsxImportCalendarsCode}\n${projectXlsxImportEntitiesCode}\n${projectXlsxImportCode}\n${projectXlsxExportUtilCode}\n${projectXlsxExportProjectCode}\n${projectXlsxExportEntitiesCode}\n${projectXlsxExportCalendarsCode}\n${projectXlsxExportCode}\n${projectXlsxCode}\n${wbsDatebandCode}\n${wbsXlsxBaseCode}\n${wbsXlsxTaskmetaCode}\n${wbsXlsxLayoutCode}\n${wbsXlsxSectionsCode}\n${wbsXlsxCellsCode}\n${wbsXlsxExportCode}\n${wbsXlsxPublicCode}\n${wbsXlsxCode}\n${wbsMarkdownCode}`);
 
 const excelIo = globalThis.__mikuprojectExcelIo;
 const xml = globalThis.__mikuprojectXml;
@@ -64,19 +65,19 @@ const projectXlsx = globalThis.__mikuprojectProjectXlsx;
 const wbsXlsx = globalThis.__mikuprojectWbsXlsx;
 const wbsMarkdown = globalThis.__mikuprojectWbsMarkdown;
 if (!excelIo?.XlsxWorkbookCodec) {
-  throw new Error("mikuproject excel io module is not loaded");
+  throw new Error("miku-project excel io module is not loaded");
 }
 if (!xml?.SAMPLE_XML || typeof xml.importMsProjectXml !== "function") {
-  throw new Error("mikuproject xml module is not loaded");
+  throw new Error("miku-project xml module is not loaded");
 }
 if (typeof projectXlsx?.exportProjectWorkbook !== "function") {
-  throw new Error("mikuproject project xlsx module is not loaded");
+  throw new Error("miku-project project xlsx module is not loaded");
 }
 if (typeof wbsXlsx?.exportWbsWorkbook !== "function") {
-  throw new Error("mikuproject wbs xlsx module is not loaded");
+  throw new Error("miku-project wbs xlsx module is not loaded");
 }
 if (typeof wbsMarkdown?.exportWbsMarkdown !== "function") {
-  throw new Error("mikuproject wbs markdown module is not loaded");
+  throw new Error("miku-project wbs markdown module is not loaded");
 }
 
 const codec = new excelIo.XlsxWorkbookCodec();
@@ -99,10 +100,10 @@ const richWbsMarkdownText = wbsMarkdown.exportWbsMarkdown(richMarkdownModel, {
 
 const bytes = codec.exportWorkbook(workbook);
 const wbsBytes = codec.exportWorkbook(wbsWorkbook);
-const outputPath = path.resolve(ROOT, "local-data/mikuproject-sample.xlsx");
-const wbsOutputPath = path.resolve(ROOT, "local-data/mikuproject-wbs-sample.xlsx");
-const wbsMarkdownOutputPath = path.resolve(ROOT, "local-data/mikuproject-wbs-sample.md");
-const richWbsMarkdownOutputPath = path.resolve(ROOT, "local-data/mikuproject-wbs-sample-rich.md");
+const outputPath = path.resolve(ROOT, "local-data/miku-project-sample.xlsx");
+const wbsOutputPath = path.resolve(ROOT, "local-data/miku-project-wbs-sample.xlsx");
+const wbsMarkdownOutputPath = path.resolve(ROOT, "local-data/miku-project-wbs-sample.md");
+const richWbsMarkdownOutputPath = path.resolve(ROOT, "local-data/miku-project-wbs-sample-rich.md");
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, Buffer.from(bytes));
 fs.writeFileSync(wbsOutputPath, Buffer.from(wbsBytes));

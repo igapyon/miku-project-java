@@ -22,6 +22,10 @@ const excelIoCode = readFileSync(
   path.resolve(__dirname, "../src/js/excel-io.js"),
   "utf8"
 );
+const msOfficeCoreCode = readFileSync(
+  path.resolve(__dirname, "../src/js/ms-office-core.js"),
+  "utf8"
+);
 const excelIoZipCode = readFileSync(
   path.resolve(__dirname, "../src/js/excel-io-zip.js"),
   "utf8"
@@ -60,7 +64,7 @@ const excelIoStylesParseCode = readFileSync(
 );
 
 function bootExcelIoModule() {
-  new Function(`${typesCode}\n${excelIoUtilCode}\n${excelIoZipCode}\n${excelIoNormalizeCode}\n${excelIoPackageXmlCode}\n${excelIoWorksheetBuildCode}\n${excelIoWorksheetParseCode}\n${excelIoWorkbookParseCode}\n${excelIoWorkbookBuildCode}\n${excelIoStylesBuildCode}\n${excelIoStylesParseCode}\n${excelIoCode}`)();
+  new Function(`${typesCode}\n${excelIoUtilCode}\n${msOfficeCoreCode}\n${excelIoZipCode}\n${excelIoNormalizeCode}\n${excelIoPackageXmlCode}\n${excelIoWorksheetBuildCode}\n${excelIoWorksheetParseCode}\n${excelIoWorkbookParseCode}\n${excelIoWorkbookBuildCode}\n${excelIoStylesBuildCode}\n${excelIoStylesParseCode}\n${excelIoCode}`)();
   return globalThis.__mikuprojectExcelIo;
 }
 
@@ -132,7 +136,7 @@ function buildDeflatedZipWithSingleEntry(name, text) {
   return bytes;
 }
 
-describe("mikuproject excel io", () => {
+describe("miku-project excel io", () => {
   it("exports a minimal xlsx package with required workbook entries", () => {
     const excelIo = bootExcelIoModule();
     const codec = new excelIo.XlsxWorkbookCodec();
@@ -261,7 +265,9 @@ describe("mikuproject excel io", () => {
         rows: [{
           cells: [
             { value: "ok\u0000bad\u0008text" },
-            { value: "line1\nline2\tok" }
+            { value: "line1\nline2\tok" },
+            { value: "😀 🐇 𠮷野家" },
+            { value: "before\uD800middle\uDC00\uFFFE\uFFFFafter" }
           ]
         }]
       }]
@@ -277,6 +283,8 @@ describe("mikuproject excel io", () => {
     expect(sheetXml).not.toContain("\u0008");
     expect(imported.sheets[0].rows[0].cells[0].value).toBe("okbadtext");
     expect(imported.sheets[0].rows[0].cells[1].value).toBe("line1\nline2\tok");
+    expect(imported.sheets[0].rows[0].cells[2].value).toBe("😀 🐇 𠮷野家");
+    expect(imported.sheets[0].rows[0].cells[3].value).toBe("beforemiddleafter");
   });
 
   it("keeps explicitly formatted numeric cells as numeric values", () => {

@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>miku-project</artifactId>
-  <version>0.12.0</version>
+  <version>1.0.4</version>
   <packaging>jar</packaging>
 
   <name>miku-project-java</name>
@@ -82,7 +82,7 @@
                 <resource>
                   <directory>${project.basedir}/vendor/mikuproject/docs</directory>
                   <includes>
-                    <include>mikuproject-ai-json-spec.md</include>
+                    <include>miku-project-ai-json-spec.md</include>
                   </includes>
                 </resource>
               </resources>

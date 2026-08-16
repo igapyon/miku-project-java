@@ -765,7 +765,7 @@ follow-up:
   - `miku-project-ai-json-spec` の安定取得
   - version 抽出
   - Java 側では実行時に classpath / JAR 内リソースとして内包された本文を参照し、公開製品名だけを current upstream に合わせる
-  - 固定 vendored snapshot の元 Markdown は `vendor/mikuproject/docs/mikuproject-ai-json-spec.md`。subtree 更新時は upstream の `docs/miku-project-ai-json-spec.md` へ切り替える
+  - vendored upstream Markdown は `vendor/mikuproject/docs/miku-project-ai-json-spec.md`。Java は同じ本文を classpath resource として内包する
 
 ### `vendor/mikuproject/src/ts/core-api-msproject-ai.ts`
 

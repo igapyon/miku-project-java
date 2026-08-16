@@ -1,14 +1,12 @@
-# mikuproject
+# miku-project
 
-![mikuproject OGP](docs/screenshots/mikuproject-ogp.png)
+GitHub: https://github.com/igapyon/miku-project
 
-GitHub: https://github.com/igapyon/mikuproject
+Agent Skills 版: https://github.com/igapyon/miku-project-skills
 
-Agent Skills 版: https://github.com/igapyon/mikuproject-skills
+`miku-project` は、`MS Project XML` を意味の基軸に、生成AIとの往復を支えるために設計されたローカル HTML ツールです。WBS の草案作成から再編集・再取込、人向けの可視化・帳票化までを、ひとつの流れとして扱えます。
 
-`mikuproject` は、`MS Project XML` を意味の基軸に、生成AIとの往復を支えるために設計されたローカル HTML ツールです。WBS の草案作成から再編集・再取込、人向けの可視化・帳票化までを、ひとつの流れとして扱えます。
-
-`mikuproject` の強みは、`MS Project XML` を意味の基軸として保ちながら、生成AIと人のあいだを往復できることです。WBS 草案の作成、生成AI が扱いやすい形への表現変換、生成AI から返った内容の再取込、人による確認と修正、そして可視化・帳票化までを、同じプロジェクト情報の流れとして扱えます。`XLSX`、`Markdown`、`JSON`、`Mermaid`、生成AI向け表現、そして必要に応じた `MS Project` への橋渡しは、それぞれの用途に応じた周辺表現として無理なく出し分けられます。
+`miku-project` の強みは、`MS Project XML` を意味の基軸として保ちながら、生成AIと人のあいだを往復できることです。WBS 草案の作成、生成AI が扱いやすい形への表現変換、生成AI から返った内容の再取込、人による確認と修正、そして可視化・帳票化までを、同じプロジェクト情報の流れとして扱えます。`XLSX`、`Markdown`、`JSON`、`Mermaid`、生成AI向け表現、そして必要に応じた `MS Project` への橋渡しは、それぞれの用途に応じた周辺表現として無理なく出し分けられます。
 
 特に、次の 3 つを重視して設計しています。
 
@@ -16,57 +14,23 @@ Agent Skills 版: https://github.com/igapyon/mikuproject-skills
 - 生成AIと人の往復に適した表現変換 / 再取込 / 介在を支えること
 - 人が読むための可視化と、WBS 帳票・SVG を含む成果物出力を提供すること
 
-配布物は `mikuproject.html` ひとつの single-file web app で、Web ブラウザさえあればインストール不要・ネットワーク不要で利用できます。
+Web UI と single-file 配布物は [miku-project-web](https://github.com/igapyon/miku-project-web) が canonical repository として管理します。Main Application は UI 非依存の core API、Node.js CLI、browser-compatible runtime bundle を提供します。
 
 `MS Project XML` を意味の基軸として扱い、`.xlsx` と workbook JSON は確認・可視化・限定編集のための周辺表現として扱います。生成AI 連携の編集用 JSON は、workbook JSON と区別するため当面 `.editjson` 拡張子を推奨します。
 
-Agent Skills から `mikuproject` の CLI / AI JSON 連携を扱うための関連リポジトリとして、[`mikuproject-skills`](https://github.com/igapyon/mikuproject-skills) があります。
+Agent Skills から `miku-project` の CLI / AI JSON 連携を扱うための関連リポジトリとして、[`miku-project-skills`](https://github.com/igapyon/miku-project-skills) があります。
 
 ## 代表的なユースケース
 
-- その1: 生成AI との対話で WBS 草案を作成し、`mikuproject` に取り込んで、人と生成AIが確認・修正しながら、帳票や可視化成果物として仕上げる
-- その2: 既存の `MS Project XML` を `mikuproject` に取り込み、内容を確認しながら、`WBS Excel ブック (.xlsx)` や日次・週次のガント表現や月次カレンダーの `SVG`、`Markdown` などの人向け成果物へ展開する
-- その3: `mikuproject` で扱う WBS やプロジェクト情報を生成AI向けに表現変換し、生成AIが返した結果を再び取り込みながら、人と生成AIがレビュー・調整・再利用しやすい形へ整える
+- その1: 生成AI との対話で WBS 草案を作成し、`miku-project` に取り込んで、人と生成AIが確認・修正しながら、帳票や可視化成果物として仕上げる
+- その2: 既存の `MS Project XML` を `miku-project` に取り込み、内容を確認しながら、`WBS Excel ブック (.xlsx)` や日次・週次のガント表現や月次カレンダーの `SVG`、`Markdown` などの人向け成果物へ展開する
+- その3: `miku-project` で扱う WBS やプロジェクト情報を生成AI向けに表現変換し、生成AIが返した結果を再び取り込みながら、人と生成AIがレビュー・調整・再利用しやすい形へ整える
 
 import / export / 生成AI連携の使い分けを「何をしたいか」から辿りたい場合は、[docs/import-export-workflows.md](docs/import-export-workflows.md) を参照してください。`replace / merge / patch` の違い、`project-overview / task-edit / phase-detail / bundle` の使い分け、既存WBSの安全な局所修正フローをまとめています。
 
-## スクリーンショット
+## Web App
 
-### Input
-
-`Load from file`、`サンプル`、`生成AI連携` から入力を受け付ける。
-
-![Input](docs/screenshots/screen01.png)
-
-### Overview
-
-`Daily / Weekly / Monthly Calendar` preview をここで行う。
-
-![Overview](docs/screenshots/screen02.png)
-
-### Overview Monthly Calendar
-
-`Overview` では `Monthly Calendar` preview も確認できる。
-
-![Overview Monthly Calendar](docs/screenshots/screen02c.png)
-
-### Output
-
-`MS Project XML`、`XLSX`、workbook JSON、`CSV`、`WBS XLSX`、`WBS Markdown`、`Daily / Weekly / Monthly Calendar SVG`、Mermaid、生成AI向け `.editjson`、`ALL` ZIP をここから保存する。
-
-![Output](docs/screenshots/screen03.png)
-
-### WBS Excel ブック (.xlsx)
-
-人が読むための帳票として出力される `WBS Excel ブック (.xlsx)` の例。
-
-![WBS Excel ブック](docs/screenshots/excel01.png)
-
-### WBS Markdown
-
-`WBS ツリー` と `WBS テーブル` を含む `Markdown` 出力の例。
-
-![WBS Markdown](docs/screenshots/markdown01.png)
+ブラウザでの入力、可視化、ダウンロード、screenshots、single-file HTML は [miku-project-web](https://github.com/igapyon/miku-project-web) を参照してください。Web App は固定した Main Application runtime を build 時に検証・内包し、実行時にネットワークから runtime を取得しません。
 
 ## できること
 
@@ -85,34 +49,9 @@ import / export / 生成AI連携の使い分けを「何をしたいか」から
 
 ## 使い始め方
 
-もっとも簡単なのは、生成済みの [mikuproject.html](mikuproject.html) をブラウザで開く方法です。
+Web App の使い始め方とブラウザ配布物は [miku-project-web](https://github.com/igapyon/miku-project-web) を参照してください。
 
-画面上では主に次を行えます。
-
-- `Load from file` からの `MS Project XML / XLSX / workbook JSON (.json) / 生成AI向け編集用 JSON (.editjson) / CSV + ParentID` の読込
-- 生成AIによる WBS 草案（`project_draft_view`）をもとに生成した `MS Project XML` の読込
-- 生成AIが返した WBS 草案（`project_draft_view`）の JSON 貼り付け取込
-- 内部モデル、validation、`Daily / Weekly / Monthly Calendar` preview の確認
-- `MS Project XML / XLSX / WBS XLSX / workbook JSON / CSV + ParentID / Daily SVG / Weekly SVG / Monthly Calendar SVG / Mermaid / 生成AI向け編集用 JSON (.editjson)` の保存
-- 主要成果物をまとめた `ALL` ZIP の保存
-
-主な保存名の例:
-
-- `Daily SVG`: `mikuproject-wbs-daily-<YYYYMMDDHHmm>.svg`
-- `Weekly SVG`: `mikuproject-wbs-weekly-<YYYYMMDDHHmm>.svg`
-- `Monthly Calendar SVG`: `mikuproject-monthly-wbs-calendar-<YYYYMMDDHHmm>.zip`
-- `ALL`: `mikuproject-all-<YYYYMMDDHHmm>.zip`
-
-`Monthly Calendar SVG` の ZIP 内では、月別ファイルを `monthly-calendar/YYYY-MM.svg` の形で格納します。
-
-### Windows 11 での `SVG` / `ZIP` 取扱いメモ
-
-- `Monthly Calendar SVG` は、月ごとの `SVG` をまとめた `ZIP` として保存される
-- `ALL` も、複数の成果物をまとめた `ZIP` として保存される
-- `Windows 11` では、ダウンロードした `ZIP` や `SVG` が「危険なファイル」として警告される場合がある
-- これは `mikuproject` 固有の独自拡張ではなく、`ZIP` や `SVG` を Windows 側が外部由来ファイルとして慎重に扱う場合があるため
-- 少なくとも `Monthly Calendar SVG` と `ALL` の `ZIP` は、アプリ内で生成した成果物をまとめたもの
-- 警告の有無や表示文言は、利用するブラウザや Windows の設定に依存する可能性がある
+CLI の使い始め方、AI JSON API、runtime contract はこの repository の [docs/development.md](docs/development.md) と [docs/browser-runtime.md](docs/browser-runtime.md) を参照してください。
 
 ## 開発
 
@@ -122,13 +61,21 @@ npm run build
 npm test
 ```
 
-`npm run build` には `build:web`、`build:cli-bundle`、`test:fast` が含まれる。開発用コマンドの詳細、テスト運用、`local-data/` の扱いは [docs/development.md](docs/development.md) を参照してください。
+`npm run build` には `build:core`、`build:browser-runtime`、`build:cli-bundle`、`test:fast` が含まれる。開発用コマンドの詳細、テスト運用、`local-data/` の扱いは [docs/development.md](docs/development.md) を参照してください。
+
+`workplace/` は外部リポジトリの一時 clone、展開物、検証成果物などを置くローカル作業領域として扱い、`workplace/.gitkeep` 以外は Git 管理しません。
+
+`src/js/` は core runtime の Git 管理する生成物です。手編集はせず、対応する `src/ts/` を更新して `npm run build:core` で再生成します。`node_modules/`、`.npm-cache/`、`coverage/`、`bundle/`、`runtime/`、`local-data/`、`workplace/` と個人用の `.vscode/mcp.json` はローカル作業用であり、Git 管理しません。
+
+miku-soft の共有標準と、このリポジトリの追従状況は [docs/miku-soft-reference.md](docs/miku-soft-reference.md) と [docs/migration-worklog.md](docs/migration-worklog.md) を参照してください。
+
+CLI、Java CLI、Agent Skillsを中心にしたゼロベース再設計は、[2026-08-09版仕様](docs/miku-project-zero-base-spec-v20260809.md)、[2026-08-10版実施計画](docs/miku-project-zero-base-implementation-plan-v20260810.md)、[Gate G4 readiness](docs/miku-project-gate-g4-readiness-v20260814.md)、[Java contract handoff v1.0.3](docs/miku-project-java-contract-handoff-v1.0.3.md)、[semantic contract v1](docs/miku-project-semantic-contract-v1.md)、[format and loss contract v1](docs/miku-project-format-and-loss-contract-v1.md)、[change contract v1](docs/miku-project-change-contract-v1.md)、[CLI contract v1](docs/miku-project-cli-contract-v1.md)、[CLI result and diagnostics contract v1](docs/miku-project-cli-result-contract-v1.md)、[runtime capability contract v1](docs/miku-project-runtime-capability-contract-v1.md)、[runtime manifest contract v1](docs/miku-project-runtime-manifest-contract-v1.md)、[conformance corpus v1](docs/miku-project-conformance-corpus-v1.md)、[human gate and next action contract v1](docs/miku-project-human-gate-and-next-action-contract-v1.md) を参照してください。WebとMCPは、この初期計画では後続検討です。
 
 ## 再利用 API
 
-single-file web app 向けの既存 `globalThis.__mikuproject*` 群は維持しつつ、Agent Skills / CLI / MCP から使いやすい集約入口として `globalThis.__mikuprojectCoreApi` を公開しています。
+Web App / Agent Skills / CLI / MCP から使いやすい集約入口として `globalThis.__mikuProjectCoreApi` を公開しています。
 
-- `getAiJsonSpec()` / `getAiJsonSpecText()`: `mikuproject-ai-json-spec` の安定取得
+- `getAiJsonSpec()` / `getAiJsonSpecText()`: `miku-project-ai-json-spec` の安定取得
 - `parseAiJsonText()` / `importAiJsonDocument()` / `importAiJsonText()`: `project_draft_view` / Patch JSON / workbook JSON の UI 非依存な共通入口
 - `importExternal()`: `MS Project XML / XLSX / workbook JSON / project_draft_view / patch JSON` の format-aware な共通 import 入口
 - `projectModel`, `msProject`, `aiViews`, `workbookJson`, `xlsx`, `patchJson`, `report`: `ProjectModel` 周りの import / export / validate の集約 entrypoint
@@ -150,7 +97,7 @@ single-file web app 向けの既存 `globalThis.__mikuproject*` 群は維持し�
 `importExternal()` の最小例:
 
 ```ts
-const api = globalThis.__mikuprojectCoreApi;
+const api = globalThis.__mikuProjectCoreApi;
 
 const replaceResult = api.importExternal({
   source: { format: "xlsx", bytes },
@@ -180,29 +127,29 @@ Node 側から `core API` を起動する最小 helper は [`scripts/lib/core-ap
 
 Node 側から `core API` を薄く包む最小 CLI first cut として、次の入口を追加している。
 
-- `mikuproject ai spec`
-- `mikuproject --version`
-- `mikuproject ai export project-overview`
-- `mikuproject ai export task-edit`
-- `mikuproject ai export phase-detail`
-- `mikuproject ai export bundle`
-- `mikuproject ai detect-kind`
-- `mikuproject ai validate-patch`
-- `mikuproject state from-draft`
-- `mikuproject state summarize`
-- `mikuproject state diff`
-- `mikuproject state apply-patch`
-- `mikuproject import xlsx`
-- `mikuproject export workbook-json`
-- `mikuproject export xml`
-- `mikuproject export xlsx`
-- `mikuproject report wbs-xlsx`
-- `mikuproject report daily-svg`
-- `mikuproject report weekly-svg`
-- `mikuproject report monthly-calendar-svg`
-- `mikuproject report all`
-- `mikuproject report wbs-markdown`
-- `mikuproject report mermaid`
+- `miku-project ai spec`
+- `miku-project --version`
+- `miku-project ai export project-overview`
+- `miku-project ai export task-edit`
+- `miku-project ai export phase-detail`
+- `miku-project ai export bundle`
+- `miku-project ai detect-kind`
+- `miku-project ai validate-patch`
+- `miku-project state from-draft`
+- `miku-project state summarize`
+- `miku-project state diff`
+- `miku-project state apply-patch`
+- `miku-project import xlsx`
+- `miku-project export workbook-json`
+- `miku-project export xml`
+- `miku-project export xlsx`
+- `miku-project report wbs-xlsx`
+- `miku-project report daily-svg`
+- `miku-project report weekly-svg`
+- `miku-project report monthly-calendar-svg`
+- `miku-project report all`
+- `miku-project report wbs-markdown`
+- `miku-project report mermaid`
 
 text 系の主成果物は `stdout` または `--out <path>`、warning / diagnostics は `stderr` を基本とする。
 XLSX / ZIP などの binary artifact は `--out <path>` へ出力する。stream-friendly な binary 入出力が必要な場合は、明示的に `--in-base64 -` / `--out-base64 -` を使う。
@@ -213,66 +160,113 @@ XLSX / ZIP などの binary artifact は `--out <path>` へ出力する。stream
 例:
 
 ```bash
-mikuproject --version
-mikuproject ai spec
-mikuproject ai export project-overview --in workbook.json --out overview.editjson
-mikuproject ai export task-edit --in workbook.json --task-uid 123 --out task.editjson
-mikuproject ai export phase-detail --in workbook.json --phase-uid 100 --root-task-uid 123 --max-depth 2 --out phase.editjson
-mikuproject ai detect-kind --in patch.json
-mikuproject ai validate-patch --state workbook.json --in patch.json --diagnostics json
-mikuproject state from-draft --in draft.json --out workbook.json
-mikuproject state summarize --in workbook.json --diagnostics json
-mikuproject state diff --before workbook.before.json --after workbook.after.json --diagnostics json
-mikuproject state apply-patch --state workbook.json --in patch.json --out workbook.next.json
-mikuproject import xlsx --in project.xlsx --out workbook.json
-base64 < project.xlsx | mikuproject import xlsx --in-base64 - --out -
-mikuproject export xml --in workbook.json --out project.xml
-mikuproject export xlsx --in workbook.json --out project.xlsx
-mikuproject export xlsx --in workbook.json --out-base64 -
-mikuproject report wbs-xlsx --in workbook.json --out project-wbs.xlsx
-mikuproject report daily-svg --in workbook.json --out project-daily.svg
-mikuproject report weekly-svg --in workbook.json --out project-weekly.svg
-mikuproject report monthly-calendar-svg --in workbook.json --out project-monthly.zip
-mikuproject report all --in workbook.json --out project-report-bundle.zip
-mikuproject report wbs-markdown --in workbook.json --out project-wbs.md
-mikuproject report mermaid --in workbook.json --out project.mmd
+miku-project --version
+miku-project ai spec
+miku-project ai export project-overview --in workbook.json --out overview.editjson
+miku-project ai export task-edit --in workbook.json --task-uid 123 --out task.editjson
+miku-project ai export phase-detail --in workbook.json --phase-uid 100 --root-task-uid 123 --max-depth 2 --out phase.editjson
+miku-project ai detect-kind --in patch.json
+miku-project ai validate-patch --state workbook.json --in patch.json --diagnostics json
+miku-project state from-draft --in draft.json --out workbook.json
+miku-project state summarize --in workbook.json --diagnostics json
+miku-project state diff --before workbook.before.json --after workbook.after.json --diagnostics json
+miku-project state apply-patch --state workbook.json --in patch.json --out workbook.next.json
+miku-project import xlsx --in project.xlsx --out workbook.json
+base64 < project.xlsx | miku-project import xlsx --in-base64 - --out -
+miku-project export xml --in workbook.json --out project.xml
+miku-project export xlsx --in workbook.json --out project.xlsx
+miku-project export xlsx --in workbook.json --out-base64 -
+miku-project report wbs-xlsx --in workbook.json --out project-wbs.xlsx
+miku-project report daily-svg --in workbook.json --out project-daily.svg
+miku-project report weekly-svg --in workbook.json --out project-weekly.svg
+miku-project report monthly-calendar-svg --in workbook.json --out project-monthly.zip
+miku-project report all --in workbook.json --out project-report-bundle.zip
+miku-project report wbs-markdown --in workbook.json --out project-wbs.md
+miku-project report mermaid --in workbook.json --out project.mmd
 ```
 
 `report monthly-calendar-svg` は月別 SVG 一式をまとめた ZIP を出力する。
 `report all` は `wbs.xlsx` / `wbs.md` / `mermaid.mmd` / `daily.svg` / `weekly.svg` / `monthly-calendar/YYYY-MM.svg` をまとめた ZIP を出力する。
 
+## Browser runtime artifact
+
+`miku-project-web` などの browser downstream が build 時に取り込む importable runtime を生成できる。
+
+```bash
+npm run build:browser-runtime
+```
+
+既定の出力先は `bundle/miku-project-runtime.mjs` である。`version`、`embeddedCorePaths`、`loadMikuProjectRuntime(options)` と default loader を公開し、Node.js API、CLI 自動実行、UI event/download 層を含めない。公開契約、smoke、Release asset、SHA-256 固定による downstream 取込は [Browser Runtime Contract](docs/browser-runtime.md) を参照。
+
 ## CLI runtime artifact
 
-`mikuproject` 側で、Agent Skills など下流から受け取って実行できる単一 `MJS` CLI runtime artifact を生成できる。
+`miku-project` 側で、Agent Skills など下流から受け取って実行できる単一 `MJS` CLI runtime artifact を生成できる。
 
 ```bash
 npm run build:cli-bundle
 ```
 
-既定の出力先は `bundle/mikuproject.mjs` と `bundle/mikuproject-sources.tgz` である。
+既定の出力先は `bundle/miku-project.mjs` と `bundle/miku-project-sources.tgz` である。
 この artifact には、CLI entrypoint、`core API` 実行に必要な `src/js` runtime、XML DOM 実装を含めている。
-`mikuproject-sources.tgz` には、再ビルド・監査・下流確認用の source / docs / tests をまとめて格納する。
+`miku-project-sources.tgz` には、再ビルド・監査・下流確認用の source / docs / tests をまとめて格納する。
 
 生成後は追加の `npm install` なしで、そのまま CLI 実行に使える。たとえば次で動く。
 
 ```bash
-node bundle/mikuproject.mjs ai spec
-node bundle/mikuproject.mjs export xml --in workbook.json --out project.xml
+node bundle/miku-project.mjs ai spec
+node bundle/miku-project.mjs export xml --in workbook.json --out project.xml
 ```
 
-`mikuproject-skills` などの下流 Agent Skills では、この Node.js runtime artifact を `skills/mikuproject/runtime/mikuproject.mjs` のような skill-local runtime path に配置して使う想定である。
+`miku-project-skills` などの下流 Agent Skills では、この Node.js runtime artifact を `skills/miku-project/runtime/miku-project.mjs` のような skill-local runtime path に配置して使う想定である。
 
 生成時は repo root の `node_modules/@xmldom/xmldom` から XML DOM 実装を artifact 内へ埋め込む。そのため、artifact 生成前には一度 `npm install` 済みであることを前提とする。生成後の実行時には、`@xmldom/xmldom` や `jsdom` の `node_modules` は不要である。
 
+## Versioned v1 Node runtime（Gate G4承認済み内部reference candidate）
+
+v1 workflowを実行できるversioned runtimeは、通常の開発bundleとは別に生成する。
+
+```bash
+npm run build:cli-v1-runtime
+```
+
+このcommandはclean working treeかつ`v<package.version>`がHEADを指す場合だけ、`runtime/node/`へsingle `.mjs`、source archive、`runtime-manifest.json`をfreshに生成する。既存runtime directoryは置換しない。artifactは各workflow前に隣接manifest、executable、source archive、capability、fixture corpus digestを自己検証する。
+
+Gate G4の`v1.0.3` actual candidateは、Git管理外の`workplace/gate-g4/v1.0.3/runtime/`へ三memberのまま保持する。Git管理する外側trust anchorは[`docs/miku-project-node-reference-runtime-lock-v1.0.3.json`](docs/miku-project-node-reference-runtime-lock-v1.0.3.json)であり、source revision/tag、build toolchain、package-lock / corpus、三memberのsize / SHA-256を固定する。次のcommandはlockを先に検証し、runtime三memberだけを隔離consumerへcopyして五workflowとresult / output plan / provenance bindingを再実行する。
+
+```bash
+npm run verify:cli-v1-release-candidate -- \
+  --runtime-dir workplace/gate-g4/v1.0.3/runtime \
+  --lock docs/miku-project-node-reference-runtime-lock-v1.0.3.json
+```
+
+このcandidateとlockは`distribution_status = internal-reference-only`であり、公開Release checksumやSkills lockではない。現行の`.github/workflows/release-runtime-bundles.yml`はこのv1三memberをbuild / uploadしないため、`v1.0.3`を現行workflowから新v1 runtimeの公開Releaseとして扱わない。公開経路は`ZB-P7.10`で別途整備する。
+
 ## 関連ドキュメント
 
+- [docs/miku-project-zero-base-spec-v20260809.md](docs/miku-project-zero-base-spec-v20260809.md)
+- [docs/miku-project-zero-base-implementation-plan-v20260810.md](docs/miku-project-zero-base-implementation-plan-v20260810.md)
+- [docs/miku-project-semantic-contract-v1.md](docs/miku-project-semantic-contract-v1.md)
+- [docs/miku-project-semantic-fixture-catalog-v1.md](docs/miku-project-semantic-fixture-catalog-v1.md)
+- [docs/miku-project-format-and-loss-contract-v1.md](docs/miku-project-format-and-loss-contract-v1.md)
+- [docs/miku-project-change-contract-v1.md](docs/miku-project-change-contract-v1.md)
+- [docs/miku-project-cli-contract-v1.md](docs/miku-project-cli-contract-v1.md)
+- [docs/miku-project-cli-result-contract-v1.md](docs/miku-project-cli-result-contract-v1.md)
+- [docs/schemas/miku-project-artifacts-v1.schema.json](docs/schemas/miku-project-artifacts-v1.schema.json)
+- [docs/schemas/miku-project-cli-result-v1.schema.json](docs/schemas/miku-project-cli-result-v1.schema.json)
+- [docs/schemas/miku-project-cli-diagnostic-v1.schema.json](docs/schemas/miku-project-cli-diagnostic-v1.schema.json)
+- [docs/miku-project-runtime-capability-contract-v1.md](docs/miku-project-runtime-capability-contract-v1.md)
+- [docs/miku-project-runtime-manifest-contract-v1.md](docs/miku-project-runtime-manifest-contract-v1.md)
+- [docs/miku-project-node-reference-runtime-lock-v1.0.3.json](docs/miku-project-node-reference-runtime-lock-v1.0.3.json)
+- [docs/miku-project-conformance-corpus-v1.md](docs/miku-project-conformance-corpus-v1.md)
+- [docs/miku-project-human-gate-and-next-action-contract-v1.md](docs/miku-project-human-gate-and-next-action-contract-v1.md)
+- [docs/miku-project-gate-g4-readiness-v20260814.md](docs/miku-project-gate-g4-readiness-v20260814.md)
 - [docs/architecture.md](docs/architecture.md)
 - [docs/import-export-workflows.md](docs/import-export-workflows.md)
 - [docs/core-api-import-export-notes.md](docs/core-api-import-export-notes.md)
 - [docs/development.md](docs/development.md)
 - [docs/spec.md](docs/spec.md)
 - [docs/gap-notes.md](docs/gap-notes.md)
-- [docs/mikuproject-ai-json-spec.md](docs/mikuproject-ai-json-spec.md)
+- [docs/miku-project-ai-json-spec.md](docs/miku-project-ai-json-spec.md)
 - [docs/msprojectxml-ai-integration.md](docs/msprojectxml-ai-integration.md)
 - [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)
 - [docs/TODO.md](docs/TODO.md)
