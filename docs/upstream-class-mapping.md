@@ -266,6 +266,7 @@ upstream file:
 
 java classes:
   jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJson
+  jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonDiff
   jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonExport
   jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonImport
   jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonValidate
@@ -284,17 +285,17 @@ tests:
 
 diff summary:
   挙動差分:
-    workbook JSON の fixed format、editable field、warning / reject 契約、hierarchy fixture round-trip を確認する
+    workbook JSON の fixed format、editable field、warning / reject 契約、hierarchy fixture round-trip と、upstream v1.1.1 の known column 全体を使う document diff 契約を確認する。diff は row add / remove、field update、Tasks の相対順序変更を検出し、未知 sheet / column / Project field を警告として比較未完了にする。Java 側の追加 workbook 列は upstream 未知列として扱う
   命名差分:
     upstream の workbook JSON helper 群と Java 側の export / import / validate 分割が追跡可能かを見る
   未移植差分:
-    upstream 側で sheet 構成や editable field 契約が増えた場合に Java 側へ入っているかを見る
+    upstream 側で sheet 構成や editable field / diff 契約が増えた場合に Java 側へ入っているかを見る
   Java 側独自拡張:
     Core API wrapper 経由の統一導線は upstream 本体とは分けて扱う
 
 follow-up:
   - 追加/更新した test:
-    まず ProjectWorkbookJsonTest で吸収し、wrapper 契約に影響する場合だけ CoreApiWorkbookTest まで広げる
+    workbook document diff の focused regression は未追加。実装回帰を追加するときは ProjectWorkbookJsonTest と MikuprojectCliTest の state diff を対象にし、wrapper 契約に影響する場合だけ CoreApiWorkbookTest まで広げる
   - 追加/更新した fixture 比較:
     hierarchy fixture の workbook JSON round-trip で確認したかを明記する
   - `docs/remaining-migration-items.md` への反映要否:

@@ -82,12 +82,13 @@ Use this section as the repo-top entrypoint for upstream tracking and migration 
 Suggested order:
 
 1. `docs/v1-contract-snapshot.md` for the v1 Java CLI migration
-2. `docs/remaining-migration-items.md` for historical-port maintenance
-3. `docs/miku-soft-reference.md`
-4. `docs/upstream-class-mapping.md`
-5. `docs/upstream-test-mapping.md`
-6. `docs/development.md`
-7. `docs/upstream-followup-log.md`
+2. `docs/node-java-feature-parity-v1.1.1.md` for the Node / Java comparison
+3. `docs/remaining-migration-items.md` for historical-port maintenance
+4. `docs/miku-soft-reference.md`
+5. `docs/upstream-class-mapping.md`
+6. `docs/upstream-test-mapping.md`
+7. `docs/development.md`
+8. `docs/upstream-followup-log.md`
 
 Suggested tracking flow:
 
@@ -106,6 +107,8 @@ Operational note:
 
 - `docs/remaining-migration-items.md`
   - Current migration status, remaining items, and recent verification state
+- `docs/node-java-feature-parity-v1.1.1.md`
+  - Current comparison between the Node and Java legacy CLI surfaces and v1 migration
 - `docs/miku-soft-reference.md`
   - Shared miku-soft references, the selected Java straight-conversion workflow, and reference revision metadata
 - `docs/upstream-class-mapping.md`

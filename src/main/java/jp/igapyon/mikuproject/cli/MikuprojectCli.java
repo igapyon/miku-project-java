@@ -36,7 +36,7 @@ import jp.igapyon.mikuproject.wbssvg.WbsSvg.MonthlyCalendarSvgArchive;
 import jp.igapyon.mikuproject.wbsxlsx.WbsXlsx.WbsExportOptions;
 
 public class MikuprojectCli {
-    public static final String VERSION = "1.0.4";
+    public static final String VERSION = "1.1.1";
     private static final String[] NODE_TASK_HEADERS = { "UID", "ID", "Name", "OutlineLevel", "OutlineNumber", "WBS", "Start",
             "Finish", "Duration", "PercentComplete", "PercentWorkComplete", "Milestone", "Summary", "Critical", "CalendarUID",
             "Predecessors", "Notes" };
@@ -56,6 +56,9 @@ public class MikuprojectCli {
     private final CoreApiWorkbookXlsx workbookXlsx = new CoreApiWorkbookXlsx();
     private final ProjectWorkbookJson workbookJson = new ProjectWorkbookJson();
     private final ProjectPatchJson patchJson = new ProjectPatchJson();
+    private List<WorkbookJsonWarning> currentWorkbookWarnings = new ArrayList<WorkbookJsonWarning>();
+    private String currentCommandName = "unknown command";
+    private String currentDiagnosticsFormat;
 
     public static void main(String[] args) {
         int exitCode = new MikuprojectCli().run(args, System.out, System.err);
@@ -74,6 +77,15 @@ public class MikuprojectCli {
             printVersion(out);
             return 0;
         }
+        currentWorkbookWarnings = new ArrayList<WorkbookJsonWarning>();
+        Invocation invocation = inspectInvocation(args);
+        currentCommandName = invocation.commandName;
+        currentDiagnosticsFormat = invocation.options.get("diagnostics");
+        if (!isValidDiagnosticsFormat(currentDiagnosticsFormat)) {
+            return usageError(err, "--diagnostics requires text or json");
+        }
+        int optionCheck = validateInvocationOptions(invocation, err);
+        if (optionCheck >= 0) return optionCheck;
         try {
             if ("ai".equals(command)) {
                 return runAiCommand(args, out, err);
@@ -98,9 +110,163 @@ public class MikuprojectCli {
             }
             return usageError(err, "unknown command: " + command, true);
         } catch (IOException ex) {
-            return commandError(err, "I/O error: " + ex.getMessage());
+            return executionError(err, "I/O error: " + ex.getMessage(), "io_error");
         } catch (RuntimeException ex) {
-            return commandError(err, "command failed: " + ex.getMessage());
+            return executionError(err, "command failed: " + ex.getMessage(), "command_error");
+        }
+    }
+
+    private Invocation inspectInvocation(String[] args) {
+        int commandLength = 1;
+        if (args.length > 1 && !args[1].startsWith("--")) commandLength = 2;
+        if ("ai".equals(args[0])) {
+            commandLength = args.length > 1 && !args[1].startsWith("--") ? 2 : 1;
+            if (commandLength == 2 && "export".equals(args[1]) && args.length > 2 && !args[2].startsWith("--")) {
+                commandLength = 3;
+            }
+        }
+        if (commandLength > args.length) commandLength = args.length;
+        List<String> parts = new ArrayList<String>();
+        for (int index = 0; index < commandLength; index++) parts.add(args[index]);
+        String name = join(parts, " ");
+        return new Invocation(name, parseOptions(args, commandLength));
+    }
+
+    private int validateInvocationOptions(Invocation invocation, PrintStream err) {
+        List<String> allowed = allowedOptions(invocation.commandName);
+        if (allowed == null) {
+            String message = "未対応のコマンドです: " + invocation.commandName;
+            return structuredUsageError(err, message, "unsupported_command", null, allowed);
+        }
+        for (String option : invocation.options.values.keySet()) {
+            if (!allowed.contains(option)) {
+                String message = invocation.commandName + " では --" + option + " を使えません";
+                return structuredUsageError(err, message, "unknown_option", "--" + option, allowed);
+            }
+        }
+        if ("import xlsx".equals(invocation.commandName)) {
+            CliOptions options = invocation.options;
+            if (options.has("in") && options.has("in-base64")) {
+                return structuredUsageError(err, "import xlsx cannot use --in and --in-base64 together", "invalid_binary_input", null, allowed);
+            }
+            if ("-".equals(options.get("in"))) {
+                return structuredUsageError(err, "import xlsx binary stdin requires --in-base64 -", "invalid_binary_input", null, allowed);
+            }
+            if (options.has("in-base64") && (options.get("in-base64") == null || options.get("in-base64").length() == 0)) {
+                return structuredUsageError(err, "import xlsx requires --in <path> or --in-base64 -", "invalid_binary_input", null, allowed);
+            }
+            if (!options.has("in-base64") && (!options.has("in") || options.get("in").length() == 0)) {
+                return structuredUsageError(err, "import xlsx requires --in <path> or --in-base64 -", "invalid_binary_input", null, allowed);
+            }
+        }
+        if (allowed.contains("out-base64")) {
+            CliOptions options = invocation.options;
+            if (options.has("out") && options.has("out-base64")) {
+                return structuredUsageError(err, invocation.commandName + " cannot use --out and --out-base64 together", "invalid_binary_output", null, allowed);
+            }
+            if (options.has("out-base64") && !"-".equals(options.get("out-base64"))) {
+                return structuredUsageError(err, invocation.commandName + " --out-base64 supports only -", "invalid_binary_output", null, allowed);
+            }
+            if (!options.has("out-base64") && (!options.has("out") || options.get("out").length() == 0 || "-".equals(options.get("out")))) {
+                return structuredUsageError(err, invocation.commandName + " is a binary artifact and requires --out <path> or --out-base64 -", "invalid_binary_output", null, allowed);
+            }
+        }
+        return -1;
+    }
+
+    private List<String> allowedOptions(String command) {
+        if ("ai spec".equals(command)) return options("out");
+        if ("ai detect-kind".equals(command)) return options("in", "out", "diagnostics");
+        if ("ai export project-overview".equals(command) || "ai export bundle".equals(command)) return options("in", "out", "diagnostics");
+        if ("ai export task-edit".equals(command)) return options("in", "out", "diagnostics", "task-uid", "select");
+        if ("ai export phase-detail".equals(command)) return options("in", "out", "diagnostics", "phase-uid", "select", "mode", "root-task-uid", "max-depth");
+        if ("ai validate-patch".equals(command)) return options("state", "in", "out", "diagnostics");
+        if ("state from-draft".equals(command)) return options("in", "out");
+        if ("state validate".equals(command)) return options("in");
+        if ("state import".equals(command)) return options("in", "out");
+        if ("state merge".equals(command)) return options("state", "in", "out");
+        if ("state apply-patch".equals(command)) return options("state", "in", "out", "diagnostics");
+        if ("state summarize".equals(command)) return options("in", "out", "diagnostics");
+        if ("state diff".equals(command)) return options("before", "after", "out", "diagnostics");
+        if ("validate xml".equals(command) || "validate xlsx".equals(command)) return options("in");
+        if ("export workbook-json".equals(command) || "export xml".equals(command)) return options("in", "out", "diagnostics");
+        if ("export xlsx".equals(command)) return options("in", "out", "out-base64", "diagnostics");
+        if ("import xlsx".equals(command)) return options("in", "in-base64", "out", "diagnostics");
+        if ("merge xlsx".equals(command)) return options("state", "in", "out");
+        if ("report all".equals(command) || "report wbs-xlsx".equals(command)
+                || "report monthly-calendar-svg".equals(command)) return options("in", "out", "out-base64", "diagnostics");
+        if ("report daily-svg".equals(command) || "report weekly-svg".equals(command)
+                || "report wbs-markdown".equals(command) || "report mermaid".equals(command)) return options("in", "out", "diagnostics");
+        if ("report dir".equals(command)) return options("in", "out");
+        return null;
+    }
+
+    private List<String> options(String... names) {
+        List<String> result = new ArrayList<String>();
+        for (String name : names) result.add(name);
+        return result;
+    }
+
+    private int structuredUsageError(PrintStream err, String message, String code, String option, List<String> allowed) {
+        if (!"json".equals(currentDiagnosticsFormat)) return usageError(err, message);
+        Map<String, Object> diagnostics = errorDiagnostics(2, currentCommandName, message, code);
+        if (option != null) diagnostics.put("option", option);
+        if (allowed != null) {
+            List<String> allowedNames = new ArrayList<String>();
+            for (String name : allowed) allowedNames.add("--" + name);
+            diagnostics.put("allowed_options", allowedNames);
+        }
+        err.println(jsonUtil.stringifyPrettyJson(diagnostics));
+        return 2;
+    }
+
+    private int executionError(PrintStream err, String message, String code) {
+        if ("json".equals(currentDiagnosticsFormat)) {
+            err.println(jsonUtil.stringifyPrettyJson(errorDiagnostics(1, currentCommandName, message, code)));
+        } else {
+            commandError(err, message);
+        }
+        return 1;
+    }
+
+    private Map<String, Object> errorDiagnostics(int exitCode, String command, String message, String code) {
+        Map<String, Object> error = new LinkedHashMap<String, Object>();
+        error.put("code", code);
+        error.put("message", message);
+        List<Object> errors = new ArrayList<Object>();
+        errors.add(error);
+        Map<String, Object> diagnostics = new LinkedHashMap<String, Object>();
+        diagnostics.put("ok", Boolean.FALSE);
+        diagnostics.put("diagnostics_version", Integer.valueOf(1));
+        diagnostics.put("command", command);
+        diagnostics.put("context", command);
+        diagnostics.put("status", "error");
+        diagnostics.put("exit_code", Integer.valueOf(exitCode));
+        diagnostics.put("warning_count", Integer.valueOf(0));
+        diagnostics.put("error_count", Integer.valueOf(1));
+        diagnostics.put("warnings", new ArrayList<Object>());
+        diagnostics.put("errors", errors);
+        diagnostics.put("error_code", code);
+        diagnostics.put("message", message);
+        return diagnostics;
+    }
+
+    private String join(List<String> values, String separator) {
+        StringBuilder result = new StringBuilder();
+        for (String value : values) {
+            if (result.length() > 0) result.append(separator);
+            result.append(value);
+        }
+        return result.toString();
+    }
+
+    private static class Invocation {
+        final String commandName;
+        final CliOptions options;
+
+        Invocation(String commandName, CliOptions options) {
+            this.commandName = commandName;
+            this.options = options;
         }
     }
 
@@ -110,7 +276,9 @@ public class MikuprojectCli {
         }
         String action = args[1];
         if ("spec".equals(action)) {
-            out.print(coreApiImport.getAiJsonSpecText());
+            CliOptions options = parseOptions(args, 2);
+            String text = coreApiImport.getAiJsonSpecText();
+            writeTextOutput(options.get("out"), text, out);
             return 0;
         }
         if ("detect-kind".equals(action)) {
@@ -121,7 +289,7 @@ public class MikuprojectCli {
             }
             String input = inputOrStdin(options);
             CoreApiAiJsonParseResult parsed = coreApiImport.parseAiJsonText(readText(input));
-            out.println(safe(parsed.kind));
+            writeTextOutput(options.get("out"), safe(parsed.kind) + "\n", out);
             if ("json".equals(diagnosticsFormat)) {
                 Map<String, Object> diagnostics = buildCommandDiagnostics("detect-kind", options);
                 diagnostics.put("detected_kind", parsed.kind);
@@ -269,9 +437,8 @@ public class MikuprojectCli {
             if (before == null || after == null) {
                 return 2;
             }
-            ProjectModel beforeModel = importWorkbookJsonModel(before);
-            jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonImport.ImportResult result =
-                    workbookJson.importProjectWorkbookJson(parseJsonFile(after), beforeModel);
+            jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonDiff.Result result =
+                    workbookJson.diffDocuments(parseJsonFile(before), parseJsonFile(after));
             Map<String, Object> summary = buildStateDiffSummary(result);
             writeTextOutput(options.get("out"), jsonUtil.stringifyPrettyJson(summary) + "\n", out);
             writeStateDiffDiagnostics(diagnosticsFormat, options, summary, err);
@@ -579,9 +746,57 @@ public class MikuprojectCli {
     }
 
     private ProjectModel importWorkbookJsonModel(String path) throws IOException {
+        Object document = parseJsonFile(path);
         jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonImport.ImportAsProjectModelResult result =
-                workbookJson.importProjectWorkbookJsonAsProjectModel(parseJsonFile(path));
+                workbookJson.importProjectWorkbookJsonAsProjectModel(document);
+        currentWorkbookWarnings = result.warnings == null ? new ArrayList<WorkbookJsonWarning>() : result.warnings;
+        appendUpstreamWorkbookColumnWarnings(document);
         return result.model;
+    }
+
+    private void appendUpstreamWorkbookColumnWarnings(Object documentLike) {
+        if (!(documentLike instanceof Map<?, ?>)) return;
+        Object sheetsValue = ((Map<?, ?>) documentLike).get("sheets");
+        if (!(sheetsValue instanceof Map<?, ?>)) return;
+        for (Map.Entry<?, ?> sheetEntry : ((Map<?, ?>) sheetsValue).entrySet()) {
+            String sheet = String.valueOf(sheetEntry.getKey());
+            if (!(sheetEntry.getValue() instanceof List<?>)) continue;
+            List<?> rows = (List<?>) sheetEntry.getValue();
+            for (int rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
+                Object rowValue = rows.get(rowIndex);
+                if (!(rowValue instanceof Map<?, ?>)) continue;
+                for (Object fieldValue : ((Map<?, ?>) rowValue).keySet()) {
+                    String field = String.valueOf(fieldValue);
+                    if (isUpstreamWorkbookColumn(sheet, field)) continue;
+                    String message = "未知の列は無視します: " + sheet + "[" + rowIndex + "]." + field;
+                    if (!hasWorkbookWarning(currentWorkbookWarnings, message)) {
+                        WorkbookJsonWarning warning = new WorkbookJsonWarning();
+                        warning.message = message;
+                        currentWorkbookWarnings.add(warning);
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean isUpstreamWorkbookColumn(String sheet, String field) {
+        if ("Project".equals(sheet)) return "Field".equals(field) || "Value".equals(field);
+        if ("Tasks".equals(sheet)) return contains(NODE_TASK_HEADERS, field);
+        if ("Resources".equals(sheet)) return contains(NODE_RESOURCE_HEADERS, field);
+        if ("Assignments".equals(sheet)) return contains(NODE_ASSIGNMENT_HEADERS, field);
+        if ("Calendars".equals(sheet)) return contains(NODE_CALENDAR_HEADERS, field);
+        if ("NonWorkingDays".equals(sheet)) return contains(NODE_NON_WORKING_DAYS_HEADERS, field);
+        return true;
+    }
+
+    private boolean contains(String[] values, String value) {
+        for (String candidate : values) if (candidate.equals(value)) return true;
+        return false;
+    }
+
+    private boolean hasWorkbookWarning(List<WorkbookJsonWarning> warnings, String message) {
+        for (WorkbookJsonWarning warning : warnings) if (message.equals(warning.message)) return true;
+        return false;
     }
 
     private void writeWorkbookJsonOutput(String path, ProjectModel model, PrintStream out) throws IOException {
@@ -602,12 +817,13 @@ public class MikuprojectCli {
     }
 
     private boolean isValidDiagnosticsFormat(String value) {
-        return value == null || value.length() == 0 || "text".equals(value) || "json".equals(value);
+        return value == null || "text".equals(value) || "json".equals(value);
     }
 
     private void writeAiExportDiagnostics(String diagnosticsFormat, String subject, CliOptions options, Object exported,
             PrintStream err) {
         if (!"json".equals(diagnosticsFormat)) {
+            writeWorkbookWarningsText(currentWorkbookWarnings, err);
             return;
         }
         Map<String, Object> diagnostics = buildCommandDiagnostics("ai export " + subject, options);
@@ -646,6 +862,7 @@ public class MikuprojectCli {
             }
             diagnostics.put("task_count", Integer.valueOf(listSize(phaseDetail.get("tasks"))));
         }
+        applyWorkbookWarnings(diagnostics);
         err.println(jsonUtil.stringifyPrettyJson(diagnostics));
     }
 
@@ -657,6 +874,7 @@ public class MikuprojectCli {
     private void writeSimpleDiagnostics(String diagnosticsFormat, String command, CliOptions options, String outputKind,
             Map<String, Object> details, PrintStream err) {
         if (!"json".equals(diagnosticsFormat)) {
+            writeWorkbookWarningsText(currentWorkbookWarnings, err);
             return;
         }
         Map<String, Object> diagnostics = buildCommandDiagnostics(command, options);
@@ -664,6 +882,7 @@ public class MikuprojectCli {
             diagnostics.put("output_kind", outputKind);
         }
         diagnostics.putAll(details);
+        applyWorkbookWarnings(diagnostics);
         err.println(jsonUtil.stringifyPrettyJson(diagnostics));
     }
 
@@ -676,6 +895,7 @@ public class MikuprojectCli {
     private void writeStateSummaryDiagnostics(String diagnosticsFormat, CliOptions options, Map<String, Object> summary,
             PrintStream err) {
         if (!"json".equals(diagnosticsFormat)) {
+            writeWorkbookWarningsText(currentWorkbookWarnings, err);
             return;
         }
         Map<String, Object> diagnostics = buildCommandDiagnostics("state summarize", options);
@@ -689,43 +909,54 @@ public class MikuprojectCli {
             diagnostics.put("task_count", ((Map<?, ?>) detail).get("task_count"));
             diagnostics.put("milestone_count", ((Map<?, ?>) detail).get("milestone_count"));
         }
+        applyWorkbookWarnings(diagnostics);
         err.println(jsonUtil.stringifyPrettyJson(diagnostics));
     }
 
     private void writeStateDiffDiagnostics(String diagnosticsFormat, CliOptions options, Map<String, Object> summary,
             PrintStream err) {
+        Object warnings = summary.get("warnings");
         if (!"json".equals(diagnosticsFormat)) {
+            writeWorkbookWarningsText(warnings, err);
             return;
         }
         Map<String, Object> diagnostics = buildCommandDiagnostics("state diff", options);
         diagnostics.put("io", buildIoDiagnostics(options, "before", "after"));
-        Object warnings = summary.get("warnings");
         int warningCount = listSize(warnings);
-        diagnostics.put("status", warningCount > 0 ? "warning" : "noop");
+        Object changesSummary = summary.get("changes_summary");
+        int changeCount = changesSummary instanceof Map<?, ?> && ((Map<?, ?>) changesSummary).get("total_changes") instanceof Number
+                ? ((Number) ((Map<?, ?>) changesSummary).get("total_changes")).intValue() : 0;
+        diagnostics.put("status", warningCount > 0 ? "warning" : changeCount == 0 ? "noop" : "success");
         diagnostics.put("warning_count", Integer.valueOf(warningCount));
         diagnostics.put("warnings", warnings instanceof List<?> ? warnings : new ArrayList<Object>());
-        diagnostics.put("changes_summary", summary.get("changes_summary"));
+        diagnostics.put("comparison_complete", summary.get("comparison_complete"));
+        diagnostics.put("changes_summary", changesSummary);
         err.println(jsonUtil.stringifyPrettyJson(diagnostics));
     }
 
     private void writePatchValidationOutput(String diagnosticsFormat, CliOptions options,
-            jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonCore.ImportResult result, PrintStream out) {
+            jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonCore.ImportResult result, PrintStream out) throws IOException {
         Map<String, Object> report = buildPatchDiagnostics("ai validate-patch", options, result, "state", "in");
         report.put("diagnostics_format", diagnosticsFormat == null || diagnosticsFormat.length() == 0 ? "text" : diagnosticsFormat);
         if ("json".equals(diagnosticsFormat)) {
-            out.println(jsonUtil.stringifyPrettyJson(report));
+            writeTextOutput(options.get("out"), jsonUtil.stringifyPrettyJson(report) + "\n", out);
             return;
         }
         Map<?, ?> changesSummary = (Map<?, ?>) report.get("changes_summary");
-        out.println("[miku-project-cli] validate-patch ok=true status=" + report.get("status") + " warnings="
-                + report.get("warning_count") + " errors=0 changes=" + changesSummary.get("total_changes"));
+        StringBuilder output = new StringBuilder();
+        output.append("[miku-project-cli] validate-patch ok=true status=").append(report.get("status")).append(" warnings=")
+                .append(report.get("warning_count")).append(" errors=0 changes=").append(changesSummary.get("total_changes")).append('\n');
         for (PatchWarning warning : result.warnings) {
-            out.println("[warning] " + formatPatchWarning(warning));
+            output.append("[warning] ").append(formatPatchWarning(warning)).append('\n');
+        }
+        for (Object warning : workbookWarningMaps(currentWorkbookWarnings)) {
+            output.append("[warning] ").append(((Map<?, ?>) warning).get("message")).append('\n');
         }
         Map<?, ?> byScope = (Map<?, ?>) changesSummary.get("by_scope");
-        out.println("[changes] project=" + byScope.get("project") + " tasks=" + byScope.get("tasks") + " resources="
-                + byScope.get("resources") + " assignments=" + byScope.get("assignments") + " calendars="
-                + byScope.get("calendars"));
+        output.append("[changes] project=").append(byScope.get("project")).append(" tasks=").append(byScope.get("tasks"))
+                .append(" resources=").append(byScope.get("resources")).append(" assignments=").append(byScope.get("assignments"))
+                .append(" calendars=").append(byScope.get("calendars")).append('\n');
+        writeTextOutput(options.get("out"), output.toString(), out);
     }
 
     private void writePatchDiagnostics(String diagnosticsFormat, String context, CliOptions options,
@@ -741,7 +972,8 @@ public class MikuprojectCli {
     private Map<String, Object> buildPatchDiagnostics(String context, CliOptions options,
             jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonCore.ImportResult result, String... inputNames) {
         Map<String, Object> changesSummary = summarizePatchChanges(result.changes);
-        List<Object> warnings = patchWarningMaps(result.warnings);
+        List<Object> warnings = workbookWarningMaps(currentWorkbookWarnings);
+        warnings.addAll(patchWarningMaps(result.warnings));
         String status = warnings.isEmpty() ? (Integer.valueOf(0).equals(changesSummary.get("total_changes")) ? "noop" : "success")
                 : "warning";
         Map<String, Object> diagnostics = buildCommandDiagnostics(context, options);
@@ -760,6 +992,35 @@ public class MikuprojectCli {
                 + changesSummary.get("total_changes") + " warnings=" + diagnostics.get("warning_count"));
         for (PatchWarning warning : warnings) {
             err.println("[warning] " + formatPatchWarning(warning));
+        }
+        writeWorkbookWarningsText(currentWorkbookWarnings, err);
+    }
+
+    private List<Object> workbookWarningMaps(List<WorkbookJsonWarning> warnings) {
+        List<Object> result = new ArrayList<Object>();
+        if (warnings == null) return result;
+        for (WorkbookJsonWarning warning : warnings) {
+            Map<String, Object> item = new LinkedHashMap<String, Object>();
+            item.put("message", warning.message);
+            result.add(item);
+        }
+        return result;
+    }
+
+    private void applyWorkbookWarnings(Map<String, Object> diagnostics) {
+        List<Object> warnings = workbookWarningMaps(currentWorkbookWarnings);
+        if (warnings.isEmpty()) return;
+        diagnostics.put("status", "warning");
+        diagnostics.put("warning_count", Integer.valueOf(warnings.size()));
+        diagnostics.put("warnings", warnings);
+    }
+
+    private void writeWorkbookWarningsText(Object warnings, PrintStream out) {
+        if (!(warnings instanceof List<?>)) return;
+        for (Object warning : (List<?>) warnings) {
+            String message = warning instanceof WorkbookJsonWarning ? ((WorkbookJsonWarning) warning).message
+                    : warning instanceof Map<?, ?> ? String.valueOf(((Map<?, ?>) warning).get("message")) : String.valueOf(warning);
+            out.println("[warning] " + message);
         }
     }
 
@@ -1224,26 +1485,29 @@ public class MikuprojectCli {
         return result;
     }
 
-    private Map<String, Object> buildStateDiffSummary(jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonImport.ImportResult result) {
+    private Map<String, Object> buildStateDiffSummary(jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonDiff.Result result) {
         Map<String, Object> summary = new LinkedHashMap<String, Object>();
         summary.put("kind", "state_diff_summary");
+        summary.put("comparison_complete", Boolean.valueOf(result.comparisonComplete));
         summary.put("warnings", result.warnings);
         summary.put("changes_summary", summarizeWorkbookChanges(result.changes));
         summary.put("changed_items", buildWorkbookChangedItems(result.changes));
         return summary;
     }
 
-    private Map<String, Object> summarizeWorkbookChanges(List<jp.igapyon.mikuproject.projectworkbookjson.ImportChange> changes) {
+    private Map<String, Object> summarizeWorkbookChanges(List<Map<String, Object>> changes) {
         Map<String, Integer> byScope = initializedScopeCounts();
         Map<String, List<String>> affected = initializedScopeLists();
-        for (jp.igapyon.mikuproject.projectworkbookjson.ImportChange change : changes) {
-            if (!byScope.containsKey(change.scope)) {
+        for (Map<String, Object> change : changes) {
+            String scope = String.valueOf(change.get("scope"));
+            if (!byScope.containsKey(scope)) {
                 continue;
             }
-            byScope.put(change.scope, Integer.valueOf(byScope.get(change.scope).intValue() + 1));
-            List<String> items = affected.get(change.scope);
-            if (!items.contains(change.uid)) {
-                items.add(change.uid);
+            byScope.put(scope, Integer.valueOf(byScope.get(scope).intValue() + 1));
+            List<String> items = affected.get(scope);
+            String uid = String.valueOf(change.get("uid"));
+            if (!items.contains(uid)) {
+                items.add(uid);
             }
         }
         Map<String, Object> affectedCounts = new LinkedHashMap<String, Object>();
@@ -1257,25 +1521,33 @@ public class MikuprojectCli {
         return summary;
     }
 
-    private Map<String, Object> buildWorkbookChangedItems(List<jp.igapyon.mikuproject.projectworkbookjson.ImportChange> changes) {
+    private Map<String, Object> buildWorkbookChangedItems(List<Map<String, Object>> changes) {
         Map<String, Object> grouped = new LinkedHashMap<String, Object>();
         grouped.put("project", new ArrayList<Object>());
         grouped.put("tasks", new ArrayList<Object>());
         grouped.put("resources", new ArrayList<Object>());
         grouped.put("assignments", new ArrayList<Object>());
         grouped.put("calendars", new ArrayList<Object>());
-        for (jp.igapyon.mikuproject.projectworkbookjson.ImportChange change : changes) {
-            if (!grouped.containsKey(change.scope)) {
+        for (Map<String, Object> change : changes) {
+            String scope = String.valueOf(change.get("scope"));
+            if (!grouped.containsKey(scope)) {
                 continue;
             }
             Map<String, Object> item = new LinkedHashMap<String, Object>();
-            item.put("uid", change.uid);
-            item.put("label", change.label);
-            item.put("field", change.field);
-            item.put("before", change.before);
-            item.put("after", change.after);
+            item.put("uid", change.get("uid"));
+            item.put("label", change.get("label"));
+            item.put("field", change.get("field"));
+            item.put("before", change.get("before"));
+            item.put("after", change.get("after"));
+            item.put("change_type", change.get("change_type"));
+            item.put("sheet", change.get("sheet"));
+            item.put("row_key", change.get("row_key"));
+            if ("row-added".equals(change.get("change_type")) || "row-removed".equals(change.get("change_type"))) {
+                item.put("before_position", change.get("before_position"));
+                item.put("after_position", change.get("after_position"));
+            }
             @SuppressWarnings("unchecked")
-            List<Object> list = (List<Object>) grouped.get(change.scope);
+            List<Object> list = (List<Object>) grouped.get(scope);
             list.add(item);
         }
         return grouped;
@@ -1372,17 +1644,17 @@ public class MikuprojectCli {
         out.println("Usage:");
         out.println("Shared Node-compatible commands:");
         out.println("  --version");
-        out.println("  ai spec");
+        out.println("  ai spec [--out spec.md|-]");
         out.println("  ai export project-overview [--in workbook.json|-] [--diagnostics text|json] [--out overview.editjson|-]");
         out.println("  ai export task-edit [--in workbook.json|-] [--task-uid taskUid] [--select auto|first-task|uid] [--diagnostics text|json] [--out task.editjson|-]");
         out.println("  ai export phase-detail [--in workbook.json|-] [--phase-uid phaseUid] [--select auto|first-phase|uid] [--mode scoped|full] [--root-task-uid rootTaskUid] [--max-depth n] [--diagnostics text|json] [--out phase.editjson|-]");
         out.println("  ai export bundle [--in workbook.json|-] [--diagnostics text|json] [--out bundle.editjson|-]");
-        out.println("  ai detect-kind [--in document.json|-] [--diagnostics text|json]");
-        out.println("  ai validate-patch --state workbook.json [--in patch.json] [--diagnostics text|json]");
+        out.println("  ai detect-kind [--in document.json|-] [--diagnostics text|json] [--out kind.txt|-]");
+        out.println("  ai validate-patch --state workbook.json [--in patch.json] [--diagnostics text|json] [--out validation.txt|-]");
         out.println("  state from-draft [--in draft.editjson|-] [--out workbook.json|-]");
         out.println("  state apply-patch --state workbook.json|- [--in patch.json|-] [--diagnostics text|json] [--out workbook.next.json|-]");
         out.println("  state summarize [--in workbook.json|-] [--diagnostics text|json]");
-        out.println("  state diff --before workbook.before.json --after workbook.after.json [--diagnostics text|json]");
+        out.println("  state diff --before workbook.before.json --after workbook.after.json [--diagnostics text|json] [--out diff.json|-]");
         out.println("  export workbook-json [--in workbook.json|-] [--diagnostics text|json] [--out workbook.json|-]");
         out.println("  export xml [--in workbook.json|-] [--diagnostics text|json] [--out project.xml|-]");
         out.println("  export xlsx [--in workbook.json|-] [--diagnostics text|json] (--out project.xlsx|--out-base64 -)");
