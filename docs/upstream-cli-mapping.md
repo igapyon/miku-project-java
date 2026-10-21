@@ -36,6 +36,17 @@ it also advertises the Java-only commands below. The shared-command entries and
 their runtime behavior remain Node-compatible and must be covered by parity
 tests.
 
+Upstream `v1.1.1` adds explicit rejection of unknown or inapplicable legacy
+options, preserves workbook import warnings in diagnostics, and emits JSON
+failure diagnostics when a requested output cannot be written. Java applies
+these rules to the shared commands while retaining Java-only command options.
+`state diff` compares the full known workbook JSON representation, including
+row additions and removals and surviving task order; it does not use the
+limited editable-field merge import as its comparison model. Unknown workbook
+data is reported in `comparison_complete` and warnings. The comparison field
+set follows upstream `v1.1.1` `SHEET_HEADERS`; Java-only extension columns are
+therefore treated as unknown input data.
+
 ## Legacy shared Node and Java commands
 
 - `ai spec`, `ai detect-kind`, `ai export project-overview`, `ai export task-edit`, `ai export phase-detail`, `ai export bundle`, and `ai validate-patch`

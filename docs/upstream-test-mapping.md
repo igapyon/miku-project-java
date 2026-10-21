@@ -22,6 +22,8 @@ upstream 更新追随で差分を見たときは、まず変更された upstrea
   - `mvn test -Dtest=CoreApiImportTest,MsProjectAiViewsTest`
 - workbook 回帰:
   - `mvn test -Dtest=ProjectWorkbookJsonTest,ProjectXlsxTest,CoreApiWorkbookTest`
+- workbook document diff:
+  - v1.1.1 の `diffDocuments` に対応する Java focused regression は未追加。追加時は `ProjectWorkbookJsonTest` と `MikuprojectCliTest` の `state diff` を対象にする
 - upstream 追随の保守回帰:
   - `mvn test -Dtest=WbsMarkdownTest,WbsSvgTest,WbsXlsxTest,ProjectWorkbookJsonTest,ProjectXlsxTest,CoreApiWorkbookTest,CoreApiPublicTest,CoreApiImportTest,MsProjectAiViewsTest,MikuprojectCliTest`
 

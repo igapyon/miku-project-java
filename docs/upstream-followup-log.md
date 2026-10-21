@@ -73,6 +73,46 @@ repo top から入るときの入口は `README.md` の `Development Docs` 節�
 report / workbook / import / AI view の主要導線は sample 記録がある状態になっている。
 現フェーズでは、新規機能追加ではなく、この sample 記録と既存実装 / test 対応のズレを小さく保つことを優先する。
 
+## 2026-10-21 `miku-project` `v1.1.1` subtree integration
+
+```text
+upstream files:
+  package.json
+  scripts/lib/cli-command-specs.mjs
+  scripts/lib/cli-state-commands.mjs
+  scripts/lib/cli-diagnostics.mjs
+  scripts/lib/cli-ai-commands.mjs
+  scripts/lib/cli-exchange-commands.mjs
+  scripts/lib/cli-report-commands.mjs
+  src/ts/project-workbook-json.ts
+  src/ts/core-api-workbook.ts
+
+java classes:
+  jp.igapyon.mikuproject.cli.MikuprojectCli
+  jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJson
+  jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonDiff
+
+tests:
+  MikuprojectCliTest.printsVersion (expected version updated)
+  ProjectWorkbookJsonTest / MikuprojectCliTest (existing suites; diff coverage not added)
+
+diff summary:
+  挙動差分:
+    Java `state diff` now compares known workbook JSON cells directly, reports row additions / removals and task order, and marks comparisons incomplete when workbook warnings exist. Legacy CLI rejects unknown options before reading input, keeps workbook import warnings in text / JSON diagnostics, and returns structured JSON errors for execution failures when JSON diagnostics are requested.
+  命名差分:
+    Java keeps the established `MikuprojectCli` and `ProjectWorkbookJson` public names; `ProjectWorkbookJsonDiff` corresponds to upstream `diffProjectWorkbookJson`.
+  未移植差分:
+    Node v1 source control/help routing remains upstream-specific. Java's v1 command authority is still the immutable `vendor/miku-project-contract/v1.0.3/` snapshot.
+  Java 側独自拡張:
+    Java-only CLI commands and options remain available under their existing names.
+
+follow-up:
+  - 実施した確認: `mvn -q -DskipTests compile` succeeded
+  - 未実施の確認: tests were not run; add focused diff / diagnostics regression coverage, then run the workbook and CLI suites
+  - fixture: upstream workbook diff cases in `vendor/mikuproject/tests/mikuproject-workbook-diff.test.js`; Java fixture parity remains to be checked
+  - contract: keep `vendor/miku-project-contract/v1.0.3/` immutable
+```
+
 ## 2026-08-16 `miku-project` `v1.0.4` subtree integration
 
 ```text

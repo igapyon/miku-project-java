@@ -231,6 +231,7 @@ upstream 更新追随では、カテゴリ単位ではなく `upstream file -> J
 - 2026-05-01 時点では、Java CLI の `import xlsx` は `--in <path>` に加えて `--in-base64 -` を受け、diagnostics JSON の io に `stdin_base64` / `stdout_base64` を記録する
 - 2026-05-01 時点では、上記 CLI 追随の focused 回帰として `mvn test -Dtest=MikuprojectCliTest` が `16` tests, `0` failures で通っている
 - 2026-08-16 時点では、`vendor/mikuproject` を `v1.0.4` (`dc6fe12310c38bfdba5ea3283c93500d027eac86`) まで追随した。canonical Node CLI と AI JSON specification の rename に合わせ、Java の resource copy と Node parity launcher を更新した
+- 2026-10-21 時点では、`vendor/mikuproject` を upstream `v1.1.1` (`9a9f562c03d28f1b0f3c809226dc61d0cd9d5f7e`) へ追随し、POM / `--version` を `1.1.1` に揃えた。Java に workbook JSON 全列 diff と legacy CLI の unknown option / warning / JSON output failure 処理を反映した。新 diff と CLI 修正の focused regression は未追加・未実行のため、実装回帰確認が残る
 - 2026-08-16 時点では、`mvn clean test` が `176` tests, `0` failures, `0` errors, `4` skipped で通っている。`MIKUPROJECT_RUN_NODE_PARITY=true mvn test` では同じ `176` tests が `0` skipped で通り、更新済み Node runtime との report artifact / shared text CLI parity を確認した
 - `v1.0.3` contract snapshot は不変のまま維持する。今後 Gate 承認済みの Node contract 更新を取り込む場合は、既存 tree を上書きせず、新しい release directory として追加する
 - 2026-04-21 時点では、`vendor/mikuproject/src/ts/msproject-validate.ts` を題材にした upstream follow-up 実例も追加し、同じく `mvn test -Dtest=MsProjectXmlTest` の validation focused tests を根拠に記録した

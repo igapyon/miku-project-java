@@ -21,28 +21,32 @@ future contract change creates a new versioned snapshot directory.
 
 - Upstream repository: <https://github.com/igapyon/miku-project>
 - Vendored path: `vendor/mikuproject`
-- Upstream package version in the vendored snapshot: `1.0.4`
-- Vendored upstream commit: `dc6fe12310c38bfdba5ea3283c93500d027eac86`
-- Java companion version: `1.0.4`
-- Checked: 2026-08-16
+- Upstream package version in the vendored snapshot: `1.1.1`
+- Vendored upstream commit: `9a9f562c03d28f1b0f3c809226dc61d0cd9d5f7e`
+- Java companion version: `1.1.1`
+- Checked: 2026-10-21
 
 `vendor/mikuproject` is a Git subtree and is read-only for ordinary Java
 maintenance. The initial subtree import recorded upstream commit
-`9257d1991244ac8277cc489b1cabb680d1e1fb8b`; the vendored snapshot used by the
-current Java compatibility baseline is
-`dc6fe12310c38bfdba5ea3283c93500d027eac86` (tag `v1.0.4`), incorporated by
-target-repository merge commit `ab27348`.
+`9257d1991244ac8277cc489b1cabb680d1e1fb8b`; the current Java compatibility
+baseline follows upstream tag `v1.1.1` at
+`9a9f562c03d28f1b0f3c809226dc61d0cd9d5f7e`.
 
 The local `mikuproject` remote uses
 `git@github.com:igapyon/miku-project.git`; do not rely on the old GitHub
 redirect when fetching future subtree updates.
 
 The public naming follow-up is anchored to upstream commit
-`a3385a5` (`miku-project 命名体系へ Main Application を移行`). The v1.0.4
-subtree contains the renamed CLI and AI JSON specification paths. The Java
+`a3385a5` (`miku-project 命名体系へ Main Application を移行`). The v1.1.1
+subtree retains the renamed CLI and AI JSON specification paths. The Java
 resource copy and Node parity runner follow those paths, while
 `vendor/mikuproject`, `jp.igapyon.mikuproject`, and established exchange-format
 IDs remain compatibility anchors.
+
+Upstream v1.1.1 also adds workbook-document diffing and tightens legacy CLI
+argument validation and warning reporting. Java carries the workbook diff and
+corresponding CLI behavior in `ProjectWorkbookJsonDiff` and
+`MikuprojectCli`; the v1.0.3 contract snapshot remains unchanged.
 
 The content follow-up is anchored to upstream commits `8c5043f`
 (`miku-ms-office-coreでXLSXパッケージ読み込みを共通化する`) and `7e5d283`

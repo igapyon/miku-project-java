@@ -9,6 +9,7 @@ import jp.igapyon.mikuproject.model.ProjectModel;
 public class ProjectWorkbookJson {
     private final ProjectWorkbookJsonExport export = new ProjectWorkbookJsonExport();
     private final ProjectWorkbookJsonImport imports = new ProjectWorkbookJsonImport();
+    private final ProjectWorkbookJsonDiff diff = new ProjectWorkbookJsonDiff();
 
     public WorkbookJsonDocument exportProjectWorkbookJson(ProjectModel model) {
         return export.exportProjectWorkbookJson(model);
@@ -20,6 +21,10 @@ public class ProjectWorkbookJson {
 
     public ProjectWorkbookJsonImport.ImportResult importProjectWorkbookJson(Object documentLike, ProjectModel baseModel) {
         return imports.importProjectWorkbookJson(documentLike, baseModel);
+    }
+
+    public ProjectWorkbookJsonDiff.Result diffDocuments(Object beforeLike, Object afterLike) {
+        return diff.diffDocuments(beforeLike, afterLike);
     }
 
     public ProjectWorkbookJsonValidate.ValidationResult validateWorkbookJsonDocument(Object documentLike) {
