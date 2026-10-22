@@ -15,9 +15,11 @@ import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
 
 import jp.igapyon.mikuproject.model.ProjectModel;
+import jp.igapyon.mikuproject.model.TaskModel;
 import jp.igapyon.mikuproject.msprojectxml.MsProjectCalendar;
 import jp.igapyon.mikuproject.msprojectxml.MsProjectSamples;
 import jp.igapyon.mikuproject.msprojectxml.MsProjectXml;
+import jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookSchema;
 
 public class ProjectXlsxTest {
     @Test
@@ -175,6 +177,187 @@ public class ProjectXlsxTest {
     }
 
     @Test
+    public void importsTaskValuesByHeaderNameWhenColumnsAreReordered() throws IOException {
+        ProjectXlsx projectXlsx = new ProjectXlsx();
+        ProjectModel source = new MsProjectXml().importFromXml(readVendorTestdata("hierarchy.xml"));
+        source.tasks.get(2).calendarUID = "1";
+        source.tasks.get(2).notes = "Notes header sentinel";
+        XlsxWorkbookLike workbook = projectXlsx.exportProjectWorkbook(source);
+        XlsxSheetLike tasksSheet = findSheet(workbook, "Tasks");
+        XlsxRowLike headerRow = tasksSheet.rows.get(2);
+        int calendarUidColumn = -1;
+        int notesColumn = -1;
+        for (int columnIndex = 0; columnIndex < headerRow.cells.size(); columnIndex++) {
+            Object value = headerRow.cells.get(columnIndex).value;
+            if ("CalendarUID".equals(value)) {
+                calendarUidColumn = columnIndex;
+            } else if ("Notes".equals(value)) {
+                notesColumn = columnIndex;
+            }
+        }
+        assertTrue(calendarUidColumn >= 0);
+        assertTrue(notesColumn >= 0);
+
+        for (int rowIndex = 2; rowIndex < tasksSheet.rows.size(); rowIndex++) {
+            XlsxRowLike row = tasksSheet.rows.get(rowIndex);
+            XlsxCellLike calendarUidCell = row.cells.get(calendarUidColumn);
+            row.cells.set(calendarUidColumn, row.cells.get(notesColumn));
+            row.cells.set(notesColumn, calendarUidCell);
+        }
+
+        ProjectModel imported = projectXlsx.importProjectWorkbookAsProjectModel(workbook);
+
+        assertEquals("1", imported.tasks.get(2).calendarUID);
+        assertEquals("Notes header sentinel", imported.tasks.get(2).notes);
+    }
+
+    @Test
+    public void importsResourceAndAssignmentValuesByHeaderNameWhenColumnsAreReordered() throws IOException {
+        ProjectXlsx projectXlsx = new ProjectXlsx();
+        ProjectModel source = new MsProjectXml().importFromXml(readVendorTestdata("dependency.xml"));
+        source.resources.get(0).initials = "I-SENTINEL";
+        source.resources.get(0).group = "G-SENTINEL";
+        source.resources.get(0).cost = Double.valueOf(123.5d);
+        source.assignments.get(0).work = "PT5H0M0S";
+        source.assignments.get(0).actualWork = "PT2H0M0S";
+        source.assignments.get(0).cost = Double.valueOf(321.5d);
+        XlsxWorkbookLike workbook = projectXlsx.exportProjectWorkbook(source);
+        XlsxSheetLike resources = findSheet(workbook, "Resources");
+        XlsxSheetLike assignments = findSheet(workbook, "Assignments");
+        swapColumns(resources, "Initials", "Cost");
+        swapColumns(assignments, "Work", "Cost");
+        swapColumns(assignments, "ActualWork", "RemainingWork");
+
+        ProjectModel imported = projectXlsx.importProjectWorkbookAsProjectModel(workbook);
+
+        assertEquals("I-SENTINEL", imported.resources.get(0).initials);
+        assertEquals("G-SENTINEL", imported.resources.get(0).group);
+        assertEquals(Double.valueOf(123.5d), imported.resources.get(0).cost);
+        assertEquals("PT5H0M0S", imported.assignments.get(0).work);
+        assertEquals("PT2H0M0S", imported.assignments.get(0).actualWork);
+        assertEquals(Double.valueOf(321.5d), imported.assignments.get(0).cost);
+    }
+
+    @Test
+    public void handlesMissingUnknownAndDuplicateHeadersThroughPublicImporter() throws IOException {
+        ProjectXlsx projectXlsx = new ProjectXlsx();
+        ProjectModel source = new MsProjectXml().importFromXml(readVendorTestdata("hierarchy.xml"));
+        source.tasks.get(2).name = "KNOWN-NAME";
+        source.tasks.get(2).notes = "KEEP-NOTES";
+
+        XlsxWorkbookLike missingWorkbook = projectXlsx.exportProjectWorkbook(source);
+        removeColumn(findSheet(missingWorkbook, "Tasks"), "Notes");
+        ProjectXlsxImport.ImportResult merged = projectXlsx.importProjectWorkbookDetailed(missingWorkbook, source);
+        ProjectModel replaced = projectXlsx.importProjectWorkbookAsProjectModel(missingWorkbook);
+        assertEquals("KEEP-NOTES", merged.model.tasks.get(2).notes);
+        assertEquals(null, replaced.tasks.get(2).notes);
+
+        XlsxWorkbookLike unknownWorkbook = projectXlsx.exportProjectWorkbook(source);
+        insertUnknownColumn(findSheet(unknownWorkbook, "Tasks"), "Name", "CustomColumn", "UNKNOWN-SENTINEL");
+        ProjectModel unknownImported = projectXlsx.importProjectWorkbookAsProjectModel(unknownWorkbook);
+        assertEquals("KNOWN-NAME", unknownImported.tasks.get(2).name);
+        assertEquals("KEEP-NOTES", unknownImported.tasks.get(2).notes);
+
+        XlsxWorkbookLike duplicateWorkbook = projectXlsx.exportProjectWorkbook(source);
+        appendColumn(findSheet(duplicateWorkbook, "Tasks"), "Notes", "SECOND-NOTES");
+        ProjectModel duplicateImported = projectXlsx.importProjectWorkbookAsProjectModel(duplicateWorkbook);
+        assertEquals("KEEP-NOTES", duplicateImported.tasks.get(2).notes);
+    }
+
+    @Test
+    public void fallsBackToNativeColumnsOnlyWhenNoKnownHeaderExists() throws IOException {
+        ProjectXlsx projectXlsx = new ProjectXlsx();
+        ProjectModel source = new MsProjectXml().importFromXml(readVendorTestdata("hierarchy.xml"));
+        source.tasks.get(2).calendarUID = "1";
+        source.tasks.get(2).notes = "NATIVE-NOTES";
+        XlsxWorkbookLike workbook = projectXlsx.exportProjectWorkbook(source);
+        XlsxSheetLike tasks = findSheet(workbook, "Tasks");
+        XlsxRowLike header = tasks.rows.get(ProjectWorkbookSchema.HEADER_ROW_INDEX.intValue());
+        for (XlsxCellLike cell : header.cells) {
+            cell.value = "";
+        }
+
+        ProjectModel imported = projectXlsx.importProjectWorkbookAsProjectModel(workbook);
+
+        assertEquals("1", imported.tasks.get(2).calendarUID);
+        assertEquals("NATIVE-NOTES", imported.tasks.get(2).notes);
+    }
+
+    @Test
+    public void missingUidAndShortRowsDoNotBorrowOtherTaskValues() throws IOException {
+        ProjectXlsx projectXlsx = new ProjectXlsx();
+        ProjectModel source = new MsProjectXml().importFromXml(readVendorTestdata("hierarchy.xml"));
+        source.tasks.get(1).notes = "KEEP-NORMAL-NOTES";
+        source.tasks.get(2).notes = "KEEP-NOTES";
+        String targetUid = source.tasks.get(2).uid;
+        String targetName = source.tasks.get(2).name;
+        String targetNotes = source.tasks.get(2).notes;
+        String normalUid = source.tasks.get(1).uid;
+        String normalName = source.tasks.get(1).name;
+        String normalNotes = source.tasks.get(1).notes;
+
+        XlsxWorkbookLike noUidWorkbook = projectXlsx.exportProjectWorkbook(source);
+        XlsxSheetLike noUidTasks = findSheet(noUidWorkbook, "Tasks");
+        noUidTasks.rows.get(ProjectWorkbookSchema.DATA_ROW_START_INDEX.intValue() + 2)
+                .cells.get(columnIndex(noUidTasks, "Name")).value = "NO-UID-SENTINEL";
+        removeColumn(noUidTasks, "UID");
+        ProjectXlsxImport.ImportResult noUidMerge = projectXlsx.importProjectWorkbookDetailed(noUidWorkbook, source);
+        ProjectModel noUidReplace = projectXlsx.importProjectWorkbookAsProjectModel(noUidWorkbook);
+        assertEquals(0, noUidReplace.tasks.size());
+        assertEquals(source.tasks.size(), noUidMerge.model.tasks.size());
+        assertTaskValues(noUidMerge.model, targetUid, targetName, targetNotes);
+        assertTaskValues(noUidMerge.model, normalUid, normalName, normalNotes);
+        assertTaskValues(source, targetUid, targetName, targetNotes);
+        assertTaskValues(source, normalUid, normalName, normalNotes);
+
+        XlsxWorkbookLike oneMissingUidWorkbook = projectXlsx.exportProjectWorkbook(source);
+        XlsxSheetLike oneMissingUidTasks = findSheet(oneMissingUidWorkbook, "Tasks");
+        int uidIndex = columnIndex(oneMissingUidTasks, "UID");
+        int nameIndex = columnIndex(oneMissingUidTasks, "Name");
+        oneMissingUidTasks.rows.get(ProjectWorkbookSchema.DATA_ROW_START_INDEX.intValue() + 2)
+                .cells.get(nameIndex).value = "NO-UID-SENTINEL";
+        oneMissingUidTasks.rows.get(ProjectWorkbookSchema.DATA_ROW_START_INDEX.intValue() + 1)
+                .cells.get(nameIndex).value = "NORMAL-ROW-SENTINEL";
+        oneMissingUidTasks.rows.get(ProjectWorkbookSchema.DATA_ROW_START_INDEX.intValue() + 2)
+                .cells.get(uidIndex).value = null;
+
+        ProjectXlsxImport.ImportResult oneMissingUidMerge = projectXlsx.importProjectWorkbookDetailed(oneMissingUidWorkbook, source);
+        ProjectModel oneMissingUidReplace = projectXlsx.importProjectWorkbookAsProjectModel(oneMissingUidWorkbook);
+        assertEquals(source.tasks.size() - 1, oneMissingUidReplace.tasks.size());
+        assertEquals(null, findTaskByUid(oneMissingUidReplace, targetUid));
+        assertEquals("NORMAL-ROW-SENTINEL", findTaskByUid(oneMissingUidReplace, normalUid).name);
+        assertEquals(source.tasks.size(), oneMissingUidMerge.model.tasks.size());
+        assertTaskValues(oneMissingUidMerge.model, targetUid, targetName, targetNotes);
+        assertEquals(normalUid, findTaskByUid(oneMissingUidMerge.model, normalUid).uid);
+        assertEquals("NORMAL-ROW-SENTINEL", findTaskByUid(oneMissingUidMerge.model, normalUid).name);
+        assertEquals(normalNotes, findTaskByUid(oneMissingUidMerge.model, normalUid).notes);
+        assertEquals(normalUid, findTaskByUid(oneMissingUidReplace, normalUid).uid);
+        assertEquals("NORMAL-ROW-SENTINEL", findTaskByUid(oneMissingUidReplace, normalUid).name);
+        assertEquals(normalNotes, findTaskByUid(oneMissingUidReplace, normalUid).notes);
+        assertTaskValues(source, targetUid, targetName, targetNotes);
+        assertTaskValues(source, normalUid, normalName, normalNotes);
+
+        XlsxWorkbookLike shortRowWorkbook = projectXlsx.exportProjectWorkbook(source);
+        XlsxSheetLike shortTasks = findSheet(shortRowWorkbook, "Tasks");
+        int notesIndex = columnIndex(shortTasks, "Notes");
+        shortTasks.rows.get(ProjectWorkbookSchema.DATA_ROW_START_INDEX.intValue() + 2).cells.remove(notesIndex);
+        shortTasks.rows.get(ProjectWorkbookSchema.DATA_ROW_START_INDEX.intValue() + 1)
+                .cells.get(columnIndex(shortTasks, "Name")).value = "NORMAL-ROW-SENTINEL";
+        ProjectXlsxImport.ImportResult shortRowResult = projectXlsx.importProjectWorkbookDetailed(shortRowWorkbook, source);
+        ProjectModel shortRowReplace = projectXlsx.importProjectWorkbookAsProjectModel(shortRowWorkbook);
+        assertTaskValues(shortRowReplace, targetUid, targetName, null);
+        assertEquals(normalUid, findTaskByUid(shortRowReplace, normalUid).uid);
+        assertEquals("NORMAL-ROW-SENTINEL", findTaskByUid(shortRowReplace, normalUid).name);
+        assertEquals(normalNotes, findTaskByUid(shortRowReplace, normalUid).notes);
+        assertTaskValues(shortRowResult.model, targetUid, targetName, targetNotes);
+        assertEquals(normalUid, findTaskByUid(shortRowResult.model, normalUid).uid);
+        assertEquals("NORMAL-ROW-SENTINEL", findTaskByUid(shortRowResult.model, normalUid).name);
+        assertEquals(normalNotes, findTaskByUid(shortRowResult.model, normalUid).notes);
+        assertTaskValues(source, targetUid, targetName, targetNotes);
+        assertTaskValues(source, normalUid, normalName, normalNotes);
+    }
+
+    @Test
     public void roundTripsHierarchyFixtureThroughWorkbook() throws IOException {
         ProjectXlsx projectXlsx = new ProjectXlsx();
         ProjectModel model = new MsProjectXml().importFromXml(readVendorTestdata("hierarchy.xml"));
@@ -219,6 +402,23 @@ public class ProjectXlsxTest {
         return new MsProjectCalendar().ensureDefaultProjectCalendar(model);
     }
 
+    private TaskModel findTaskByUid(ProjectModel model, String uid) {
+        for (TaskModel task : model.tasks) {
+            if (uid.equals(task.uid)) {
+                return task;
+            }
+        }
+        return null;
+    }
+
+    private void assertTaskValues(ProjectModel model, String uid, String name, String notes) {
+        TaskModel task = findTaskByUid(model, uid);
+        assertTrue(task != null);
+        assertEquals(uid, task.uid);
+        assertEquals(name, task.name);
+        assertEquals(notes, task.notes);
+    }
+
     private XlsxSheetLike findSheet(XlsxWorkbookLike workbook, String name) {
         for (XlsxSheetLike sheet : workbook.sheets) {
             if (name.equals(sheet.name)) {
@@ -247,6 +447,51 @@ public class ProjectXlsxTest {
             }
         }
         return null;
+    }
+
+    private int columnIndex(XlsxSheetLike sheet, String label) {
+        XlsxRowLike header = sheet.rows.get(ProjectWorkbookSchema.HEADER_ROW_INDEX.intValue());
+        for (int index = 0; index < header.cells.size(); index++) {
+            if (label.equals(header.cells.get(index).value)) {
+                return index;
+            }
+        }
+        throw new IllegalArgumentException("Missing header: " + label);
+    }
+
+    private void swapColumns(XlsxSheetLike sheet, String first, String second) {
+        int firstIndex = columnIndex(sheet, first);
+        int secondIndex = columnIndex(sheet, second);
+        for (int rowIndex = ProjectWorkbookSchema.HEADER_ROW_INDEX.intValue(); rowIndex < sheet.rows.size(); rowIndex++) {
+            XlsxRowLike row = sheet.rows.get(rowIndex);
+            XlsxCellLike firstCell = row.cells.get(firstIndex);
+            row.cells.set(firstIndex, row.cells.get(secondIndex));
+            row.cells.set(secondIndex, firstCell);
+        }
+    }
+
+    private void removeColumn(XlsxSheetLike sheet, String label) {
+        int index = columnIndex(sheet, label);
+        for (int rowIndex = ProjectWorkbookSchema.HEADER_ROW_INDEX.intValue(); rowIndex < sheet.rows.size(); rowIndex++) {
+            sheet.rows.get(rowIndex).cells.remove(index);
+        }
+    }
+
+    private void insertUnknownColumn(XlsxSheetLike sheet, String beforeLabel, String label, String value) {
+        int index = columnIndex(sheet, beforeLabel);
+        for (int rowIndex = ProjectWorkbookSchema.HEADER_ROW_INDEX.intValue(); rowIndex < sheet.rows.size(); rowIndex++) {
+            XlsxCellLike cell = new XlsxCellLike();
+            cell.value = rowIndex == ProjectWorkbookSchema.HEADER_ROW_INDEX.intValue() ? label : value;
+            sheet.rows.get(rowIndex).cells.add(index, cell);
+        }
+    }
+
+    private void appendColumn(XlsxSheetLike sheet, String label, String value) {
+        for (int rowIndex = ProjectWorkbookSchema.HEADER_ROW_INDEX.intValue(); rowIndex < sheet.rows.size(); rowIndex++) {
+            XlsxCellLike cell = new XlsxCellLike();
+            cell.value = rowIndex == ProjectWorkbookSchema.HEADER_ROW_INDEX.intValue() ? label : value;
+            sheet.rows.get(rowIndex).cells.add(cell);
+        }
     }
 
     private String readVendorTestdata(String fileName) throws IOException {

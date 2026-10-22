@@ -41,6 +41,26 @@ public class WbsSvgTest {
     }
 
     @Test
+    public void keepsJavaTimelineFallbackForTasksWithoutUsableDates() {
+        MsProjectXml xml = new MsProjectXml();
+        ProjectModel model = new ProjectModel();
+        model.project.name = "Undated Project";
+        model.tasks.add(task("1", "Undated Task", null, null));
+
+        String dailySvg = xml.exportNativeSvg(model);
+        String weeklySvg = xml.exportWeeklyNativeSvg(model);
+
+        assertTrue(dailySvg.contains("Undated Project"));
+        assertTrue(dailySvg.contains("Undated Task"));
+        assertTrue(dailySvg.contains("<rect x=\"6\""), "Java keeps a daily fallback bar without date ticks");
+        assertFalse(dailySvg.contains("class=\"axis\""));
+        assertTrue(weeklySvg.contains("Undated Project"));
+        assertTrue(weeklySvg.contains("Undated Task"));
+        assertTrue(weeklySvg.contains("stroke=\"#4f95d6\""), "Java keeps a weekly fallback bar without dated week bands");
+        assertFalse(weeklySvg.contains("class=\"weekAxis\""));
+    }
+
+    @Test
     public void rendersDependencyConnectorsInDailyAndWeeklySvg() {
         MsProjectXml xml = new MsProjectXml();
         ProjectModel model = new ProjectModel();

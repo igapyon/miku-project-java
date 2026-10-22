@@ -74,7 +74,7 @@ public class MikuprojectCliTest {
         int exitCode = cli.run(new String[] { "--version" }, stream(out), stream(err));
 
         assertEquals(0, exitCode);
-        assertEquals("miku-project 1.1.1\n", text(out));
+        assertEquals("miku-project 1.1.2\n", text(out));
         assertEquals("", text(err));
     }
 
@@ -347,7 +347,9 @@ public class MikuprojectCliTest {
             String phaseText = Files.readString(phaseFile, StandardCharsets.UTF_8);
             assertEquals(0, exitCode);
             assertEquals("", text(out));
-            assertEquals("", text(err));
+            assertTrue(text(err).contains("[warning] 未知の列は無視します: Tasks[0].Type"));
+            assertTrue(text(err).contains("[warning] 未知の列は無視します: Resources[0].Cost"));
+            assertTrue(text(err).contains("[warning] 未知の列は無視します: Assignments[0].StartVariance"));
             assertTrue(compactJsonLayout(phaseText).contains("\"view_type\":\"phase_detail_view\""));
             assertTrue(compactJsonLayout(phaseText).contains("\"mode\":\"scoped\""));
             assertTrue(compactJsonLayout(phaseText).contains("\"root_uid\":\"2\""));
@@ -473,14 +475,36 @@ public class MikuprojectCliTest {
     private void assertUnknownCommand(MikuprojectCli cli, String command) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
-
         int exitCode = cli.run(new String[] { command }, stream(out), stream(err));
+        assertEquals(2, exitCode);
+        assertEquals("", text(out));
+        assertEquals(1, text(err).split("usage error:", -1).length - 1);
+        assertTrue(text(err).contains(command));
+
+        out = new ByteArrayOutputStream();
+        err = new ByteArrayOutputStream();
+        exitCode = cli.run(new String[] { command, "--diagnostics", "json" }, stream(out), stream(err));
 
         assertEquals(2, exitCode);
         assertEquals("", text(out));
-        assertTrue(text(err).contains("usage error:"));
-        assertTrue(text(err).contains("unknown command: " + command));
-        assertTrue(text(err).contains("ai spec"));
+        Object parsed = new CoreApiAiJsonUtil().parseJsonText(text(err));
+        assertTrue(parsed instanceof Map);
+        Map<?, ?> diagnostics = (Map<?, ?>) parsed;
+        assertEquals(Boolean.FALSE, diagnostics.get("ok"));
+        assertEquals("error", diagnostics.get("status"));
+        assertEquals(Integer.valueOf(2), diagnostics.get("exit_code"));
+        assertEquals(command, diagnostics.get("command"));
+        assertEquals(command, diagnostics.get("context"));
+        assertEquals("unsupported_command", diagnostics.get("error_code"));
+        assertEquals(Integer.valueOf(1), diagnostics.get("error_count"));
+        assertEquals(Integer.valueOf(0), diagnostics.get("warning_count"));
+        assertTrue(diagnostics.get("errors") instanceof List);
+        List<?> errors = (List<?>) diagnostics.get("errors");
+        assertEquals(1, errors.size());
+        assertTrue(errors.get(0) instanceof Map);
+        assertEquals("unsupported_command", ((Map<?, ?>) errors.get(0)).get("code"));
+        assertTrue(diagnostics.get("warnings") instanceof List);
+        assertEquals(0, ((List<?>) diagnostics.get("warnings")).size());
     }
 
     private PrintStream stream(ByteArrayOutputStream out) {

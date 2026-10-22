@@ -373,3 +373,16 @@ Java 版では、Node.js 版 upstream の仕様を次の 2 つに分けて扱う
 - Java CLI の正式配布成果物は `mvn package` で生成される単一 fat jar とし、想定パスは `target/miku-project.jar` とする
 - `mvn package` で追跡・レビュー用の `target/miku-project-sources.jar` も生成する
 - 利用側向けの配布パッケージとして `target/miku-project-dist.zip` を生成し、`miku-project.jar`, `miku-project-sources.jar`, `README.md`, `LICENSE`, `docs/runtime-java-cli.md` を同梱する
+
+## 2026-10-22 self-review correction verification
+
+RPF-01/03 added Java test-only coverage for six legacy command text/JSON refusal diagnostics and public XLSX header boundaries. RPF-02 records the current Java first-duplicate/fallback behavior and the Node last-duplicate behavior as observations; no shared header policy was adopted. RPF-04/05 preserve the unresolved F-S5/F-S6 decisions, including the distinction between existing patch input and projection output, Java `update_task` dispatch absence, and normal/summary/milestone draft-date scope.
+
+## 2026-10-23 — I137 partial implementation
+
+- Java CLI `--max-depth` now accepts integer values from 0 through 100, treats omitted depth as unlimited, accepts zero-padded digits, and reports out-of-range / huge values as `invalid_integer_option` before writing output. The Node and Java CLI boundary cases agree. The MCP input limit is recorded in the companion repository; the direct Java core API remains unchanged.
+- Java Patch JSON now dispatches `update_task` and implements `name`, `notes`, `calendar_uid`, `percent_complete`, `percent_work_complete`, `critical`, `is_milestone`, `planned_start`, `planned_finish`, `planned_duration`, and `planned_duration_hours`. The 2026-10-23 progress-field follow-up uses the MS Project XML integer type in both runtimes: integer values from 0 through 100 apply; fractional, nonnumeric, and out-of-range values warn and preserve the existing value. F-J6 is **partially implemented** because the Java task-date parser still rejects a space-separated datetime accepted by Node.
+- Current Node CLI comparison covers depth 0 / 100 / omitted / 101 / huge values, public patch apply and validation, invalid update_task operations, and unknown-operation continuation. The test records Node CLI path, SHA-256, and Node version.
+- Known date differences remain: Node accepts a space-separated datetime that the Java task helper warns on; for T-form datetimes Node writes space-separated workbook values while Java keeps `T`. These are recorded expected differences. Date precision / empty-cell changes and F-S5 projection changes remain on hold; Issue #138 continues to track the deferred date behavior.
+
+Current R2F-06 final verification (2026-10-22): Node snapshot importer 12/12; full Maven suite 229 tests, 0 failures, 0 errors, 11 opt-in skips; dedicated `ContractSnapshotVerifierTest` 8/8. Raw console log is in the Node worktree at `workplace/node-java-137/R2F-06/test-all-closeout.log`. Node 20.20.2 parity 9/9 remains the RPF-08 historical result and was not rerun; R2F changed only Java test assertions and documentation. Earlier F-J5 225-test Maven run and 224-test/two-baseline-failure run are historical. No Java production source was changed by RPF-01/03 or R2F-02.

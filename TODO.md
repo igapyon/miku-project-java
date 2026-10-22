@@ -6,6 +6,29 @@
 - ここでは「今後の判断」や「完了条件」を優先して残し、個々の確認結果や通過ログの正本は `docs/remaining-migration-items.md` に寄せる
 - `vendor/mikuproject/docs/TODO.md` は upstream 機能差分、仕様制約、入出力の未整理事項を扱う
 
+## Node / Java 機能差分の判断（#137）
+
+Node側の[機能・差分判断表](https://github.com/igapyon/miku-project/blob/devel/docs/node-java-feature-union-v20261022.md)を両版の比較入口とする。表の「差異維持」はJava固有機能を残す判断を含み、「実装検討」「仕様判断」は後続作業として追跡する。次のID・受入条件の詳細は同表を参照する。
+
+- [x] `F-J1` LEG-J01〜J05でworkbook diff / warning / output failureのfocused regressionを追加し、J-PARITY 9/9とJ-ALLの2 baseline failure / 9 opt-in skipを記録した
+- [x] `F-J2` LEG-J06〜J17で共有CLI差を再現・記録した。追加I137実装でNode/Java CLIの`--max-depth`上限を0〜100へ統一し、巨大値をusage errorとして拒否する。直接core APIは対象外
+- [ ] `F-S1/F-S2/F-S3/F-S4` DEC-01〜04の提案とDEC-05〜10のXML field inventory / G-XML提案を記録済み。G-HELP、G-REPORT、G-META、field別G-XMLの採択は未決定で、対応するAPPLYを開始しない
+- [x] `F-J3` KEEP-01〜05でJava拡張command、native workbook列、日付なしSVG、zero-duration warning、配布境界の維持理由を追跡文書へ接続した
+- [ ] `F-X1` REF-01はexact tag `v1.1.1` / `9a9f562c03d28f1b0f3c809226dc61d0cd9d5f7e`を新しい内部reference候補として提案し、Node repoに後続Issue草案を保存した。G-REFERENCE採択後に新candidate lockとJava snapshotを追加し、v1.0.3/G4 lockは保持する
+- [ ] `F-J4` P5-C1の再review・人の承認後、F-X1の採択済みidentityから既存P5計画の順序でGate G5適合を進める。後続Issue草案をJava repoに保存
+- [x] `F-J5` B25: Java XLSX importのTask共有列をheader名で対応づけ、Java native列を保持。Implementation is committed at Java HEAD `c0b4421`. Historical F-J5 run: focused 22/22、Node 20.20.2 parity 9/9、Maven 225 tests。Current R2F-06 run (2026-10-22): `sh scripts/test-all.sh`成功（snapshot importer 12/12、Maven 229 tests、snapshot verifier 8/8、failure/error 0、11 opt-in skip）。Node 20 parity 9/9はRPF-08の過去run。RPF-03 public regression additionsとR2F-02の追加assertionはlocal/uncommitted。
+- [ ] `F-J6` Java `update_task`のdispatchと11 field（name、notes、calendar、critical、milestone、date、duration、進捗率2 field）を実装。進捗率はMS Project XMLに合わせてNode/Java双方で整数0〜100とし、小数・範囲外・数値以外はwarning-and-preserve。Javaのspace datetime parser差が残るため部分対応として追跡する
+
+
+
+
+
+
+
+RPF-01〜08 self-review correction execution (2026-10-22): Java implementation/version work was committed at HEAD `c0b4421`; RPF-03 public regression additions and R2F-02 focused XLSX assertions remain local/uncommitted. Strengthened six legacy flat-command rejection checks in text and JSON diagnostics; added public XLSX header boundary regressions; documented current Java/Node header behavior and the RPF-05 date/task-type scope without adopting unresolved policy. Current R2F-06 J-ALL (2026-10-22) is snapshot importer 12/12, Maven 229 tests (0 failures/errors, 11 opt-in skips), dedicated snapshot verifier 8/8. Node 20 parity 9/9 was verified in RPF-08 and not rerun. Earlier 225-test F-J5 and 224-test/two-baseline-failure runs are historical. Details: Node repository `docs/node-java-137-review-evidence-v20261022.md`.
+
+調査表と75カード計画は2026-10-22時点で37件完了、2件はmaintainerの判断待ち、36件は未着手。END-03はローカル草案作成まで完了。REM-01〜04、REM-06〜12、REM-16〜18は完了、REM-05はNode 26のbyte mismatch未再現で保留、REM-13〜15は採択待ち。DEC-05〜10のXML inventory / field別判断案、F-S5/F-S6/depthの採択判断パケット、REF-01案は記録済みで、対応Gateが採択されるまでAPPLY/REF後続作業を開始しない。後続Issue草案4件はローカルに保存したが、GitHubへの登録・#137コメントは行っていない。
+
 ## 最重要
 
 ### Gate G5へ向けたv1 Java CLI適合

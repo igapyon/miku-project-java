@@ -60,6 +60,8 @@ CLI は `java -jar miku-project.jar <command> ...` の形で実行する。
 - `ai detect-kind --in patch.editjson --diagnostics json`
 - `ai export task-edit --in workbook.json --select first-task --out task.editjson`
 - `ai export phase-detail --in workbook.json --phase-uid phaseUid --mode scoped --root-task-uid rootTaskUid --max-depth 2 --out phase.editjson`
+
+`--max-depth` は選択rootを0とする相対depthで、整数0〜100を受け付ける。省略時は選択root以下を深さ制限なしで取得する。直接のcore APIにはこのCLI上限を追加しない。
 - `ai export bundle --in workbook.json --diagnostics json --out bundle.editjson`
 - `state from-draft --in draft.editjson --out workbook.json`
 - `state apply-patch --state workbook.json --in patch.editjson --out workbook.next.json`

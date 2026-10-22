@@ -42,6 +42,25 @@ public class ProjectPatchJsonCore {
                 updates.applyUpdateProjectOperation(nextModel.project, operation.fields, nextModel, changes, warnings, index);
                 continue;
             }
+            if ("update_task".equals(op)) {
+                String uid = safe(operation.uid).trim();
+                if (uid.length() == 0) {
+                    warnings.add(warning("update_task の uid がありません: operations[" + index + "]", null, null, null));
+                    continue;
+                }
+                TaskModel task = taskByUid.get(uid);
+                if (task == null) {
+                    warnings.add(warning("update_task の uid が既存 task を指していません: " + uid, "tasks", uid, null));
+                    continue;
+                }
+                if (operation.fields == null) {
+                    warnings.add(warning("update_task.fields がオブジェクトではありません: " + uid, "tasks", uid,
+                            task.name == null || task.name.isEmpty() ? task.uid : task.name));
+                    continue;
+                }
+                updates.applyUpdateTaskOperation(task, operation.fields, nextModel, changes, warnings, index);
+                continue;
+            }
             if ("update_assignment".equals(op)) {
                 jp.igapyon.mikuproject.model.AssignmentModel assignment = findAssignment(nextModel, safe(operation.uid).trim());
                 if (assignment == null) {

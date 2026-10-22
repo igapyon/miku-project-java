@@ -150,17 +150,17 @@ Supported commands:
 ### Shared Node-compatible commands
 
 - `--version`
-- `ai spec`
+- `ai spec [--out spec.md|-]`
 - `ai export project-overview [--in workbook.json|-] [--diagnostics text|json] [--out overview.editjson|-]`
 - `ai export task-edit [--in workbook.json|-] [--task-uid taskUid] [--select auto|first-task|uid] [--diagnostics text|json] [--out task.editjson|-]`
-- `ai export phase-detail [--in workbook.json|-] [--phase-uid phaseUid] [--select auto|first-phase|uid] [--mode scoped|full] [--root-task-uid rootTaskUid] [--max-depth n] [--diagnostics text|json] [--out phase.editjson|-]`
+- `ai export phase-detail [--in workbook.json|-] [--phase-uid phaseUid] [--select auto|first-phase|uid] [--mode scoped|full] [--root-task-uid rootTaskUid] [--max-depth 0..100] [--diagnostics text|json] [--out phase.editjson|-]`
 - `ai export bundle [--in workbook.json|-] [--diagnostics text|json] [--out bundle.editjson|-]`
-- `ai detect-kind [--in document.json|-] [--diagnostics text|json]`
-- `ai validate-patch --state workbook.json [--in patch.json] [--diagnostics text|json]`
+- `ai detect-kind [--in document.json|-] [--diagnostics text|json] [--out kind.txt|-]`
+- `ai validate-patch --state workbook.json [--in patch.json] [--diagnostics text|json] [--out validation.txt|-]`
 - `state from-draft [--in draft.editjson|-] [--out workbook.json|-]`
 - `state apply-patch --state workbook.json|- [--in patch.json|-] [--diagnostics text|json] [--out workbook.next.json|-]`
 - `state summarize [--in workbook.json|-] [--diagnostics text|json]`
-- `state diff --before workbook.before.json --after workbook.after.json [--diagnostics text|json]`
+- `state diff --before workbook.before.json --after workbook.after.json [--diagnostics text|json] [--out diff.json|-]`
 - `export workbook-json [--in workbook.json|-] [--diagnostics text|json] [--out workbook.json|-]`
 - `export xml [--in workbook.json|-] [--diagnostics text|json] [--out project.xml|-]`
 - `export xlsx [--in workbook.json|-] [--diagnostics text|json] (--out project.xlsx|--out-base64 -)`

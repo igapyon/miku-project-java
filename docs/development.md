@@ -49,7 +49,9 @@ Java test実行の正本は`mvn test`とする。repository全体では`sh scrip
 - upstream 追随の保守回帰:
   - `mvn test -Dtest=WbsMarkdownTest,WbsSvgTest,WbsXlsxTest,ProjectWorkbookJsonTest,ProjectXlsxTest,CoreApiWorkbookTest,CoreApiPublicTest,CoreApiImportTest,MsProjectAiViewsTest,MikuprojectCliTest`
 - Node upstream report artifact parity:
-  - `MIKUPROJECT_RUN_NODE_PARITY=true mvn test`
+  - `npm --prefix vendor/mikuproject ci`
+  - `MIKUPROJECT_RUN_NODE_PARITY=true mvn -Dmiku.project.node.binary=/path/to/node20 test`
+  - Node 20 is used for byte-level parity; the system Node 26 run differed in WBS XLSX bytes.
 - runtime jar / sources jar / distribution zip reproducibility:
   - `sh scripts/verify-reproducible-package.sh`
 - v1 contract snapshot integrity:
