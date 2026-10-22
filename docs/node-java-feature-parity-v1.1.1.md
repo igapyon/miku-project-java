@@ -2,6 +2,8 @@
 
 調査日: 2026-10-21
 
+現在の機能単位の比較と差分判断は、Node側の[Node / Java 機能・差分判断表（#137）](https://github.com/igapyon/miku-project/blob/devel/docs/node-java-feature-union-v20261022.md)を参照する。本書は先行する概括調査として保持する。新しい表は、共通legacy 22command、Java固有7command、I/O・core・v1・配布境界を扱い、差異維持と仕様判断も記録する。G4当時のcapability matrixは履歴として保持し、現在の進捗は新しい表と各TODOから案内する。
+
 ## 比較基準
 
 - Node版: miku-project v1.1.1 release tag、commit `9a9f562c03d28f1b0f3c809226dc61d0cd9d5f7e`

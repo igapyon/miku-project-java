@@ -5,6 +5,8 @@
 package jp.igapyon.mikuproject.cli;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -14,8 +16,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import jp.igapyon.mikuproject.coreapi.CoreApiAiJsonParseResult;
 import jp.igapyon.mikuproject.coreapi.CoreApiReportAdapters;
@@ -36,7 +40,7 @@ import jp.igapyon.mikuproject.wbssvg.WbsSvg.MonthlyCalendarSvgArchive;
 import jp.igapyon.mikuproject.wbsxlsx.WbsXlsx.WbsExportOptions;
 
 public class MikuprojectCli {
-    public static final String VERSION = "1.1.1";
+    public static final String VERSION = "1.1.2";
     private static final String[] NODE_TASK_HEADERS = { "UID", "ID", "Name", "OutlineLevel", "OutlineNumber", "WBS", "Start",
             "Finish", "Duration", "PercentComplete", "PercentWorkComplete", "Milestone", "Summary", "Critical", "CalendarUID",
             "Predecessors", "Notes" };
@@ -61,9 +65,19 @@ public class MikuprojectCli {
     private String currentDiagnosticsFormat;
 
     public static void main(String[] args) {
-        int exitCode = new MikuprojectCli().run(args, System.out, System.err);
+        PrintStream stdout = utf8ConsoleStream(FileDescriptor.out);
+        PrintStream stderr = utf8ConsoleStream(FileDescriptor.err);
+        int exitCode = new MikuprojectCli().run(args, stdout, stderr);
         if (exitCode != 0) {
             System.exit(exitCode);
+        }
+    }
+
+    private static PrintStream utf8ConsoleStream(FileDescriptor descriptor) {
+        try {
+            return new PrintStream(new FileOutputStream(descriptor), true, StandardCharsets.UTF_8.name());
+        } catch (java.io.UnsupportedEncodingException ex) {
+            throw new IllegalStateException("UTF-8 is required for CLI output", ex);
         }
     }
 
@@ -109,6 +123,8 @@ public class MikuprojectCli {
                 return runReportCommand(args, out, err);
             }
             return usageError(err, "unknown command: " + command, true);
+        } catch (BinaryUsageFailure ex) {
+            return binaryUsageError(err, ex.getMessage(), ex.code, ex.details, invocation.options);
         } catch (IOException ex) {
             return executionError(err, "I/O error: " + ex.getMessage(), "io_error");
         } catch (RuntimeException ex) {
@@ -138,6 +154,15 @@ public class MikuprojectCli {
             String message = "未対応のコマンドです: " + invocation.commandName;
             return structuredUsageError(err, message, "unsupported_command", null, allowed);
         }
+        if (!invocation.options.missingValueOptions.isEmpty()) {
+            String option = "--" + invocation.options.missingValueOptions.iterator().next();
+            return structuredUsageError(err, "オプション " + option + " には値が必要です", "missing_option_value", option, null);
+        }
+        if (!invocation.options.positionals.isEmpty()) {
+            String commandName = invocation.commandName + " " + join(invocation.options.positionals, " ");
+            currentCommandName = commandName;
+            return structuredUsageError(err, "未対応のコマンドです: " + commandName, "unsupported_command", null, null);
+        }
         for (String option : invocation.options.values.keySet()) {
             if (!allowed.contains(option)) {
                 String message = invocation.commandName + " では --" + option + " を使えません";
@@ -146,32 +171,104 @@ public class MikuprojectCli {
         }
         if ("import xlsx".equals(invocation.commandName)) {
             CliOptions options = invocation.options;
-            if (options.has("in") && options.has("in-base64")) {
-                return structuredUsageError(err, "import xlsx cannot use --in and --in-base64 together", "invalid_binary_input", null, allowed);
+            boolean hasInput = hasValue(options.get("in"));
+            boolean hasBase64Input = hasValue(options.get("in-base64"));
+            if (hasInput && hasBase64Input) {
+                return binaryUsageError(err, "import xlsx では --in と --in-base64 を同時に指定できません",
+                        "multiple_input_sources", diagnosticsDetail("options", java.util.Arrays.asList("--in", "--in-base64")), options);
             }
             if ("-".equals(options.get("in"))) {
-                return structuredUsageError(err, "import xlsx binary stdin requires --in-base64 -", "invalid_binary_input", null, allowed);
+                return binaryUsageError(err, "import xlsx の binary stdin には --in-base64 - を指定してください",
+                        "binary_stdin_requires_base64", diagnosticsDetail("option", "--in-base64"), options);
             }
-            if (options.has("in-base64") && (options.get("in-base64") == null || options.get("in-base64").length() == 0)) {
-                return structuredUsageError(err, "import xlsx requires --in <path> or --in-base64 -", "invalid_binary_input", null, allowed);
-            }
-            if (!options.has("in-base64") && (!options.has("in") || options.get("in").length() == 0)) {
-                return structuredUsageError(err, "import xlsx requires --in <path> or --in-base64 -", "invalid_binary_input", null, allowed);
+            if (!hasInput && !hasBase64Input) {
+                return binaryUsageError(err, "import xlsx には --in <path> または --in-base64 - が必要です",
+                        "missing_binary_input", diagnosticsDetail("required_options", java.util.Arrays.asList("--in", "--in-base64")), options);
             }
         }
         if (allowed.contains("out-base64")) {
             CliOptions options = invocation.options;
-            if (options.has("out") && options.has("out-base64")) {
-                return structuredUsageError(err, invocation.commandName + " cannot use --out and --out-base64 together", "invalid_binary_output", null, allowed);
+            boolean hasOutput = hasValue(options.get("out"));
+            boolean hasBase64Output = hasValue(options.get("out-base64"));
+            if (hasOutput && hasBase64Output) {
+                return binaryUsageError(err, invocation.commandName + " では --out と --out-base64 を同時に指定できません",
+                        "multiple_output_targets", diagnosticsDetail("options", java.util.Arrays.asList("--out", "--out-base64")), options);
             }
-            if (options.has("out-base64") && !"-".equals(options.get("out-base64"))) {
-                return structuredUsageError(err, invocation.commandName + " --out-base64 supports only -", "invalid_binary_output", null, allowed);
+            if (hasBase64Output && !"-".equals(options.get("out-base64"))) {
+                Map<String, Object> details = diagnosticsDetail("option", "--out-base64");
+                details.put("expected", "-");
+                return binaryUsageError(err, invocation.commandName + " の --out-base64 は - のみ対応です",
+                        "invalid_base64_output_target", details, options);
             }
-            if (!options.has("out-base64") && (!options.has("out") || options.get("out").length() == 0 || "-".equals(options.get("out")))) {
-                return structuredUsageError(err, invocation.commandName + " is a binary artifact and requires --out <path> or --out-base64 -", "invalid_binary_output", null, allowed);
+            if (!hasBase64Output && (!hasOutput || "-".equals(options.get("out")))) {
+                Map<String, Object> details = diagnosticsDetail("option", "--out");
+                details.put("command", invocation.commandName);
+                details.put("expected", "file_or_base64_stdout");
+                return binaryUsageError(err, invocation.commandName + " is a binary artifact and requires --out <path> or --out-base64 -",
+                        "binary_stdout_not_supported", details, options);
             }
         }
         return -1;
+    }
+
+    private boolean hasValue(String value) {
+        return value != null && value.length() > 0;
+    }
+
+    private int binaryUsageError(PrintStream err, String message, String code, Map<String, Object> details, CliOptions options) {
+        if (!"json".equals(currentDiagnosticsFormat)) return usageError(err, message);
+        Map<String, Object> diagnostics = errorDiagnostics(2, currentCommandName, message, code);
+        Map<String, Object> item = new LinkedHashMap<String, Object>();
+        item.put("code", code);
+        item.put("message", message);
+        if (details != null) item.put("details", details);
+        List<Object> errors = new ArrayList<Object>();
+        errors.add(item);
+        diagnostics.put("errors", errors);
+        diagnostics.put("io", buildBinaryIoDiagnostics(options));
+        diagnostics.put("error_type", "usage_error");
+        diagnostics.put("error_details", details);
+        err.println(jsonUtil.stringifyPrettyJson(diagnostics));
+        return 2;
+    }
+
+    private Map<String, Object> buildBinaryIoDiagnostics(CliOptions options) {
+        List<Object> inputs = new ArrayList<Object>();
+        boolean hasExplicitInput = false;
+        Map<String, Object> output = new LinkedHashMap<String, Object>();
+        output.put("mode", "stdout");
+        for (Map.Entry<String, String> entry : options.values.entrySet()) {
+            String name = entry.getKey();
+            String value = entry.getValue();
+            if ("in".equals(name) || "in-base64".equals(name)) {
+                hasExplicitInput = true;
+                Map<String, Object> input = new LinkedHashMap<String, Object>();
+                boolean base64 = "in-base64".equals(name);
+                input.put("option", base64 ? "--in-base64" : "--in");
+                input.put("mode", base64 ? ("-".equals(value) ? "stdin_base64" : "file_base64")
+                        : ("-".equals(value) ? "stdin" : "file"));
+                if (hasValue(value) && !"-".equals(value)) input.put("path", value);
+                inputs.add(input);
+            } else if ("out".equals(name)) {
+                output.clear();
+                output.put("mode", "-".equals(value) ? "stdout" : "file");
+                if (hasValue(value) && !"-".equals(value)) output.put("path", value);
+            } else if ("out-base64".equals(name)) {
+                output.clear();
+                output.put("mode", "-".equals(value) ? "stdout_base64" : "file_base64");
+                if (hasValue(value) && !"-".equals(value)) output.put("path", value);
+            }
+        }
+        if (!hasExplicitInput && !"import xlsx".equals(currentCommandName)) {
+            Map<String, Object> implicit = new LinkedHashMap<String, Object>();
+            implicit.put("option", "--in");
+            implicit.put("mode", "stdin_implicit");
+            inputs.add(implicit);
+        }
+        Map<String, Object> io = new LinkedHashMap<String, Object>();
+        io.put("inputs", inputs);
+        io.put("output", output);
+        return io;
     }
 
     private List<String> allowedOptions(String command) {
@@ -289,13 +386,16 @@ public class MikuprojectCli {
             }
             String input = inputOrStdin(options);
             CoreApiAiJsonParseResult parsed = coreApiImport.parseAiJsonText(readText(input));
+            if (parsed.kind == null || parsed.kind.length() == 0) {
+                return executionError(err, "入力 JSON の kind を判定できませんでした", "document_kind_not_detected");
+            }
             writeTextOutput(options.get("out"), safe(parsed.kind) + "\n", out);
             if ("json".equals(diagnosticsFormat)) {
                 Map<String, Object> diagnostics = buildCommandDiagnostics("detect-kind", options);
                 diagnostics.put("detected_kind", parsed.kind);
                 err.println(jsonUtil.stringifyPrettyJson(diagnostics));
             }
-            return parsed.kind == null || parsed.kind.length() == 0 ? 1 : 0;
+            return 0;
         }
         if ("export".equals(action)) {
             return runAiExportCommand(args, out, err);
@@ -306,14 +406,67 @@ public class MikuprojectCli {
             if (!isValidDiagnosticsFormat(diagnosticsFormat)) {
                 return usageError(err, "--diagnostics requires text or json");
             }
-            String state = requireOption(options, "state", err, "ai validate-patch requires --state <workbook.json>");
-            String input = inputOrStdin(options);
-            if (state == null) {
+            String state = options.get("state");
+            if (state == null || state.length() == 0) {
+                structuredUsageError(err, "ai validate-patch には --state workbook.json が必要です", "missing_state_option", "--state", null);
                 return 2;
             }
-            ProjectModel baseModel = importWorkbookJsonModel(state);
-            Object json = parseJsonFile(input);
-            jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonCore.ImportResult applied = patchJson.importProjectPatchJson(json, baseModel);
+            String input = inputOrStdin(options);
+            if ("-".equals(state) && "-".equals(input)) {
+                return rejectMultipleStdinSources(err, "--state", "--in");
+            }
+            Object stateDocument;
+            try {
+                stateDocument = parseJsonFile(state);
+            } catch (RuntimeException ex) {
+                Map<String, Object> details = new LinkedHashMap<String, Object>();
+                details.put("context", "ai validate-patch --state");
+                return writePatchValidationFailure(diagnosticsFormat, options,
+                        "ai validate-patch --state の JSON を解析できませんでした", "invalid_json_input", details, out);
+            } catch (IOException ex) {
+                return writePatchValidationFailure(diagnosticsFormat, options, ex.getMessage(), "patch_validation_failed", null, out);
+            }
+            Object json;
+            try {
+                json = parseAiJsonFile(input);
+            } catch (RuntimeException ex) {
+                Map<String, Object> details = new LinkedHashMap<String, Object>();
+                details.put("context", "ai validate-patch --in");
+                return writePatchValidationFailure(diagnosticsFormat, options,
+                        "ai validate-patch --in の JSON を解析できませんでした", "invalid_json_input", details, out);
+            } catch (IOException ex) {
+                return writePatchValidationFailure(diagnosticsFormat, options, ex.getMessage(), "patch_validation_failed", null, out);
+            }
+            String stateKind = coreApiImport.detectAiJsonDocumentKind(stateDocument);
+            if (!"workbook_json".equals(stateKind)) {
+                Map<String, Object> details = new LinkedHashMap<String, Object>();
+                details.put("context", "ai validate-patch");
+                details.put("expected_kind", "workbook_json");
+                details.put("actual_kind", stateKind);
+                return writePatchValidationFailure(diagnosticsFormat, options,
+                        "ai validate-patch は mikuproject_workbook_json を入力してください", "invalid_workbook_kind", details, out);
+            }
+            String patchKind = coreApiImport.detectAiJsonDocumentKind(json);
+            if (!"patch_json".equals(patchKind)) {
+                Map<String, Object> details = new LinkedHashMap<String, Object>();
+                details.put("context", "ai validate-patch");
+                details.put("expected_kind", "patch_json");
+                details.put("actual_kind", patchKind);
+                return writePatchValidationFailure(diagnosticsFormat, options,
+                        "ai validate-patch は patch_json を入力してください", "invalid_patch_kind", details, out);
+            }
+            ProjectModel baseModel;
+            jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonCore.ImportResult applied;
+            try {
+                jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonImport.ImportAsProjectModelResult baseImport =
+                        workbookJson.importProjectWorkbookJsonAsProjectModel(stateDocument);
+                currentWorkbookWarnings = baseImport.warnings == null ? new ArrayList<WorkbookJsonWarning>() : baseImport.warnings;
+                appendUpstreamWorkbookColumnWarnings(stateDocument);
+                baseModel = baseImport.model;
+                applied = patchJson.importProjectPatchJson(json, baseModel);
+            } catch (RuntimeException ex) {
+                return writePatchValidationFailure(diagnosticsFormat, options, ex.getMessage(), "patch_validation_failed", null, out);
+            }
             writePatchValidationOutput(diagnosticsFormat, options, applied, out);
             return 0;
         }
@@ -352,8 +505,12 @@ public class MikuprojectCli {
             if (mode == null) {
                 return 2;
             }
+            Integer maxDepth = parseOptionalNonNegativeInteger(options.get("max-depth"), err);
+            if (options.has("max-depth") && maxDepth == null) {
+                return 2;
+            }
             result = msProjectXml.exportPhaseDetailView(model, phaseUid, mode,
-                    options.get("root-task-uid"), options.getInteger("max-depth"));
+                    options.get("root-task-uid"), maxDepth);
         } else {
             return usageError(err, "unknown ai export command: " + subject, true);
         }
@@ -370,7 +527,7 @@ public class MikuprojectCli {
         CliOptions options = parseOptions(args, 2);
         if ("from-draft".equals(action)) {
             String input = inputOrStdin(options);
-            ProjectModel model = msProjectXml.importProjectDraftView(parseJsonFile(input));
+            ProjectModel model = msProjectXml.importProjectDraftView(parseAiJsonFile(input));
             writeWorkbookJsonOutput(options.get("out"), model, out);
             return 0;
         }
@@ -410,8 +567,11 @@ public class MikuprojectCli {
             if (state == null) {
                 return 2;
             }
+            if ("-".equals(state) && "-".equals(input)) {
+                return rejectMultipleStdinSources(err, "--state", "--in");
+            }
             jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonCore.ImportResult result =
-                    patchJson.importProjectPatchJson(parseJsonFile(input), importWorkbookJsonModel(state));
+                    patchJson.importProjectPatchJson(parseAiJsonFile(input), importWorkbookJsonModel(state));
             writeWorkbookJsonOutput(options.get("out"), result.model, out);
             writePatchDiagnostics(diagnosticsFormat, "apply-patch", options, result, err);
             return 0;
@@ -436,6 +596,9 @@ public class MikuprojectCli {
             String after = requireOption(options, "after", err, "state diff requires --after <workbook.after.json>");
             if (before == null || after == null) {
                 return 2;
+            }
+            if ("-".equals(before) && "-".equals(after)) {
+                return rejectMultipleStdinSources(err, "--before", "--after");
             }
             jp.igapyon.mikuproject.projectworkbookjson.ProjectWorkbookJsonDiff.Result result =
                     workbookJson.diffDocuments(parseJsonFile(before), parseJsonFile(after));
@@ -652,9 +815,23 @@ public class MikuprojectCli {
         return jsonUtil.parseJsonText(readText(path));
     }
 
+    private Object parseAiJsonFile(String path) throws IOException {
+        return coreApiImport.parseAiJsonText(readText(path)).document;
+    }
+
     private String inputOrStdin(CliOptions options) {
         String input = options.get("in");
         return input == null || input.length() == 0 ? "-" : input;
+    }
+
+    private int rejectMultipleStdinSources(PrintStream err, String... optionNames) {
+        StringBuilder sources = new StringBuilder();
+        for (String optionName : optionNames) {
+            if (sources.length() > 0) sources.append(", ");
+            sources.append(optionName);
+        }
+        String message = "標準入力を使える入力オプションは 1 つだけです: " + sources;
+        return structuredUsageError(err, message, "multiple_stdin_sources", null, null);
     }
 
     private String exportWorkbookJsonText(ProjectModel model) {
@@ -732,14 +909,27 @@ public class MikuprojectCli {
     }
 
     private byte[] readBinaryInput(CliOptions options, String commandLabel) throws IOException {
-        if (options.has("in-base64")) {
+        if (hasValue(options.get("in-base64"))) {
             String source = options.get("in-base64");
             byte[] encoded = "-".equals(source) ? readStdinBytes() : Files.readAllBytes(Paths.get(source));
+            if ("-".equals(source) && encoded.length == 0) {
+                throw new BinaryUsageFailure("入力が必要です。--in を指定するか標準入力を渡してください", "missing_input",
+                        diagnosticsDetail("option", "--in"));
+            }
+            String normalized = new String(encoded, StandardCharsets.UTF_8).replaceAll("\\s+", "");
+            if (normalized.length() == 0) {
+                throw new BinaryUsageFailure(commandLabel + " の Base64 入力が空です", "invalid_base64_input",
+                        diagnosticsDetail("context", commandLabel));
+            }
+            if (!normalized.matches("[A-Za-z0-9+/]*={0,2}") || normalized.length() % 4 != 0) {
+                throw new BinaryUsageFailure(commandLabel + " の Base64 入力を解析できませんでした", "invalid_base64_input",
+                        diagnosticsDetail("context", commandLabel));
+            }
             try {
-                String normalized = new String(encoded, StandardCharsets.UTF_8).replaceAll("\\s+", "");
                 return Base64.getDecoder().decode(normalized);
             } catch (IllegalArgumentException ex) {
-                throw new IllegalArgumentException(commandLabel + " invalid Base64 input");
+                throw new BinaryUsageFailure(commandLabel + " の Base64 入力を解析できませんでした", "invalid_base64_input",
+                        diagnosticsDetail("context", commandLabel));
             }
         }
         return Files.readAllBytes(Paths.get(options.get("in")));
@@ -959,6 +1149,52 @@ public class MikuprojectCli {
         writeTextOutput(options.get("out"), output.toString(), out);
     }
 
+    private int writePatchValidationFailure(String diagnosticsFormat, CliOptions options, String message, String code,
+            Map<String, Object> details, PrintStream out) throws IOException {
+        Map<String, Object> report = buildCommandDiagnostics("ai validate-patch", options);
+        List<Object> warnings = workbookWarningMaps(currentWorkbookWarnings);
+        Map<String, Object> error = new LinkedHashMap<String, Object>();
+        error.put("code", code);
+        error.put("message", message);
+        if (details != null) error.put("details", details);
+        List<Object> errors = new ArrayList<Object>();
+        errors.add(error);
+        Map<String, Object> emptyChanges = summarizePatchChanges(new ArrayList<jp.igapyon.mikuproject.projectpatchjson.ImportChange>());
+
+        report.put("ok", Boolean.FALSE);
+        report.put("status", "error");
+        report.put("exit_code", Integer.valueOf(1));
+        report.put("warning_count", Integer.valueOf(warnings.size()));
+        report.put("error_count", Integer.valueOf(1));
+        report.put("io", buildIoDiagnostics(options, "state", "in"));
+        report.put("error_type", "processing_error");
+        report.put("error_code", code);
+        if (details != null) report.put("error_details", details);
+        report.put("warnings", warnings);
+        report.put("errors", errors);
+        report.put("changes_summary", emptyChanges);
+        report.put("diagnostics_format", diagnosticsFormat == null || diagnosticsFormat.length() == 0 ? "text" : diagnosticsFormat);
+
+        if ("json".equals(diagnosticsFormat)) {
+            writeTextOutput(options.get("out"), jsonUtil.stringifyPrettyJson(report) + "\n", out);
+            return 1;
+        }
+        Map<?, ?> byScope = (Map<?, ?>) emptyChanges.get("by_scope");
+        StringBuilder output = new StringBuilder();
+        output.append("[miku-project-cli] validate-patch ok=false status=error warnings=").append(warnings.size())
+                .append(" errors=1 changes=0\n");
+        output.append("[error] ").append(message).append('\n');
+        for (Object warning : warnings) {
+            Object warningMessage = warning instanceof Map<?, ?> ? ((Map<?, ?>) warning).get("message") : warning;
+            output.append("[warning] ").append(safe(warningMessage == null ? null : String.valueOf(warningMessage))).append('\n');
+        }
+        output.append("[changes] project=").append(byScope.get("project")).append(" tasks=").append(byScope.get("tasks"))
+                .append(" resources=").append(byScope.get("resources")).append(" assignments=").append(byScope.get("assignments"))
+                .append(" calendars=").append(byScope.get("calendars")).append('\n');
+        writeTextOutput(options.get("out"), output.toString(), out);
+        return 1;
+    }
+
     private void writePatchDiagnostics(String diagnosticsFormat, String context, CliOptions options,
             jp.igapyon.mikuproject.projectpatchjson.ProjectPatchJsonCore.ImportResult result, PrintStream err) {
         Map<String, Object> diagnostics = buildPatchDiagnostics(context, options, result, "state", "in");
@@ -1106,7 +1342,7 @@ public class MikuprojectCli {
         List<Object> inputs = new ArrayList<Object>();
         for (String inputName : inputNames) {
             Map<String, Object> input = new LinkedHashMap<String, Object>();
-            boolean base64Input = "in".equals(inputName) && options.has("in-base64");
+            boolean base64Input = "in".equals(inputName) && hasValue(options.get("in-base64"));
             String value = base64Input ? options.get("in-base64") : options.get(inputName);
             input.put("option", base64Input ? "--in-base64" : "--" + inputName);
             if (base64Input) {
@@ -1121,7 +1357,7 @@ public class MikuprojectCli {
         }
         io.put("inputs", inputs);
         Map<String, Object> output = new LinkedHashMap<String, Object>();
-        boolean base64Output = options.has("out-base64");
+        boolean base64Output = hasValue(options.get("out-base64"));
         if (base64Output) {
             String value = options.get("out-base64");
             output.put("mode", "-".equals(value) ? "stdout_base64" : "file_base64");
@@ -1152,6 +1388,22 @@ public class MikuprojectCli {
         }
         usageError(err, "--mode requires scoped or full");
         return null;
+    }
+
+    private Integer parseOptionalNonNegativeInteger(String value, PrintStream err) {
+        if (value == null) {
+            return null;
+        }
+        if (!value.matches("[0-9]+")) {
+            structuredUsageError(err, "--max-depth には 0 以上 100 以下の整数を指定してください", "invalid_integer_option", "--max-depth", null);
+            return null;
+        }
+        String canonical = value.replaceFirst("^0+(?!$)", "");
+        if (canonical.length() > 3 || (canonical.length() == 3 && canonical.compareTo("100") > 0)) {
+            structuredUsageError(err, "--max-depth には 0 以上 100 以下の整数を指定してください", "invalid_integer_option", "--max-depth", null);
+            return null;
+        }
+        return Integer.valueOf(canonical);
     }
 
     private String parseSelectMode(String value, PrintStream err) {
@@ -1244,7 +1496,7 @@ public class MikuprojectCli {
     }
 
     private void writeBinaryOutput(CliOptions options, byte[] bytes, PrintStream out, String suffix) throws IOException {
-        if (options.has("out-base64")) {
+        if (hasValue(options.get("out-base64"))) {
             out.println(Base64.getEncoder().encodeToString(bytes));
             return;
         }
@@ -1263,7 +1515,7 @@ public class MikuprojectCli {
     }
 
     private boolean ensureBinaryInputSource(CliOptions options, String commandLabel, PrintStream err) {
-        if (options.has("in") && options.has("in-base64")) {
+        if (hasValue(options.get("in")) && hasValue(options.get("in-base64"))) {
             usageError(err, commandLabel + " cannot use --in and --in-base64 together");
             return false;
         }
@@ -1271,14 +1523,10 @@ public class MikuprojectCli {
             usageError(err, commandLabel + " binary stdin requires --in-base64 -");
             return false;
         }
-        if (options.has("in-base64")) {
-            if (options.get("in-base64").length() == 0) {
-                usageError(err, commandLabel + " requires --in <path> or --in-base64 -");
-                return false;
-            }
+        if (hasValue(options.get("in-base64"))) {
             return true;
         }
-        if (options.has("in") && options.get("in").length() > 0) {
+        if (hasValue(options.get("in"))) {
             return true;
         }
         usageError(err, commandLabel + " requires --in <path> or --in-base64 -");
@@ -1286,18 +1534,18 @@ public class MikuprojectCli {
     }
 
     private boolean ensureBinaryOutputTarget(CliOptions options, String commandLabel, PrintStream err) {
-        if (options.has("out") && options.has("out-base64")) {
+        if (hasValue(options.get("out")) && hasValue(options.get("out-base64"))) {
             usageError(err, commandLabel + " cannot use --out and --out-base64 together");
             return false;
         }
-        if (options.has("out-base64")) {
+        if (hasValue(options.get("out-base64"))) {
             if (!"-".equals(options.get("out-base64"))) {
                 usageError(err, commandLabel + " --out-base64 supports only -");
                 return false;
             }
             return true;
         }
-        if (options.has("out") && options.get("out").length() > 0 && !"-".equals(options.get("out"))) {
+        if (hasValue(options.get("out")) && !"-".equals(options.get("out"))) {
             return true;
         }
         usageError(err, commandLabel + " is a binary artifact and requires --out <path> or --out-base64 -");
@@ -1343,6 +1591,7 @@ public class MikuprojectCli {
                 value = args[index + 1];
                 index += 2;
             } else {
+                options.missingValueOptions.add(name);
                 index++;
             }
             options.values.put(name, value);
@@ -1573,9 +1822,22 @@ public class MikuprojectCli {
         return result;
     }
 
+    private static class BinaryUsageFailure extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+        final String code;
+        final Map<String, Object> details;
+
+        BinaryUsageFailure(String message, String code, Map<String, Object> details) {
+            super(message);
+            this.code = code;
+            this.details = details;
+        }
+    }
+
     private static class CliOptions {
         final Map<String, String> values = new LinkedHashMap<String, String>();
         final List<String> positionals = new ArrayList<String>();
+        final Set<String> missingValueOptions = new LinkedHashSet<String>();
 
         String get(String name) {
             return values.get(name);
@@ -1647,7 +1909,7 @@ public class MikuprojectCli {
         out.println("  ai spec [--out spec.md|-]");
         out.println("  ai export project-overview [--in workbook.json|-] [--diagnostics text|json] [--out overview.editjson|-]");
         out.println("  ai export task-edit [--in workbook.json|-] [--task-uid taskUid] [--select auto|first-task|uid] [--diagnostics text|json] [--out task.editjson|-]");
-        out.println("  ai export phase-detail [--in workbook.json|-] [--phase-uid phaseUid] [--select auto|first-phase|uid] [--mode scoped|full] [--root-task-uid rootTaskUid] [--max-depth n] [--diagnostics text|json] [--out phase.editjson|-]");
+        out.println("  ai export phase-detail [--in workbook.json|-] [--phase-uid phaseUid] [--select auto|first-phase|uid] [--mode scoped|full] [--root-task-uid rootTaskUid] [--max-depth 0..100] [--diagnostics text|json] [--out phase.editjson|-]");
         out.println("  ai export bundle [--in workbook.json|-] [--diagnostics text|json] [--out bundle.editjson|-]");
         out.println("  ai detect-kind [--in document.json|-] [--diagnostics text|json] [--out kind.txt|-]");
         out.println("  ai validate-patch --state workbook.json [--in patch.json] [--diagnostics text|json] [--out validation.txt|-]");

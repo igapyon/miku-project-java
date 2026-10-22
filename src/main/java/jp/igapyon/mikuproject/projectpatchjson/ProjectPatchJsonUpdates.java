@@ -5,6 +5,8 @@
 package jp.igapyon.mikuproject.projectpatchjson;
 
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 
 import jp.igapyon.mikuproject.model.AssignmentModel;
@@ -12,9 +14,217 @@ import jp.igapyon.mikuproject.model.CalendarModel;
 import jp.igapyon.mikuproject.model.ProjectInfo;
 import jp.igapyon.mikuproject.model.ProjectModel;
 import jp.igapyon.mikuproject.model.ResourceModel;
+import jp.igapyon.mikuproject.model.TaskModel;
 
 public class ProjectPatchJsonUpdates {
     private final ProjectPatchJsonUtil util = new ProjectPatchJsonUtil();
+
+    public void applyUpdateTaskOperation(TaskModel task, Map<String, Object> rawFields, ProjectModel model,
+            List<ImportChange> changes, List<PatchWarning> warnings, int operationIndex) {
+        Map<String, Object> fields = new LinkedHashMap<String, Object>(rawFields);
+        if (fields.isEmpty()) {
+            warnings.add(warning("update_task に fields がありません: " + task.uid, "tasks", task.uid, taskLabel(task)));
+            return;
+        }
+        if (fields.containsKey("planned_duration") && fields.containsKey("planned_duration_hours")) {
+            warnings.add(warning("planned_duration と planned_duration_hours が同時指定されたため、planned_duration_hours は無視します: "
+                    + task.uid, "tasks", task.uid, taskLabel(task)));
+            fields.remove("planned_duration_hours");
+        }
+
+        java.util.Set<String> handledFields = new LinkedHashSet<String>();
+        boolean nextMilestone = task.milestone;
+
+        if (fields.containsKey("is_milestone")) {
+            handledFields.add("is_milestone");
+            Object rawValue = fields.get("is_milestone");
+            if (!(rawValue instanceof Boolean)) {
+                warnings.add(warning("update_task.is_milestone は boolean が必要です: " + task.uid, "tasks", task.uid,
+                        taskLabel(task)));
+            } else if (task.summary && ((Boolean) rawValue).booleanValue()) {
+                warnings.add(warning("update_task では summary task を milestone にできません: " + task.uid, "tasks", task.uid,
+                        taskLabel(task)));
+            } else if (task.milestone != ((Boolean) rawValue).booleanValue()) {
+                boolean value = ((Boolean) rawValue).booleanValue();
+                changes.add(change("tasks", task.uid, taskLabel(task), "is_milestone", Boolean.valueOf(task.milestone),
+                        Boolean.valueOf(value)));
+                task.milestone = value;
+                nextMilestone = value;
+            }
+        }
+
+        if (fields.containsKey("name")) {
+            handledFields.add("name");
+            Object rawValue = fields.get("name");
+            if (!(rawValue instanceof String) || ((String) rawValue).trim().length() == 0) {
+                warnings.add(warning("update_task.name は空でない文字列が必要です: " + task.uid, "tasks", task.uid,
+                        taskLabel(task)));
+            } else {
+                String value = ((String) rawValue).trim();
+                if (!equalsNullable(task.name, value)) {
+                    changes.add(change("tasks", task.uid, taskLabel(task), "name", task.name, value));
+                    task.name = value;
+                }
+            }
+        }
+
+        if (fields.containsKey("notes")) {
+            handledFields.add("notes");
+            Object rawValue = fields.get("notes");
+            if (!(rawValue instanceof String)) {
+                warnings.add(warning("update_task.notes は文字列が必要です: " + task.uid, "tasks", task.uid,
+                        taskLabel(task)));
+            } else {
+                String value = (String) rawValue;
+                String currentValue = task.notes == null ? "" : task.notes;
+                if (!currentValue.equals(value)) {
+                    changes.add(change("tasks", task.uid, taskLabel(task), "notes", task.notes, value));
+                    task.notes = value.length() == 0 ? null : value;
+                }
+            }
+        }
+
+        if (fields.containsKey("calendar_uid")) {
+            handledFields.add("calendar_uid");
+            Object rawValue = fields.get("calendar_uid");
+            if (!(rawValue instanceof String)) {
+                warnings.add(warning("update_task.calendar_uid は文字列が必要です: " + task.uid, "tasks", task.uid,
+                        taskLabel(task)));
+            } else {
+                String value = ((String) rawValue).trim();
+                String nextCalendarUid = value.length() == 0 ? null : value;
+                if (nextCalendarUid != null && findCalendar(model, nextCalendarUid) == null) {
+                    warnings.add(warning("update_task.calendar_uid が既存 calendar を指していません: " + task.uid + " -> "
+                            + nextCalendarUid, "tasks", task.uid, taskLabel(task)));
+                } else if (!equalsNullable(task.calendarUID, nextCalendarUid)) {
+                    changes.add(change("tasks", task.uid, taskLabel(task), "calendarUID", task.calendarUID,
+                            nextCalendarUid == null ? "(cleared)" : nextCalendarUid));
+                    task.calendarUID = nextCalendarUid;
+                }
+            }
+        }
+
+        if (fields.containsKey("percent_complete")) {
+            handledFields.add("percent_complete");
+            Object rawValue = fields.get("percent_complete");
+            Integer value = integerPercentage(rawValue);
+            if (value == null) {
+                warnings.add(warning("update_task.percent_complete は 0 以上 100 以下の整数が必要です: " + task.uid,
+                        "tasks", task.uid, taskLabel(task)));
+            } else if (!equalsNullable(task.percentComplete, value)) {
+                changes.add(change("tasks", task.uid, taskLabel(task), "percentComplete", task.percentComplete,
+                        value));
+                task.percentComplete = value;
+            }
+        }
+
+        if (fields.containsKey("percent_work_complete")) {
+            handledFields.add("percent_work_complete");
+            Object rawValue = fields.get("percent_work_complete");
+            Integer value = integerPercentage(rawValue);
+            if (value == null) {
+                warnings.add(warning("update_task.percent_work_complete は 0 以上 100 以下の整数が必要です: " + task.uid,
+                        "tasks", task.uid, taskLabel(task)));
+            } else if (!equalsNullable(task.percentWorkComplete, value)) {
+                changes.add(change("tasks", task.uid, taskLabel(task), "percentWorkComplete",
+                        task.percentWorkComplete, value));
+                task.percentWorkComplete = value;
+            }
+        }
+
+        if (fields.containsKey("critical")) {
+            handledFields.add("critical");
+            Object rawValue = fields.get("critical");
+            if (!(rawValue instanceof Boolean)) {
+                warnings.add(warning("update_task.critical は boolean が必要です: " + task.uid, "tasks", task.uid,
+                        taskLabel(task)));
+            } else {
+                Boolean value = (Boolean) rawValue;
+                if (!equalsNullable(task.critical, value)) {
+                    changes.add(change("tasks", task.uid, taskLabel(task), "critical", task.critical, value));
+                    task.critical = value;
+                }
+            }
+        }
+
+        if (fields.containsKey("planned_start")) {
+            handledFields.add("planned_start");
+            String value = util.normalizePatchedTaskDate(fields.get("planned_start"), "start", task, model.project);
+            if (value == null) {
+                warnings.add(warning("update_task.planned_start の日付形式が解釈できません: " + task.uid, "tasks", task.uid,
+                        taskLabel(task)));
+            } else if (!equalsNullable(task.start, value)) {
+                changes.add(change("tasks", task.uid, taskLabel(task), "planned_start", task.start, value));
+                task.start = value;
+            }
+        }
+
+        if (fields.containsKey("planned_finish")) {
+            handledFields.add("planned_finish");
+            String value = util.normalizePatchedTaskDate(fields.get("planned_finish"), "finish", task, model.project);
+            if (value == null) {
+                warnings.add(warning("update_task.planned_finish の日付形式が解釈できません: " + task.uid, "tasks", task.uid,
+                        taskLabel(task)));
+            } else if (!equalsNullable(task.finish, value)) {
+                changes.add(change("tasks", task.uid, taskLabel(task), "planned_finish", task.finish, value));
+                task.finish = value;
+            }
+        }
+
+        if (fields.containsKey("planned_duration")) {
+            handledFields.add("planned_duration");
+            Object rawValue = fields.get("planned_duration");
+            if (!(rawValue instanceof String) || ((String) rawValue).trim().length() == 0) {
+                warnings.add(warning("update_task.planned_duration は空でない文字列が必要です: " + task.uid, "tasks", task.uid,
+                        taskLabel(task)));
+            } else {
+                String value = ((String) rawValue).trim();
+                if (!equalsNullable(task.duration, value)) {
+                    changes.add(change("tasks", task.uid, taskLabel(task), "planned_duration", task.duration, value));
+                    task.duration = value;
+                }
+            }
+        }
+
+        if (fields.containsKey("planned_duration_hours")) {
+            handledFields.add("planned_duration_hours");
+            Object rawValue = fields.get("planned_duration_hours");
+            Double value = finiteNonNegativeNumber(rawValue);
+            if (value == null) {
+                warnings.add(warning("update_task.planned_duration_hours は 0 以上の数値が必要です: " + task.uid, "tasks",
+                        task.uid, taskLabel(task)));
+            } else {
+                Double before = util.parseDurationHours(task.duration);
+                String nextDuration = util.formatDurationHours(value.doubleValue());
+                if (!equalsNullable(task.duration, nextDuration)) {
+                    changes.add(change("tasks", task.uid, taskLabel(task), "planned_duration_hours", before, value));
+                    task.duration = nextDuration;
+                }
+            }
+        }
+
+        if (nextMilestone) {
+            if (!equalsNullable(task.finish, task.start)) {
+                warnings.add(warning("update_task.is_milestone=true のため planned_finish は planned_start に揃えます: "
+                        + task.uid, "tasks", task.uid, taskLabel(task)));
+                changes.add(change("tasks", task.uid, taskLabel(task), "planned_finish", task.finish, task.start));
+                task.finish = task.start;
+            }
+            if (!util.isZeroDuration(task.duration)) {
+                warnings.add(warning("update_task.is_milestone=true のため planned_duration は 0 に揃えます: " + task.uid,
+                        "tasks", task.uid, taskLabel(task)));
+                changes.add(change("tasks", task.uid, taskLabel(task), "planned_duration", task.duration, "PT0H0M0S"));
+                task.duration = "PT0H0M0S";
+            }
+        }
+
+        for (String fieldName : fields.keySet()) {
+            if (!handledFields.contains(fieldName)) {
+                warnings.add(warning("未対応の field は無視します: operations[" + operationIndex + "].fields." + fieldName,
+                        "tasks", task.uid, taskLabel(task)));
+            }
+        }
+    }
 
     public void applyUpdateProjectOperation(ProjectInfo project, Map<String, Object> fields, ProjectModel model, List<ImportChange> changes,
             List<PatchWarning> warnings, int operationIndex) {
@@ -260,6 +470,30 @@ public class ProjectPatchJsonUpdates {
 
     private String label(CalendarModel calendar) {
         return calendar.name == null || calendar.name.isEmpty() ? calendar.uid : calendar.name;
+    }
+
+    private String taskLabel(TaskModel task) {
+        return task.name == null || task.name.length() == 0 ? task.uid : task.name;
+    }
+
+    private Integer integerPercentage(Object value) {
+        if (!(value instanceof Number)) {
+            return null;
+        }
+        double number = ((Number) value).doubleValue();
+        if (Double.isNaN(number) || Double.isInfinite(number) || number < 0 || number > 100
+                || number != Math.floor(number)) {
+            return null;
+        }
+        return Integer.valueOf((int) number);
+    }
+
+    private Double finiteNonNegativeNumber(Object value) {
+        if (!(value instanceof Number)) {
+            return null;
+        }
+        double number = ((Number) value).doubleValue();
+        return Double.isNaN(number) || Double.isInfinite(number) || number < 0 ? null : Double.valueOf(number);
     }
 
     private String stringValue(Object value) {
